@@ -135,3 +135,29 @@
 @media (prefers-reduced-motion: reduce) {
   .sis-easy *, .sis-easy *::before, .sis-easy *::after { scroll-behavior: auto !important; animation: none !important; transition: none !important; }
 }
+
+@media screen and (min-width: 992px) {
+  html[data-system="sis"] body.sis-easy .sis-workspace-header .sis-toolbar-in-appbar:not(:has(> .page-head)) {
+    display: none !important;
+  }
+  html[data-system="sis"] body.sis-easy .sis-appbar:has(> .sis-appbar-record-tools) { gap: 12px; }
+  .sis-easy .sis-appbar-record-tools .std-tb-btn { font-size: 11px; }
+  .sis-easy .sis-appbar-record-tools .std-tb-search { min-width: 110px; }
+}
+@media screen and (min-width: 992px) and (max-width: 1439.98px) {
+  html[data-system="sis"] body.sis-easy:has(.sis-appbar-record-tools) { --t-bar-h: 122px; }
+  html[data-system="sis"] body.sis-easy .sis-appbar:has(> .sis-appbar-record-tools) {
+    flex-wrap: wrap;
+    align-content: center;
+    row-gap: 8px;
+  }
+  .sis-easy .sis-appbar-record-tools { flex: 0 0 100%; }
+}
+@media screen and (min-width: 1440px) {
+  .sis-easy .sis-appbar-record-tools { flex: 1 1 auto; }
+  html[data-system="sis"] body.sis-easy .sis-appbar:has(> .sis-appbar-record-tools) .sis-appbar-search {
+    flex: 0 1 260px;
+    min-width: 150px;
+    margin-inline: 0;
+  }
+}

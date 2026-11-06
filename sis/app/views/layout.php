@@ -115,7 +115,7 @@ function layout_start(string $title, bool $bare = false): void
 <link rel="stylesheet" href="assets/theme.css?v=53">
 <link rel="stylesheet" href="assets/unified-toolbar.css?v=57">
 <link rel="stylesheet" href="../css/standard-toolbar.css?v=57">
-<?php if ($system === 'sis' && !$bare && $u): ?><link rel="stylesheet" href="assets/easy-navigation.css?v=1"><?php endif; ?>
+<?php if ($system === 'sis' && !$bare && $u): ?><link rel="stylesheet" href="assets/easy-navigation.css?v=2"><?php endif; ?>
 </head>
 <?php $embedFlashes = $bare && isset($_GET['embed']) ? take_flashes() : []; // pop-up pages show their own messages ?>
 <body data-client-scope="<?= h($u ? acadlink_client_scope(Auth::central()) : '') ?>" class="<?= $bare ? 'bare' : ('sis-theme' . ($system === 'sis' && $u ? ' sis-easy' : '')) ?>" data-user-id="<?= h((string) ($u['id'] ?? 'guest')) ?>" data-route="<?= h((string) $route) ?>"<?= array_filter($embedFlashes, fn($f) => $f[0] === 'success') ? ' data-changed="1"' : '' ?>>
@@ -212,7 +212,7 @@ function layout_end(bool $bare = false): void
 </div>
 <?php endif; ?>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" crossorigin="anonymous"></script>
-<script src="assets/navigation.js?v=55"></script>
+<script src="assets/navigation.js?v=56"></script>
 <script src="assets/activity.js?v=31"></script>
 <script src="assets/record-list.js?v=48" defer></script>
 <script src="assets/fixed-shell.js?v=31" defer></script>
@@ -222,7 +222,7 @@ function layout_end(bool $bare = false): void
 <script src="assets/sis-actions.js?v=39"></script>
 <script src="assets/theme.js?v=51"></script>
 <script src="../js/standard-toolbar-core.js?v=57"></script>
-<script src="assets/standard-toolbar.js?v=58"></script>
+<script src="assets/standard-toolbar.js?v=59"></script>
 <script src="assets/eligibility.js?v=31"></script>
 <script src="assets/workspaces.js?v=31"></script>
 <script src="assets/success-sound.js?v=56"></script>
