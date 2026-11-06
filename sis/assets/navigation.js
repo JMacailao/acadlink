@@ -140,7 +140,7 @@
         const selected=new Set([...parsed.querySelectorAll('#sidebar .side-link.active')].map(a=>new URL(a.getAttribute('href'),url).href));
         document.querySelectorAll('#sidebar .side-link').forEach(link=>{const yes=selected.has(link.href);link.classList.toggle('active',yes);if(yes)link.setAttribute('aria-current','page');else link.removeAttribute('aria-current');});
         renderedURL=url.href;mount();restorePosition(scroll);
-        if(focusName){const control=[...main.querySelectorAll('input,select,textarea')].find(el=>el.name===focusName);if(control){control.focus({preventScroll:true});if(selection!==null&&typeof control.setSelectionRange==='function'&&/^(search|text)$/.test(control.type))control.setSelectionRange(selection,selection);}}
+        if(focusName){const control=[...main.querySelectorAll('input,select,textarea'),...document.querySelectorAll('.sis-appbar-record-tools input')].find(el=>el.name===focusName);if(control){control.focus({preventScroll:true});if(selection!==null&&typeof control.setSelectionRange==='function'&&/^(search|text)$/.test(control.type))control.setSelectionRange(selection,selection);}}
         else if(!sameModule){const title=main.querySelector('h1');if(title){title.tabIndex=-1;title.focus({preventScroll:true});}}
         remember(url,html,parsed);
       }catch(error){

@@ -78,6 +78,27 @@
    const heading=main.querySelector('.sis-page-heading');
    if(heading){heading.append(host);document.body.classList.add('std-tools-fixed');}else{host.classList.add('sis-std-static');main.prepend(host);}
  }
+ if(route==='registration'&&list&&old&&document.body.classList.contains('sis-easy')){
+   const appbar=document.querySelector('.sis-appbar');
+   if(appbar){
+     const desktop=matchMedia('(min-width:992px)');
+     const wide=matchMedia('(min-width:1440px)');
+     const host=old.parentElement;
+     tb.el.setAttribute('aria-label','Registration tools');
+     function placeToolbar(){
+       T.closeMenu();
+       if(wide.matches)appbar.prepend(tb.el);
+       else if(desktop.matches)appbar.append(tb.el);
+       else old.before(tb.el);
+       tb.el.classList.toggle('sis-appbar-record-tools',desktop.matches);
+       host.classList.toggle('sis-toolbar-in-appbar',desktop.matches);
+     }
+     placeToolbar();
+     scope.on(desktop,'change',placeToolbar);
+     scope.on(wide,'change',placeToolbar);
+     scope.cleanup(()=>tb.el.remove());
+   }
+ }
  document.body.classList.add('has-std-toolbar');
 
  // More Actions: everything else this page offers, run through the original control.
