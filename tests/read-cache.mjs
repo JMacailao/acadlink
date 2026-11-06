@@ -1,0 +1,20 @@
+import assert from 'node:assert/strict';
+import {createReadCache} from '../js/read-cache.js';
+let now=0,scope='alice',calls=0,checks=0,wait,version=1;
+const cache=createReadCache({now:()=>now,getScope:()=>scope,maxEntries:3,verify:async()=>{checks++;},send:async body=>{calls++;if(wait){const hold=wait;wait=null;await hold;}return {ok:true,docs:[{id:body.path||body.collection,data:{version}}]};}});
+const query={action:'query',collection:'students',where:[['section','==','A']]};
+const first=await cache.run(query);first.docs[0].data.version=999;
+assert.equal((await cache.run(query)).docs[0].data.version,1);assert.equal(calls,1);assert.equal(checks,1);
+await cache.run({...query,where:[['section','==','B']]});assert.equal(calls,2);
+now=60001;await cache.run(query);assert.equal(calls,3);
+cache.clear();let release;wait=new Promise(r=>release=r);const one=cache.run(query),two=cache.run({...query});await new Promise(r=>setTimeout(r,0));const before=calls;release();await Promise.all([one,two]);assert.equal(calls,before,'Identical concurrent reads must coalesce');
+await cache.run({action:'commit',ops:[]});assert.equal(cache.size,0);version=2;assert.equal((await cache.run(query)).docs[0].data.version,2);
+for(let i=0;i<5;i++)await cache.run({...query,where:[['id','==',i]]});assert.equal(cache.size,3);
+const beforeFinance=calls;await cache.run({action:'query',collection:'payments'});await cache.run({action:'query',collection:'payments'});assert.equal(calls,beforeFinance+2);
+scope='bob';version=3;assert.equal((await cache.run(query)).docs[0].data.version,3);
+// A pre-write read cannot return its old result after a successful mutation.
+cache.clear();let finishOld;let readNumber=0;
+const race=createReadCache({getScope:()=>scope,send:async body=>{if(body.action==='commit')return {ok:true};readNumber++;if(readNumber===1)return new Promise(r=>finishOld=()=>r({ok:true,version:1}));return {ok:true,version:2};}});
+const stale=race.run(query);await new Promise(r=>setTimeout(r,0));await race.run({action:'commit'});finishOld();assert.equal((await stale).version,2);
+const denied=createReadCache({getScope:()=>scope,send:async()=>({ok:true}),verify:async()=>{throw Error('expired');}});await denied.run(query);await assert.rejects(denied.run(query),/expired/);
+console.log('PASS: TTL, query keys, clone isolation, coalescing, mutation invalidation, memory bounds, financial bypass, identity isolation, read/write races and expired-session rejection.');

@@ -1,0 +1,175 @@
+/* Stable SIS shell. Keep print and embedded forms in normal document flow. */
+@media screen {
+  /* Use all workspace width, including the larger CSS viewport at reduced browser zoom. */
+  body:not(.bare) .app-shell .app-content { max-width:none; margin-inline:0; }
+  .sis-page-heading { display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:8px 20px; margin-bottom:12px; flex-shrink:0; }
+  .sis-page-heading .breadcrumbs { margin:0!important; }
+  .sis-page-heading .sis-module-title { font-family:var(--font-ui,sans-serif); font-size:1.125rem; font-weight:600; line-height:1.4; letter-spacing:-.01em; text-align:right; margin:0 0 0 auto; overflow-wrap:anywhere; min-width:0; }
+  body .app-shell #main .page-title { font-family:var(--font-ui,sans-serif); font-size:1.125rem!important; font-weight:600; line-height:1.4; letter-spacing:-.01em; margin:0; }
+  body .app-shell #main .page-head { margin-bottom:12px; }
+  body .app-shell #main .page-lede { font-size:.8rem; line-height:1.5; margin:5px 0 0; }
+  .sis-list-dock .record-filter-grid:not([hidden]) { display:grid!important; grid-template-columns:repeat(auto-fit,minmax(min(100%,180px),1fr)); gap:12px; margin:12px 0 0!important; }
+  .sis-list-dock .record-filter-grid > .record-filter-cell { width:100%!important; min-width:0; max-width:none; padding:0; margin:0; }
+  .sis-list-dock .record-filter-cell > label { display:block; font-size:.78rem; font-weight:500; line-height:1.4; margin:0 0 6px; white-space:normal; }
+  .sis-list-dock .record-filter-cell .form-control,
+  .sis-list-dock .record-filter-cell .form-select { width:100%; min-width:0; }
+  body:not(.bare) .sidebar-inner { overflow:hidden; min-height:0; height:100dvh; }
+  body:not(.bare) .sidebar-inner > :not(nav) { flex-shrink:0; }
+  body:not(.bare) .sidebar-inner > nav { flex:1 1 auto; min-height:0; overflow-y:auto; overscroll-behavior:contain; scrollbar-width:thin; }
+  body:not(.bare) .sidebar-user { margin-top:0; }
+  .sis-list-dock { background:var(--acad-workspace,#f4f7fb); position:relative; z-index:20; flex-shrink:0; }
+  .sis-list-dock .page-head { margin-bottom:12px; }
+  .sis-toolbar-header { display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:12px 20px; padding-bottom:12px; border-bottom:1px solid #e0e8f1; margin-bottom:12px; position:sticky; top:0; z-index:3; background:white; }
+  .sis-list-dock .sis-toolbar-header .page-head { margin:0; flex:0 1 auto; min-width:0; }
+  .sis-list-dock .sis-toolbar-header .page-title { font-size:1.6rem; margin:0; }
+  .sis-toolbar-header .admission-heading-icon { display:none; }
+  .sis-list-dock .sis-toolbar-header .record-toolbar { justify-content:flex-end; flex:0 1 auto; position:static; }
+  .sis-list-dock .sis-toolbar-header { justify-content:flex-end; gap:8px 16px; }
+  body .app-shell #main .sis-toolbar-description { margin:0 0 10px; color:#65758c; font-size:.78rem; }
+  .sis-list-dock .record-list-controls { padding:12px 16px; border-radius:10px; margin-bottom:12px; box-shadow:0 2px 6px #17355508; max-height:52dvh; overflow:auto; }
+  .sis-list-dock .record-toolbar { position:sticky; top:0; z-index:2; background:white; }
+  .sis-list-dock .fp-row { grid-template-columns:minmax(0,1fr); gap:5px; }
+  .sis-list-dock .fp-ctl { display:grid; grid-template-columns:repeat(auto-fit,minmax(min(100%,140px),1fr)); }
+  .sis-list-dock .fp-ctl > span { display:none; }
+  /* A preference has one enabling checkbox label above its controls. */
+  .sis-list-dock .or-filters { padding:8px 12px; border-radius:8px; margin:10px 0 0!important; }
+  .sis-list-dock .or-filters-title { padding:0 0 6px; margin:0 0 8px; font-size:.8rem; font-weight:600; background:none; }
+  .sis-list-dock .fp-grid { grid-template-columns:repeat(auto-fit,minmax(min(100%,230px),1fr)); gap:8px 16px; }
+  .sis-list-dock .fp-ctl .form-control,.sis-list-dock .fp-ctl .form-select { min-height:38px; height:38px; }
+  .sis-list-dock .fp-row { align-content:start; align-items:start; min-width:0; }
+  .sis-list-dock .fp-check { white-space:normal; min-height:20px; font-size:.78rem; line-height:1.4; }
+  .sis-list-dock .fp-check .form-check-input { flex-shrink:0; }
+  .sis-list-dock .fp-ctl > .form-check { min-height:42px; display:flex; align-items:center; gap:8px; padding-left:0; margin:0; white-space:normal; }
+  .sis-list-dock .fp-ctl > .form-check .form-check-input { position:static; float:none; margin:0; flex-shrink:0; }
+  .sis-record-scroll { min-height:0; min-width:0; scrollbar-gutter:stable; }
+  .sis-record-scroll .table-responsive,.sis-record-scroll .or-grid-wrap { position:relative; }
+  .sis-record-scroll .or-grid-wrap { max-height:none; min-height:0; }
+  .sis-record-scroll :focus-visible { scroll-margin-block:16px; }
+}
+@media screen and (min-width:992px) {
+  body:not(.bare) .sidebar { position:sticky!important; top:0; height:100dvh; flex-shrink:0; }
+  body.fixed-record-shell { overflow:hidden; }
+  .fixed-record-shell .app-shell { height:100dvh; min-height:0; }
+  .fixed-record-shell .app-main { height:100%; min-height:0; }
+  .fixed-record-shell .app-content { height:100%; min-height:0; display:flex; flex-direction:column; padding-bottom:12px; }
+  .fixed-record-shell .breadcrumbs { flex-shrink:0; margin-bottom:12px; }
+  .fixed-record-shell .sis-record-scroll { flex:1 1 auto; overflow:auto; overscroll-behavior:contain; padding:2px 4px 24px 0; }
+  /* One vertical scrollbar for results. Wide tables retain horizontal scrolling. */
+  .fixed-record-shell .sis-record-scroll .table-responsive,
+  .fixed-record-shell .sis-record-scroll .or-grid-wrap { max-height:none; overflow:visible; }
+  .fixed-record-shell .sis-record-scroll table > thead > tr > th { position:sticky; top:0; z-index:5; background:var(--bs-table-bg,#f3f6fa); box-shadow:0 1px 0 #dce5ee; }
+}
+@media screen and (max-width:991.98px) {
+  body:not(.bare) .side-link { min-height:44px; }
+  body:not(.bare) .sidebar-btn { min-height:44px; display:inline-flex; align-items:center; justify-content:center; }
+  body:not(.bare) #sidebar .btn-close { min-width:32px; min-height:32px; }
+  .fixed-record-shell .topbar { position:sticky; top:0; z-index:40; }
+  .fixed-record-shell .sis-list-dock { position:sticky; top:var(--sis-mobile-header,56px); margin-inline:-4px; padding:4px; }
+  .fixed-record-shell .sis-list-dock .page-head { display:flex; margin:0 0 8px; }
+  .fixed-record-shell .sis-toolbar-header { display:block; margin-bottom:8px; padding-bottom:8px; }
+  .fixed-record-shell .sis-toolbar-header .record-toolbar { justify-content:flex-start; margin-top:10px; }
+  .fixed-record-shell .sis-list-dock .page-head .page-title { font-size:1.1rem; margin:0; }
+  .fixed-record-shell .sis-list-dock .page-head .page-lede { display:none; }
+  .fixed-record-shell .sis-toolbar-description { display:none; }
+  .fixed-record-shell .sis-list-dock .record-list-controls { max-height:48dvh; padding:10px; margin-bottom:8px; }
+  .fixed-record-shell .record-list-status { font-size:.76rem; margin-top:6px; }
+  .fixed-record-shell .record-toolbar { flex-wrap:nowrap; overflow-x:auto; padding-bottom:5px; scrollbar-width:thin; overscroll-behavior-x:contain; }
+  .fixed-record-shell .record-toolbar > * { flex-shrink:0; }
+  .fixed-record-shell .record-toolbar [data-list-apply] { order:-3; }
+  .fixed-record-shell .record-toolbar [data-list-toggle] { order:-2; }
+  .fixed-record-shell .record-toolbar [data-list-add] { order:-1; }
+  .fixed-record-shell .record-toolbar [data-list-actions] { flex-wrap:nowrap!important; }
+  .fixed-record-shell .record-toolbar .btn { flex-grow:0; white-space:nowrap; min-height:44px; display:inline-flex; align-items:center; justify-content:center; }
+  .fixed-record-shell [data-record-filters]:not([hidden]) { display:grid!important; grid-template-columns:repeat(2,minmax(0,1fr)); gap:10px; margin-inline:0!important; }
+  .fixed-record-shell [data-record-filters] > :not([type=hidden]) { width:100%; min-width:0; margin:0; padding-inline:0; max-width:none; }
+  .fixed-record-shell [data-record-filters] .form-control,
+  .fixed-record-shell [data-record-filters] .form-select { min-height:44px; font-size:16px; width:100%; }
+  .fixed-record-shell [data-record-filters] .fp-grid,
+  .fixed-record-shell [data-record-filters] .or-filters-title { grid-column:1 / -1; }
+  .fixed-record-shell [data-record-filters] .fp-grid { grid-template-columns:repeat(auto-fit,minmax(min(100%,260px),1fr)); }
+  .fixed-record-shell [data-record-filters] .fp-row { grid-template-columns:minmax(0,1fr); gap:5px; }
+  .fixed-record-shell [data-record-filters] .fp-ctl { display:grid; grid-template-columns:repeat(auto-fit,minmax(min(100%,140px),1fr)); }
+  .fixed-record-shell [data-record-filters] .fp-ctl > span { display:none; }
+  .fixed-record-shell .sis-record-scroll .table-responsive,
+  .fixed-record-shell .sis-record-scroll .or-grid-wrap { overflow-x:auto; max-width:100%; -webkit-overflow-scrolling:touch; }
+  .fixed-record-shell .sis-record-scroll table { min-width:0!important; }
+  .fixed-record-shell .sis-record-scroll table:has(tr > :nth-child(5)) { min-width:680px!important; }
+  .fixed-record-shell .sis-record-scroll table td { white-space:nowrap; }
+  .fixed-record-shell .sis-record-scroll td .btn { min-height:44px; display:inline-flex; align-items:center; }
+  .sis-tools-hint { display:block; font-size:.72rem; color:#65758c; margin:2px 0 0; }
+  .fixed-record-shell .record-filter-fields { grid-template-columns:repeat(2,minmax(0,1fr)); gap:8px; }
+}
+@media screen and (min-width:992px) { .sis-tools-hint { display:none; } }
+@media screen and (max-width:575.98px) {
+  .sis-page-heading { flex-direction:column; align-items:stretch; gap:4px; }
+  .sis-page-heading .sis-module-title { width:100%; }
+  .sis-list-dock .record-filter-grid:not([hidden]) { grid-template-columns:1fr; }
+  .fixed-record-shell [data-record-filters]:not([hidden]) { grid-template-columns:1fr; }
+  .fixed-record-shell .sis-list-dock .record-list-controls { border-radius:10px; }
+  .fixed-record-shell .sis-list-dock .page-head > .d-flex { gap:6px!important; }
+  .fixed-record-shell .sis-list-dock .page-head .btn { min-height:40px; }
+  .fixed-record-shell .sis-record-scroll { scrollbar-gutter:auto; }
+}
+@media screen and (max-height:500px) {
+  body:not(.bare) .sidebar-brand { padding-block:8px; }
+  body:not(.bare) .sidebar-user { padding-block:8px; }
+  .fixed-record-shell .app-content { padding:10px 16px; }
+  .fixed-record-shell .sis-list-dock .record-list-controls { max-height:42dvh; }
+  .fixed-record-shell .sis-list-dock .page-lede { display:none; }
+  .fixed-record-shell .sis-list-dock .page-title { font-size:1.2rem; }
+}
+@media print {
+  .sis-page-heading { display:block; margin-bottom:12px; }
+  .sis-module-title { text-align:left; font-size:18px; }
+  .fixed-record-shell,.fixed-record-shell .app-shell,.fixed-record-shell .app-main,
+  .fixed-record-shell .app-content,.fixed-record-shell .sis-record-scroll { height:auto!important; max-height:none!important; overflow:visible!important; display:block!important; }
+  .sis-list-dock { position:static!important; }
+  .sis-list-dock .record-list-controls { display:none!important; }
+  .sis-record-scroll .or-grid-wrap { max-height:none!important; overflow:visible!important; }
+}
+
+/* Shared SIS toolbar: actions, flexible search, then the refresh icon. */
+@media screen {
+  .sis-list-dock .sis-toolbar-header { justify-content:flex-start; }
+  .sis-list-dock .sis-toolbar-header .record-toolbar { display:flex; flex:1 1 100%; width:100%; align-items:center; justify-content:flex-start; flex-wrap:wrap; gap:8px; }
+  .record-toolbar-buttons { display:flex; flex:0 1 auto; flex-wrap:wrap; align-items:center; gap:8px; min-width:0; }
+  .record-toolbar-buttons .btn { white-space:nowrap; min-height:42px; display:inline-flex; align-items:center; justify-content:center; }
+  .record-toolbar-search { position:relative; flex:1 1 240px; min-width:180px; }
+  .record-toolbar-search > svg { position:absolute; width:18px; height:18px; left:12px; top:50%; transform:translateY(-50%); color:#62748b; pointer-events:none; }
+  .record-toolbar-search .form-control { width:100%; height:42px; min-height:42px; padding-left:38px; margin:0; }
+  .record-toolbar [data-list-refresh] { display:inline-flex; flex:0 0 42px; width:42px; height:42px; align-items:center; justify-content:center; padding:9px!important; }
+  .record-toolbar [data-list-refresh] svg { width:20px; height:20px; }
+}
+@media screen and (max-width:991.98px) {
+  .sis-list-dock .sis-toolbar-header .record-toolbar { display:grid; grid-template-columns:minmax(0,1fr) 44px; overflow:visible; gap:8px; padding-bottom:0; margin-top:0; }
+  .record-toolbar-buttons { grid-column:1 / -1; flex-wrap:nowrap; overflow-x:auto; overscroll-behavior-x:contain; scrollbar-width:thin; padding-bottom:4px; }
+  .record-toolbar-buttons > * { flex-shrink:0; order:0!important; }
+  .record-toolbar-search { grid-column:1; min-width:0; width:100%; }
+  .record-toolbar-search .form-control { font-size:16px; height:44px; min-height:44px; }
+  .record-toolbar [data-list-refresh] { grid-column:2; width:44px; height:44px; min-height:44px; }
+}
+
+/* The workspace header owns the toolbar; the filter card remains a separate surface. */
+@media screen {
+  .app-shell #main.sis-header-layout { --sis-header-gutter:clamp(12px,2vw,32px); padding:0 var(--sis-header-gutter) 12px; }
+  .sis-header-layout > .sis-workspace-header { width:calc(100% + 2 * var(--sis-header-gutter)); margin:0 calc(-1 * var(--sis-header-gutter)) 20px; padding:14px var(--sis-header-gutter) 12px; background:#fff; border-bottom:1px solid #dfe7ef; box-shadow:0 3px 8px #17355509; flex-shrink:0; z-index:30; }
+  .sis-workspace-header .sis-toolbar-header { position:static; flex:1 1 100%; width:100%; min-width:0; margin:0; padding:12px 0 0; border:0; border-top:1px solid #e6ecf3; justify-content:flex-start; gap:8px 16px; }
+  .sis-workspace-header .sis-toolbar-header .record-toolbar { display:flex; position:static; flex:1 1 100%; width:100%; min-width:0; align-items:center; justify-content:flex-start; flex-wrap:wrap; gap:8px; margin:0; }
+  .sis-workspace-header .page-head { margin:0!important; min-width:0; }
+  .sis-workspace-header .sis-tools-hint { flex-basis:100%; margin:0; }
+  .sis-header-layout .sis-list-dock > .record-list-controls { margin-top:0; }
+}
+@media screen and (max-width:991.98px) {
+  .sis-header-layout > .sis-workspace-header { position:sticky; top:var(--sis-mobile-header,56px); padding-block:10px; margin-bottom:12px; gap:6px; }
+  .sis-workspace-header .sis-toolbar-header .record-toolbar { display:grid; grid-template-columns:minmax(0,1fr) 44px; overflow:visible; gap:8px; padding-bottom:0; }
+  .sis-header-layout .sis-list-dock { position:relative; top:auto; margin-inline:0; padding:0; z-index:0; }
+  .sis-workspace-header .record-toolbar .btn { min-height:44px; }
+  .sis-workspace-header .record-toolbar [data-list-actions] { flex-wrap:nowrap!important; }
+}
+@media screen and (max-height:500px) {
+  .sis-header-layout > .sis-workspace-header { padding-block:8px; margin-bottom:10px; }
+}
+@media print {
+  .sis-workspace-header { position:static!important; margin:0 0 12px!important; padding:0!important; border:0!important; box-shadow:none!important; }
+  .sis-workspace-header .sis-toolbar-header,.sis-workspace-header .sis-tools-hint { display:none!important; }
+}

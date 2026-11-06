@@ -1,0 +1,57 @@
+/* AcadLink unified compact workspace layout (visual-only).
+   Retains each module's existing DOM, events, forms and permissions. */
+@media screen and (min-width:992px) {
+  html body.sis-theme:not(.bare) { --acad-tools-h:48px; }
+  html body.sis-theme.fixed-record-shell .app-shell { margin-top:var(--acad-tools-h); min-height:calc(100dvh - var(--t-bar-h) - var(--acad-tools-h)); }
+  html body.sis-theme.fixed-record-shell .app-shell { height:calc(100dvh - var(--t-bar-h) - var(--acad-tools-h)); }
+  html body.sis-theme.fixed-record-shell .sidebar { top:calc(var(--t-bar-h) + var(--acad-tools-h))!important; height:calc(100dvh - var(--t-bar-h) - var(--acad-tools-h))!important; }
+  html body.sis-theme.fixed-record-shell .sidebar-inner { height:calc(100dvh - var(--t-bar-h) - var(--acad-tools-h))!important; }
+  html body.sis-theme .app-shell #main.sis-header-layout > .sis-workspace-header { padding:0 10px 0 12px; margin:0; min-height:0; }
+  html body.sis-theme .sis-workspace-header .sis-toolbar-header { position:fixed!important; top:var(--t-bar-h)!important; left:0!important; right:0!important; width:auto!important; height:var(--acad-tools-h); z-index:1032; margin:0!important; padding:5px 12px!important; background:#fff!important; border-bottom:1px solid #dce7e4; box-shadow:0 2px 6px #173b2b0a; display:flex; align-items:center; justify-content:flex-start!important; flex-wrap:nowrap; gap:0; }
+  html body.sis-theme .sis-workspace-header .sis-toolbar-header > .page-head { display:none!important; }
+  html body.sis-theme .sis-workspace-header .sis-toolbar-header .record-toolbar { width:100%; flex:1 1 auto; min-width:0; max-width:none; flex-wrap:nowrap; justify-content:flex-start!important; gap:6px; }
+  html body.sis-theme .sis-workspace-header .record-toolbar-buttons { flex:0 0 auto; flex-wrap:nowrap; gap:5px; }
+  html body.sis-theme .sis-workspace-header .record-toolbar-search { flex:1 1 240px; min-width:110px; }
+  html body.sis-theme .sis-workspace-header .record-toolbar .btn { font-size:11px!important; min-height:34px!important; height:34px; padding:4px 9px!important; white-space:nowrap; }
+  html body.sis-theme .sis-workspace-header .record-toolbar input { font-size:11px!important; min-height:34px!important; height:34px; }
+  html body.sis-theme .sis-workspace-header .record-toolbar i { font-size:12px; }
+}
+@media screen {
+  html body.sis-theme:not(.bare) .sis-page-heading .sis-module-title,
+  html body.sis-theme:not(.bare) #main > .page-head > .page-title,
+  html body.sis-theme:not(.bare) #main .sis-toolbar-header .page-title { display:none!important; }
+  html body.sis-theme:not(.bare) .breadcrumbs { font-size:10px; }
+  html body.sis-theme:not(.bare) .record-toolbar .btn { font-size:11px!important; }
+}
+@media screen and (max-width:991.98px) {
+  /* Keep mobile toolbar in document flow to avoid obstructing offcanvas and dialogs. */
+  html body.sis-theme:not(.bare) .sis-module-title { display:none!important; }
+  html body.sis-theme:not(.bare) .sis-toolbar-header .record-toolbar { justify-content:flex-start!important; }
+}
+/* v56: one icon per filter button (the theme already draws it), no hint text behind the fixed toolbar,
+   and a search box wide enough to read its placeholder. */
+@media screen {
+  html body.sis-theme .record-toolbar .sis-toolbar-filter > i.bi:first-child,
+  html body.sis-theme .record-toolbar .sis-toolbar-apply > i.bi:first-child { display:none!important; }
+}
+@media screen and (min-width:992px) {
+  html body.sis-theme .sis-workspace-header .sis-toolbar-header .accounting-selection-note { display:none!important; }
+  html body.sis-theme .sis-workspace-header .record-toolbar-search { min-width:170px; }
+  html body.sis-theme .sis-workspace-header .record-toolbar-search input { margin-bottom:0!important; }
+}
+@media print { /* Preserve existing print layout. */ }
+/* v57: the standard toolbar replaces each module's own buttons; the old toolbar stays (hidden) because its
+   controls are what the standard buttons click. */
+html body.sis-theme .record-toolbar.std-tb-legacy { display:none!important; }
+html body.sis-theme .sis-toolbar-header .std-tb { flex:1 1 auto; padding-left:2px; }
+html body.sis-theme .sis-std-static { margin:6px 0 10px; padding:7px 9px; background:#fff; border:1px solid #dce7e4; border-radius:10px; }
+html body.sis-theme .sis-tools-hint { display:none!important; }
+@media screen and (max-width:991.98px) {
+  html body.sis-theme .sis-toolbar-header .std-tb { padding:6px 0; }
+}
+/* v57.1: pages without a list keep the toolbar in the same fixed bar as list pages. */
+@media screen and (min-width:992px) {
+  html body.sis-theme.std-tools-fixed:not(.fixed-record-shell) .app-shell { margin-top:var(--acad-tools-h); }
+  html body.sis-theme.std-tools-fixed:not(.fixed-record-shell) .sidebar { top:calc(var(--t-bar-h) + var(--acad-tools-h))!important; height:calc(100dvh - var(--t-bar-h) - var(--acad-tools-h))!important; }
+  html body.sis-theme.std-tools-fixed:not(.fixed-record-shell) .sidebar-inner { height:calc(100dvh - var(--t-bar-h) - var(--acad-tools-h))!important; }
+}

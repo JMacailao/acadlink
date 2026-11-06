@@ -1,0 +1,5 @@
+# Only api.php may be opened from the web
+<FilesMatch "^(config|config\.sample|lib|grading-restore)\.php$|\.sql$">
+  Require all denied
+</FilesMatch>
+Options -Indexes

@@ -1,0 +1,156 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <!-- Opened directly (not inside the main page)? Go to the main address and show this page there -->
+  <script>
+  (function () {
+    try {
+      if (window.top !== window.self) return;
+      var root = location.pathname.replace(/(\/pages)?\/[^/]*$/, "/");
+      var rel = location.pathname.slice(root.length) + location.search + location.hash;
+      sessionStorage.setItem("gs-current-page", rel || "pages/dashboard.html");
+      location.replace(root);
+    } catch (e) {}
+  })();
+  </script>
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="color-scheme" content="light">
+  <meta name="theme-color" content="#14203a">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Grading">
+  <meta name="format-detection" content="telephone=no">
+  <link rel="manifest" href="../manifest.webmanifest">
+  <link rel="icon" type="image/png" sizes="32x32" href="../icons/favicon-32.png">
+  <link rel="apple-touch-icon" href="../icons/apple-touch-icon.png">
+  <!-- Very old browsers can't run the system: show a clear message instead of a blank page -->
+  <script>
+  (function () {
+    var ok = true;
+    try { new Function("var a = {}; return a?.b ?? 1")(); } catch (e) { ok = false; }
+    if (!("noModule" in document.createElement("script"))) ok = false;
+    if (!ok) {
+      document.addEventListener("DOMContentLoaded", function () {
+        document.body.innerHTML = '<div style="max-width:520px;margin:12vh auto;padding:24px;font-family:Arial,sans-serif;color:#1f2a44">' +
+          '<h1 style="font-size:22px">Please update your browser</h1>' +
+          '<p>The grading system needs a recent browser: Chrome, Edge, Firefox, Safari (iPhone/iPad with iOS 14 or newer) or Samsung Internet.</p>' +
+          '<p>Update your browser, or open the system on another device.</p></div>';
+      });
+    }
+  })();
+  </script>
+  <title>Sign in | AcadLink Grading System</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@400;500;600;700&family=Source+Serif+4:opsz,wght@8..60,600;8..60,700&display=swap" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
+  <!-- Tailwind utilities (tw- prefix), pre-built: see tailwind.config.js -->
+  <link href="../css/tailwind.css" rel="stylesheet">
+  <link href="../css/style.css" rel="stylesheet">
+  <link href="../css/workspace-selector.css?v=28" rel="stylesheet">
+</head>
+<body>
+<div class="sl">
+  <!-- Left: school, what the system is for, and the school's picture (School settings → Sign-in page picture) -->
+  <aside class="sl-side">
+    <img class="sl-pic" src="../sis/index.php?r=signinpic" alt="" data-signin-pic>
+    <div class="sl-side-in">
+      <div class="sl-top">
+        <div class="sl-brand">
+          <span class="brand-seal has-logo is-default" id="brandSeal" aria-hidden="true"><img src="../icons/acadlink-mark.png" alt=""></span>
+          <span class="sl-brand-text"><span class="sl-brand-name" id="brandName">AcadLink</span><span class="sl-brand-sub" id="brandSub">Grading System</span></span>
+        </div>
+        <div class="sl-motto" aria-hidden="true"><span>Learn</span><i>·</i><span>Grow</span><i>·</i><span class="on">Succeed</span></div>
+      </div>
+      <h1 class="sl-heading"><b>Class records,</b> grades and <em>reports</em><span>.</span></h1>
+      <p class="sl-lede">Sign in to manage subjects, sections and students, or to enter final grades for the classes assigned to you.</p>
+      <ul class="sl-features">
+        <li><span class="sl-feat-ic"><i class="bi bi-journal-bookmark" aria-hidden="true"></i></span><span>Manage Classes</span></li>
+        <li><span class="sl-feat-ic"><i class="bi bi-pencil-square" aria-hidden="true"></i></span><span>Enter Grades</span></li>
+        <li><span class="sl-feat-ic"><i class="bi bi-mortarboard" aria-hidden="true"></i></span><span>Final Grades</span></li>
+      </ul>
+      <p class="small mb-0 mt-4 login-school" id="loginSchool"></p>
+      <div class="sl-trust"><i class="bi bi-shield-fill-check" aria-hidden="true"></i><span>Secure</span><i class="dot">·</i><span>Reliable</span><i class="dot">·</i><span>Trusted</span></div>
+    </div>
+    <svg class="sl-curve" viewBox="0 0 160 1000" preserveAspectRatio="none" aria-hidden="true" focusable="false"><path d="M160 0H118C40 160 40 300 72 430C104 560 96 760 0 1000H160Z"/></svg>
+  </aside>
+
+  <!-- Right: choose a system, sign in, or (first run) create the administrator -->
+  <main class="sl-main">
+    <div class="sl-main-top">
+      <span></span>
+      <div class="sl-clock" aria-hidden="true"><i class="bi bi-calendar3"></i><span><b data-clock-date></b><small data-clock-time></small></span></div>
+    </div>
+    <div class="sl-card">
+      <div id="config-alert"></div>
+      <div id="reasonAlert" class="alert alert-warning d-none" role="alert"></div>
+
+      <div id="loadingState" class="text-secondary">
+        <span class="spinner-border spinner-border-sm me-2" aria-hidden="true"></span>Checking your session…
+      </div>
+
+      <!-- Before signing in: choose the system -->
+      <div id="portalChooser" class="d-none">
+
+<header class="al-top"><div class="al-brand"><span class="brand-seal has-logo is-default" id="chooserSeal" aria-hidden="true"><img src="../icons/acadlink-mark.png" alt=""></span><div><div class="al-school" id="chooserSchool">AcadLink</div><div class="al-product">AcadLink</div></div></div></header>
+<div class="al-intro"><h1>Choose your workspace</h1><p>One account. Everything you need for school.<br>Select a system to get started.</p></div>
+<nav class="al-grid" aria-label="Select a workspace">
+<section class="al-card" data-workspace="Grading System"><div class="al-art" aria-hidden="true"><div class="al-orbit"></div><div class="al-dot"></div><div class="al-dot two"></div><div class="al-paper al-float"><strong>GRADES</strong><div class="al-line"></div><div class="al-line"></div><div class="al-line"></div><div class="al-line"></div><div class="al-grades">95<br>92<br>96<br>94</div></div><div class="al-book"></div><div class="al-cap al-bob"><i class="bi bi-mortarboard"></i></div></div><h2>Grading System</h2><p class="al-description">Manage classes, enter grades, and keep every student’s progress on track.</p><div class="al-features"><span>Classes</span><span>Grade Entry</span><span>Reports</span></div><button type="button" class="al-open" id="btnChooseGrading">Open Grading<i class="bi bi-arrow-right" aria-hidden="true"></i></button></section>
+<section class="al-card green" data-workspace="Admission & Registration"><div class="al-art" aria-hidden="true"><div class="al-orbit"></div><div class="al-dot"></div><div class="al-dot two"></div><div class="al-paper al-float"><strong>ENROLLMENT</strong><div class="al-line"></div><div class="al-line"></div><div class="al-line"></div><div class="al-line"></div></div><div class="al-check al-bob"><i class="bi bi-check-lg"></i></div><div class="al-id al-bob"><i class="bi bi-person"></i><span></span></div></div><h2>Admission &amp;<br>Registration</h2><p class="al-description">Handle applications, student records, enrollment, and payments in one place.</p><div class="al-features"><span>Admissions</span><span>Enrollment</span><span>Payments</span></div><a class="al-open" href="../sis/index.php?r=login" target="_top">Open SIS<i class="bi bi-arrow-right" aria-hidden="true"></i></a></section>
+<section class="al-card purple" data-workspace="Student Portal"><div class="al-art" aria-hidden="true"><div class="al-orbit"></div><div class="al-dot"></div><div class="al-dot two"></div><div class="al-laptop al-float"><div class="al-mini-nav"></div><div class="al-screen"><div class="al-tiles"><span><i class="bi bi-mortarboard"></i></span><span><i class="bi bi-wallet2"></i></span><span><i class="bi bi-clock-history"></i></span></div><div class="al-screen-lines"></div></div></div><div class="al-float-tile al-bob"><i class="bi bi-book"></i></div></div><h2>Student Portal</h2><p class="al-description">View your grades, check assessments, and revisit your school history.</p><div class="al-features"><span>My Grades</span><span>Assessments</span><span>History</span></div><a class="al-open" href="../sis/index.php?r=login&amp;portal=student" target="_top">Open Portal<i class="bi bi-arrow-right" aria-hidden="true"></i></a></section>
+</nav>
+<div class="al-footer"><i class="bi bi-shield-check" aria-hidden="true"></i><span data-status role="status" aria-live="polite">Secure school sign-in. Access is based on your assigned role.</span></div>
+
+      </div>
+
+      <!-- Sign in -->
+      <form id="signinForm" class="d-none sl-form" novalidate data-signin="grading">
+        <div class="sl-corner" aria-hidden="true"><i class="bi bi-person-workspace"></i></div>
+        <button type="button" class="sl-back btn btn-link p-0 text-start" id="btnBackToChooser"><i class="bi bi-arrow-left me-1" aria-hidden="true"></i>All systems</button>
+        <div>
+          <div class="sl-wave" aria-hidden="true">👋</div>
+          <p class="sl-hello"><span data-welcome-line>Welcome,</span></p>
+          <h2 class="sl-name" data-welcome-name>Sign in</h2>
+          <p class="sl-intro mb-0">Sign in to your account to continue to the Grading System.</p>
+        </div>
+        <div class="alert alert-danger d-none py-2 mb-0" id="signinError" role="alert"></div>
+        <label class="sl-field" for="loginUsername">
+          <i class="bi bi-person-fill sl-field-ic" aria-hidden="true"></i>
+          <span class="sl-field-body"><span class="sl-field-label">Username</span>
+            <input type="text" id="loginUsername" autocomplete="username" autocapitalize="none" spellcheck="false" required placeholder="Your username" data-signin-user>
+            <span class="invalid-feedback"></span></span>
+          <i class="bi bi-check-circle-fill sl-ok" aria-hidden="true"></i>
+        </label>
+        <label class="sl-field" for="loginPassword">
+          <i class="bi bi-lock-fill sl-field-ic" aria-hidden="true"></i>
+          <span class="sl-field-body"><span class="sl-field-label">Password</span>
+            <input type="password" id="loginPassword" autocomplete="current-password" required placeholder="Your password">
+            <span class="invalid-feedback"></span></span>
+          <button class="sl-eye" type="button" data-toggle-pw="loginPassword" aria-label="Show password"><i class="bi bi-eye-slash"></i></button>
+        </label>
+        <div class="sl-row">
+          <label class="form-check m-0"><input class="form-check-input" type="checkbox" id="rememberMe" data-remember> <span class="form-check-label">Remember me</span></label>
+          <a class="sl-forgot" href="#forgotNote" data-bs-toggle="collapse" role="button" aria-expanded="false" aria-controls="forgotNote">Forgot password?</a>
+        </div>
+        <div class="collapse" id="forgotNote"><div class="sl-note"><i class="bi bi-info-circle" aria-hidden="true"></i> Ask an administrator to reset it. You get a temporary password and choose a new one when you sign in.</div></div>
+        <button type="submit" class="sl-submit" id="btnSignin"><i class="bi bi-box-arrow-in-right" aria-hidden="true"></i> Sign In</button>
+        <div class="sl-or my-2"><span>OR</span></div>
+        <nav class="sl-switch" aria-label="Sign in to another system">
+          <a class="sl-sw sw-sis" href="../sis/index.php?r=login" target="_top"><i class="bi bi-book" aria-hidden="true"></i>Admission &amp; Registration</a>
+          <a class="sl-sw sw-portal" href="../sis/index.php?r=login&amp;portal=student" target="_top"><i class="bi bi-mortarboard" aria-hidden="true"></i>Student Portal</a>
+        </nav>
+        <p class="sl-auth"><i class="bi bi-shield-check" aria-hidden="true"></i> Only authorized personnel are allowed to access this system.</p>
+      </form>
+
+      <!-- First run: create the administrator -->
+    </div>
+  </main>
+</div>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script src="../js/signin-ui.js"></script>
+<script type="module" src="../js/auth.js"></script>
+</body>
+</html>

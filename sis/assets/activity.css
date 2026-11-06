@@ -1,0 +1,5 @@
+.activity-status{position:fixed;bottom:1rem;right:1rem;z-index:1090;display:flex;align-items:center;gap:.7rem;max-width:min(30rem,calc(100vw - 2rem));padding:.9rem 1rem;background:var(--bs-body-bg,#fff);color:var(--bs-body-color,#172033);border:1px solid var(--bs-border-color,#dce3e0);border-radius:.8rem;box-shadow:0 5px 24px #0002;pointer-events:none;font-size:.9rem}
+.activity-status[hidden]{display:none}.activity-ring{flex:none;width:1.1rem;height:1.1rem;border:2px solid #c5d7cf;border-top-color:currentColor;border-radius:50%;animation:activity-spin .8s linear infinite}
+@keyframes activity-spin{to{transform:rotate(360deg)}}
+@media(prefers-reduced-motion:reduce){.activity-ring{animation:none}}
+@media print{.activity-status{display:none!important}}

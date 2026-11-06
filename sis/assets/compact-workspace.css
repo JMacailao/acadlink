@@ -1,0 +1,137 @@
+/* Compact spreadsheet workspace. Screen-only staff SIS rules; documents and
+   student purple branding retain their own layouts. Native controls and table
+   semantics remain intact; the shared shell owns the scroll container. */
+@media screen {
+  html[data-system="sis"] body:not(.bare) { --sis-line:#dbe4e8; --sis-compact-ink:#24433d; }
+  .sis-desktop-bar { height:40px; align-items:center; gap:20px; padding:0 14px; background:#064832; color:#fff; border-bottom:1px solid #043e2b; }
+  .sis-desktop-bar a { color:#fff; text-decoration:none; }
+  .sis-desktop-brand { display:flex; align-items:center; gap:9px; flex-shrink:0; font-weight:700; font-size:17px; }
+  .sis-desktop-brand img { width:26px; height:26px; object-fit:contain; }
+  .sis-desktop-brand small { font-size:12px; font-weight:500; }
+  .sis-desktop-school { font-size:12px; opacity:.8; min-width:0; }
+  .sis-desktop-workspaces { margin-left:auto; white-space:nowrap; font-size:12px; }
+  .sis-desktop-user { max-width:32vw; font-size:12px; }
+  .sis-desktop-user small { opacity:.8; }
+  html[data-system="sis"] body:not(.bare) .sis-page-heading { gap:6px 16px; margin-bottom:8px; }
+  html[data-system="sis"] body:not(.bare) .sis-module-title { order:-1; margin:0; text-align:left; font-size:15px; font-weight:650; line-height:1.4; width:auto; }
+  html[data-system="sis"] body:not(.bare) .breadcrumbs { margin:0!important; font-size:11px; gap:8px; }
+  html[data-system="sis"] .app-shell #main.sis-header-layout { --sis-header-gutter:8px; padding-bottom:0; background:#fff; }
+  html[data-system="sis"] .sis-header-layout > .sis-workspace-header { padding-top:7px; padding-bottom:0; margin-bottom:0; box-shadow:none; gap:4px 16px; }
+  html[data-system="sis"] .sis-workspace-header .sis-toolbar-header { padding:5px 0; margin-top:5px; background:#f8fafb; gap:4px 8px; }
+  html[data-system="sis"] .sis-workspace-header .record-toolbar { gap:5px; }
+  html[data-system="sis"] .record-toolbar-buttons { gap:3px; }
+  html[data-system="sis"] .sis-list-dock { background:#fff; }
+  html[data-system="sis"] .sis-list-dock .record-list-controls { padding:6px 0; margin:0; border:0; border-radius:0; box-shadow:none; }
+  html[data-system="sis"] .record-list-status { font-size:11px; margin-top:4px; }
+  html[data-system="sis"] .sis-toolbar-description { font-size:11px!important; margin:0 0 4px!important; }
+  html[data-system="sis"] .sis-actions-layout { grid-template-columns:minmax(0,1fr) 216px; gap:0; }
+  html[data-system="sis"] .sis-actions-layout.actions-collapsed { grid-template-columns:minmax(0,1fr); }
+  html[data-system="sis"] .sis-actions-panel { padding:0 8px 12px; background:#f7f9fa; font-size:12px; }
+  html[data-system="sis"] .sis-actions-heading { margin:0 -8px 8px; padding:5px 10px; min-height:32px; background:#e9eff1; border-bottom:1px solid var(--sis-line); }
+  html[data-system="sis"] .sis-actions-heading > h2 { font-size:13px; }
+  html[data-system="sis"] .sis-actions-heading .btn { padding:0 6px; font-size:20px; line-height:1; }
+  html[data-system="sis"] .sis-actions-panel section + section { padding-top:8px; margin-top:8px; }
+  html[data-system="sis"] .sis-actions-panel section > h2,
+  html[data-system="sis"] .sis-actions-panel .or-panel-title { font-size:11px; font-weight:650; color:#35584f; text-transform:none; letter-spacing:0; background:#eaf0f1; padding:6px 8px; margin:0 -4px 3px; }
+  html[data-system="sis"] .sis-actions-panel section > a,
+  html[data-system="sis"] .sis-actions-panel section > button,
+  html[data-system="sis"] .sis-actions-panel .or-links a { padding:7px 8px; min-height:32px; margin:1px 0; font-size:12px; font-weight:500; justify-content:flex-start; border-radius:3px; line-height:1.4; }
+  html[data-system="sis"] .sis-actions-panel p { font-size:11px; line-height:1.5; padding:5px; }
+  html[data-system="sis"] .sis-actions-panel .or-panel { margin-bottom:10px; }
+  html[data-system="sis"] .sis-actions-panel form .btn { font-size:12px; padding:6px 8px; min-height:32px; border-radius:3px; }
+  html[data-system="sis"] .sis-record-scroll .table-responsive,
+  html[data-system="sis"] .sis-record-scroll .or-grid-wrap { border-radius:0!important; box-shadow:none; border-color:var(--sis-line)!important; }
+  html[data-system="sis"] .sis-record-scroll table { font-variant-numeric:tabular-nums; }
+  html[data-system="sis"] .sis-record-scroll .table > :not(caption) > * > *,
+  html[data-system="sis"] .sis-record-scroll .or-grid > :not(caption) > * > * { padding:6px 9px; border-right:1px solid #e5ebee; border-bottom:1px solid #e5ebee; vertical-align:middle; font-size:12px; line-height:1.5; }
+  html[data-system="sis"] .sis-record-scroll table > thead > tr > th { background:#eaf0f1; color:#26453f; font-size:11px; font-weight:650; box-shadow:0 1px 0 #cddad6; }
+  html[data-system="sis"] .sis-record-scroll table > tbody > tr:nth-child(even) > td { background-color:#f8fafb; }
+  html[data-system="sis"] .sis-record-scroll table > tbody > tr:hover > td { background-color:#eff8f3; }
+  html[data-system="sis"] .sis-record-scroll table > tbody > tr:is(.is-selected,.selected,.workspace-selected) > td { background-color:#e1f3e9!important; --bs-table-accent-bg:#e1f3e9; --bs-table-bg-state:#e1f3e9; }
+  html[data-system="sis"] .sis-record-scroll table > tbody > tr:focus-visible { outline:2px solid #078452; outline-offset:-2px; }
+  html[data-system="sis"] .sis-record-scroll .badge { font-size:10px; line-height:1.2; padding:3px 7px; }
+  html[data-system="sis"] .sis-record-scroll .directory-head { padding:8px 10px; gap:4px 12px; }
+  html[data-system="sis"] .sis-record-scroll .directory-head h2 { font-size:13px; }
+  html[data-system="sis"] .sis-record-scroll .directory-head p { font-size:11px; }
+  html[data-system="sis"] .sis-record-scroll .workspace-card-head { padding:10px 12px; }
+  html[data-system="sis"] .sis-record-scroll .workspace-card-head h2 { font-size:14px; }
+  html[data-system="sis"] .workspace-pagination { padding:8px 10px; font-size:11px; }
+}
+@media screen and (min-width:992px) {
+  html[data-system="sis"] body:not(.bare) .sidebar { width:196px; top:40px; height:calc(100dvh - 40px); border:0; border-right:1px solid #d9e4e0; }
+  html[data-system="sis"] body:not(.bare) .sidebar-inner { height:calc(100dvh - 40px); background:#f2f6f5; color:#24433d; border-top:0; }
+  html[data-system="sis"] .sidebar-inner > .d-flex:first-child { display:none!important; }
+  html[data-system="sis"] .sidebar-search { margin:8px; }
+  html[data-system="sis"] .sidebar-search .form-control { min-height:30px; height:30px; font-size:11px; background:#fff; color:#24433d; border-color:#cddcd5; }
+  html[data-system="sis"] .sidebar-search .form-control::placeholder { color:#607b70; }
+  html[data-system="sis"] .sidebar-search > i { color:#607b70; }
+  html[data-system="sis"] .side-link { display:flex; align-items:center; gap:9px; min-height:32px; padding:6px 10px; margin:1px 6px; font-size:12px; color:#284b40; border-radius:3px; border-left:0; }
+  html[data-system="sis"] .side-link i { font-size:15px; color:#315e50; }
+  html[data-system="sis"] .side-link:hover { background:#e3eee8; color:#124c34; }
+  html[data-system="sis"] .side-link.active { background:#08734c; color:#fff; border-left:0; }
+  html[data-system="sis"] .side-link.active i { color:#fff; }
+  html[data-system="sis"] .nav-group-label { padding:12px 15px 5px; font-size:10px; color:#4b6b5e; }
+  html[data-system="sis"] .sidebar-user { padding:8px; background:#edf3f0; border-top:1px solid #d9e4de; color:#24433d; }
+  html[data-system="sis"] .sidebar-user .user-name { font-size:11px; color:#24433d; }
+  html[data-system="sis"] .sidebar-user .user-role { font-size:10px; color:#597569; }
+  html[data-system="sis"] .sidebar-user .user-avatar { width:28px; height:28px; font-size:10px; background:#dcebe2; color:#275e43; }
+  html[data-system="sis"] .sidebar-user .mt-3 { margin-top:6px!important; }
+  html[data-system="sis"] .sidebar-user .sidebar-btn { padding:4px; min-height:28px; font-size:10px; color:#284b40; border-color:#c8d9cf; background:transparent; }
+  html[data-system="sis"] body:not(.bare) .app-shell { min-height:calc(100dvh - 40px); }
+  html[data-system="sis"] body.fixed-record-shell .app-shell { height:calc(100dvh - 40px); min-height:0; }
+  html[data-system="sis"] body:not(.bare) .app-content { padding:8px 10px; }
+  html[data-system="sis"] .sis-workspace-header .record-toolbar { flex-wrap:wrap; }
+  html[data-system="sis"] .record-toolbar-buttons .btn { min-height:30px; padding:4px 7px; border-radius:3px; font-size:12px; gap:4px; }
+  html[data-system="sis"] .record-toolbar-buttons svg { width:14px; height:14px; }
+  html[data-system="sis"] .record-toolbar-search { flex:1 1 220px; min-width:160px; }
+  html[data-system="sis"] .record-toolbar-search .form-control { min-height:30px; height:30px; font-size:12px; padding-left:30px; border-radius:3px; }
+  html[data-system="sis"] .record-toolbar-search > svg { width:14px; height:14px; left:9px; }
+  html[data-system="sis"] .record-toolbar [data-list-refresh] { width:30px; height:30px; min-height:30px; flex-basis:30px; padding:5px!important; }
+  html[data-system="sis"] .sis-list-dock .record-filter-fields,
+  html[data-system="sis"] .sis-list-dock .record-filter-grid:not([hidden]) { grid-template-columns:repeat(auto-fit,minmax(145px,1fr)); gap:5px 10px; margin-top:4px!important; }
+  html[data-system="sis"] .sis-list-dock label { font-size:11px; margin-bottom:3px; }
+  html[data-system="sis"] .sis-list-dock .form-control,
+  html[data-system="sis"] .sis-list-dock .form-select { min-height:30px; height:30px; font-size:12px; padding-block:3px; border-radius:3px; }
+  html[data-system="sis"] .sis-list-dock .or-filters { padding:6px 8px; margin-top:4px!important; border-radius:0; }
+  html[data-system="sis"] .sis-list-dock .fp-grid { gap:5px 10px; }
+  html[data-system="sis"] .sis-list-dock .fp-check { font-size:11px; }
+  html[data-system="sis"] .fixed-record-shell .sis-record-scroll { padding:0; background:#fff; scrollbar-gutter:auto; }
+  /* Undo historical viewport-height formulas: one result area controls scrolling. */
+  html[data-system="sis"] .fixed-record-shell .sis-record-scroll .or-grid-wrap { height:auto; min-height:0; max-height:none; }
+  html[data-system="sis"] .sis-record-scroll > .table-responsive:only-child { min-height:100%; }
+  html[data-system="sis"] .sis-record-scroll > .page-head { margin-bottom:8px; }
+  html[data-system="sis"] .sis-record-scroll .or-toolbar { border-radius:0; margin-bottom:4px; }
+}
+@media screen and (max-width:1199.98px) and (min-width:992px) {
+  html[data-system="sis"] .sis-actions-layout { grid-template-columns:minmax(0,1fr) 190px; }
+  .sis-desktop-school { display:none; }
+}
+@media screen and (max-width:991.98px) {
+  html[data-system="sis"] .sis-actions-layout { display:block; }
+  html[data-system="sis"] .sis-header-layout > .sis-workspace-header { padding-top:6px; padding-bottom:5px; }
+  html[data-system="sis"] .sis-workspace-header .record-toolbar-buttons .btn { min-height:44px; padding:6px 10px; }
+  html[data-system="sis"] .sis-actions-panel section > a,
+  html[data-system="sis"] .sis-actions-panel section > button { min-height:44px; font-size:13px; }
+  html[data-system="sis"] .sis-actions-heading .btn { min-width:44px; min-height:44px; }
+  html[data-system="sis"] .sis-list-dock .record-list-controls { max-height:40dvh; }
+}
+
+/* AcadLink approved toolbar 2026-10-25: 11px, 6px spacing, no spacer, search grows. */
+@media screen and (min-width:992px) {
+ html[data-system="sis"] body.sis-theme .sis-workspace-header .sis-toolbar-header .record-toolbar { display:flex; align-items:center; gap:6px!important; flex-wrap:nowrap; }
+ html[data-system="sis"] body.sis-theme .sis-workspace-header .sis-toolbar-header .record-toolbar-buttons { display:contents; }
+ html[data-system="sis"] body.sis-theme .sis-workspace-header .sis-toolbar-header .record-toolbar-buttons > * { flex:0 0 auto; }
+ html[data-system="sis"] body.sis-theme .record-toolbar-search { flex:1 1 200px; min-width:120px; margin:0!important; }
+ html[data-system="sis"] body.sis-theme .record-toolbar-buttons .btn, html[data-system="sis"] body.sis-theme .sis-toolbar-header .record-toolbar > .btn { font-size:11px!important; gap:5px!important; padding:4px 9px!important; height:34px!important; min-height:34px!important; }
+ html[data-system="sis"] body.sis-theme .record-toolbar-search .form-control { font-size:11px!important; height:34px!important; min-height:34px!important; }
+ html[data-system="sis"] body.sis-theme .record-toolbar-buttons { gap:6px!important; }
+ html[data-system="sis"] body.sis-theme .record-toolbar-buttons .sis-toolbar-filter { order:20; }
+ html[data-system="sis"] body.sis-theme .record-toolbar-buttons .sis-toolbar-apply { order:21; background:#087b50!important; color:#fff!important; border-color:#087b50!important; }
+ html[data-system="sis"] body.sis-theme .record-toolbar-buttons .sis-toolbar-apply .bi { color:#fff!important; }
+ html[data-system="sis"] body.sis-theme .record-toolbar-search { order:30; }
+ html[data-system="sis"] body.sis-theme .record-toolbar .sis-more { order:40; margin:0!important; }
+}
+@media screen and (max-width:991.98px) {
+ html[data-system="sis"] body.sis-theme .record-toolbar-buttons .btn { font-size:11px!important; }
+ html[data-system="sis"] body.sis-theme .record-toolbar-search .form-control { font-size:11px!important; }
+}

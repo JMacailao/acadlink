@@ -1,0 +1,527 @@
+/* SIS workspace theme (v34): compact, spreadsheet-like explorer.
+   Slim top bar · light-gray grouped sidebar · small title with breadcrumb · flat toolbar · inline filters ·
+   dense records table · light-gray Actions explorer · list footer. Loaded last; screen only, so printed
+   documents keep their own layouts. Staff use forest green; the Student Portal swaps in purple. */
+@media screen {
+  body.sis-theme {
+    --t-bar:#0f3b29; --t-bar-line:#0b2f20;
+    --t-primary:#1d5e3f; --t-primary-strong:#134a30; --t-primary-ink:#ffffff; --t-group:#1b4a33;
+    --t-tint:#e3f1e7; --t-hover:#eef5f0; --t-pill:#2d8a4e;
+    --t-rail:#f1f3f2; --t-rail-line:#dfe3e1; --t-band:#e7ebe9;
+    --t-surface:#ffffff; --t-zebra:#fafbfa; --t-line:#e2e6e4; --t-line-strong:#cdd4d0;
+    --t-ink:#1f2a25; --t-muted:#5f6b65; --t-head:#eef1ef;
+    --t-bar-h:42px; --sis-mobile-header:42px;
+    font-family:"Public Sans",system-ui,sans-serif; font-size:13px; color:var(--t-ink); background:var(--t-surface);
+  }
+  html[data-system="portal"] body.sis-theme {
+    --t-bar:#2b1866; --t-bar-line:#22124f; --t-primary:#4d2fa8; --t-primary-strong:#3b2290; --t-group:#3b2290;
+    --t-tint:#ece7fa; --t-hover:#f4f1fc; --t-pill:#5b3cc4;
+  }
+
+  /* ── Top bar ── */
+  .sis-theme .sis-appbar { position:sticky; top:0; z-index:1040; display:flex; align-items:center; gap:14px; height:var(--t-bar-h); padding:0 16px 0 14px; background:var(--t-bar); color:#fff; border-bottom:1px solid var(--t-bar-line); }
+  .sis-theme .sis-appbar a { color:#fff; text-decoration:none; }
+  .sis-theme .sis-appbar-menu { display:inline-flex; align-items:center; justify-content:center; width:36px; height:36px; margin-left:-6px; border:0; border-radius:4px; background:transparent; color:#fff; font-size:22px; }
+  .sis-theme .sis-appbar-brand { margin-right:auto; display:flex; align-items:center; gap:9px; min-width:0; font-size:17px; font-weight:700; letter-spacing:-.01em; white-space:nowrap; }
+  .sis-theme .sis-appbar-brand img { width:26px; height:26px; object-fit:contain; flex-shrink:0; }
+  .sis-theme .sis-appbar-search { position:relative; align-items:center; flex:0 1 280px; }
+  .sis-theme .sis-appbar-search i { position:absolute; left:10px; color:#ffffffa8; font-size:12px; pointer-events:none; }
+  .sis-theme .sis-appbar-search .form-control { height:28px; min-height:28px; padding:3px 10px 3px 29px; font-size:12.5px; color:#fff; background:#ffffff14; border:1px solid #ffffff2b; border-radius:4px; }
+  .sis-theme .sis-appbar-search .form-control::placeholder { color:#ffffff99; }
+  .sis-theme .sis-appbar-search .form-control:focus { background:#ffffff22; border-color:#ffffff80; box-shadow:0 0 0 2px #ffffff30; }
+  .sis-theme .sis-appbar-year { font-size:13px; font-weight:600; white-space:nowrap; padding-right:14px; border-right:1px solid #ffffff55; }
+  .sis-theme .sis-appbar-user > .dropdown-toggle { display:flex; align-items:center; gap:7px; max-width:230px; height:32px; padding:0 6px; border:0; border-radius:4px; background:transparent; color:#fff; font-size:13px; font-weight:600; }
+  .sis-theme .sis-appbar-user > .dropdown-toggle .bi { font-size:17px; }
+  .sis-theme .sis-appbar-user > .dropdown-toggle:hover, .sis-theme .sis-appbar-menu:hover { background:#ffffff1a; }
+  .sis-theme .sis-appbar :focus-visible { outline:2px solid #fff; outline-offset:2px; }
+  .sis-theme .sis-appbar-user .dropdown-menu { min-width:240px; padding:5px; border-color:var(--t-line); border-radius:6px; box-shadow:0 8px 24px #0b221726; font-size:13px; }
+  .sis-theme .sis-appbar-user .dropdown-item { display:flex; align-items:center; gap:9px; padding:6px 9px; border-radius:4px; color:var(--t-ink); }
+  .sis-theme .sis-appbar-user .dropdown-item .bi { color:var(--t-primary); }
+  .sis-theme .sis-appbar-user .dropdown-item:hover, .sis-theme .sis-appbar-user .dropdown-item:focus { background:var(--t-tint); }
+  .sis-theme .sis-appbar-who { display:flex; align-items:center; gap:9px; padding:6px 9px 8px; margin-bottom:4px; border-bottom:1px solid var(--t-line); }
+  .sis-theme .sis-appbar-who small { color:var(--t-muted); }
+  .sis-theme .sis-appbar-who .user-avatar { display:inline-grid; place-items:center; width:30px; height:30px; flex-shrink:0; border-radius:50%; background:var(--t-tint); color:var(--t-primary-strong); font-size:11px; font-weight:700; }
+
+  /* ── Sidebar ── */
+  html body.sis-theme:not(.bare) .sidebar { width:212px; border:0; border-right:1px solid var(--t-rail-line); background:var(--t-rail); }
+  html body.sis-theme:not(.bare) .sidebar-inner { background:var(--t-rail); color:var(--t-ink); border:0; padding:6px 0 12px; }
+  .sis-theme .sis-sidebar-head { display:flex; align-items:center; justify-content:space-between; padding:6px 14px 10px; font-weight:700; font-size:16px; color:var(--t-primary-strong); }
+  .sis-theme .nav-group { margin-top:4px; }
+  .sis-theme .nav-group-toggle { display:flex; align-items:center; gap:8px; width:100%; min-height:32px; padding:6px 12px 4px; border:0; background:transparent; color:var(--t-group); font-size:13.5px; font-weight:700; text-align:left; }
+  .sis-theme .nav-group-toggle .bi:first-child { font-size:15px; }
+  .sis-theme .nav-group-chevron { margin-left:auto; font-size:10px; color:var(--t-muted); transition:transform .15s ease; }
+  .sis-theme .nav-group.is-collapsed .nav-group-chevron { transform:rotate(180deg); }
+  .sis-theme .nav-group-toggle:hover { color:var(--t-primary); }
+  .sis-theme .nav-group-toggle:focus-visible, html .sis-theme .side-link:focus-visible { outline:2px solid var(--t-primary); outline-offset:-2px; }
+  html body.sis-theme .side-link { display:flex; align-items:center; gap:9px; min-height:30px; margin:1px 6px; padding:5px 9px; border:0; border-radius:4px; color:var(--t-ink); font-size:13px; font-weight:400; line-height:1.3; text-decoration:none; }
+  html body.sis-theme .nav-group .side-link { padding-left:12px; }
+  html body.sis-theme .side-link i { font-size:14px; color:var(--t-group); opacity:.85; }
+  html body.sis-theme .side-link:hover { background:#e4e9e6; color:var(--t-primary-strong); }
+  html body.sis-theme .side-link.active { background:var(--t-primary); color:var(--t-primary-ink); font-weight:600; }
+  html body.sis-theme .side-link.active i { color:var(--t-primary-ink); opacity:1; }
+
+  /* ── Title row: small title, breadcrumb beside it ── */
+  html body.sis-theme .app-shell #main.sis-header-layout { background:var(--t-surface); }
+  html body.sis-theme .sis-header-layout > .sis-workspace-header { padding-top:0; padding-bottom:0; border-bottom:1px solid var(--t-line); box-shadow:none; margin-bottom:0; }
+  html body.sis-theme:not(.bare) .sis-page-heading { display:flex; flex-direction:row; align-items:center; justify-content:flex-start; flex-wrap:wrap; gap:2px 20px; min-height:40px; margin:0; padding-block:4px; }
+  html body.sis-theme:not(.bare) .sis-module-title { order:0; margin:0; font-size:17px; font-weight:700; letter-spacing:-.01em; line-height:1.3; text-align:left; color:var(--t-group); }
+  html body.sis-theme:not(.bare) .breadcrumbs { display:flex; align-items:center; flex-wrap:wrap; gap:7px; margin:0!important; font-size:12px; color:var(--t-muted); }
+  .sis-theme .breadcrumbs a { display:inline-flex; align-items:center; gap:6px; color:var(--t-muted); text-decoration:none; }
+  html body.sis-theme #main .breadcrumbs a { color:var(--t-muted); }
+  .sis-theme .breadcrumbs a:hover { color:var(--t-primary); text-decoration:underline; }
+  .sis-theme .breadcrumbs .bi-house-door-fill { font-size:13px; color:var(--t-group); }
+  .sis-theme .breadcrumbs .bi-chevron-right { font-size:9px; }
+  .sis-theme .breadcrumbs [aria-current] { color:var(--t-primary); font-weight:600; }
+  /* Pages without the shared toolbar keep the same slim title band. */
+  html body.sis-theme:not(.bare) .app-content > .sis-page-heading { padding:0 16px; border-bottom:1px solid var(--t-line); margin-bottom:12px; }
+
+  /* ── Toolbar: flat icon + text, search fills, Refresh at the far right ── */
+  html body.sis-theme .sis-workspace-header .sis-toolbar-header { margin:0; padding:4px 0; background:transparent; border-top:1px solid var(--t-line); gap:4px 8px; }
+  html body.sis-theme .sis-workspace-header .sis-toolbar-header .record-toolbar { flex-wrap:nowrap; gap:6px; }
+  html body.sis-theme .record-toolbar-buttons { gap:0; flex-wrap:nowrap; min-width:0; }
+  html body.sis-theme .record-toolbar-buttons .btn { display:inline-flex; align-items:center; gap:6px; min-height:32px; height:32px; padding:4px 9px; border:0; border-radius:4px; background:transparent; color:var(--t-ink); font-size:13px; font-weight:500; white-space:nowrap; box-shadow:none; }
+  html body.sis-theme .record-toolbar-buttons .btn:hover:not(:disabled) { background:var(--t-hover); color:var(--t-primary-strong); }
+  html body.sis-theme .record-toolbar-buttons .btn:disabled { color:#9ba6a0; background:transparent; opacity:1; }
+  html body.sis-theme .record-toolbar-buttons .btn:focus-visible { outline:2px solid var(--t-primary); outline-offset:1px; }
+  html body.sis-theme .record-toolbar-buttons .btn > .bi, html body.sis-theme .record-toolbar-buttons .btn > svg { color:var(--t-primary-strong); }
+  html body.sis-theme .record-toolbar-buttons .btn::before { font-family:"bootstrap-icons"; font-size:15px; font-weight:400; line-height:1; color:var(--t-primary-strong); }
+  html body.sis-theme .record-toolbar-buttons .btn:disabled::before, html body.sis-theme .record-toolbar-buttons .btn:disabled > .bi { color:inherit; }
+  html body.sis-theme [data-list-add] .btn::before { content:"\f64d"; }
+  html body.sis-theme .btn[data-list-toggle]::before { content:"\f56b"; }
+  html body.sis-theme .btn[data-list-apply]::before { content:"\f3e1"; }
+  html body.sis-theme .btn[data-list-print]::before { content:"\f501"; }
+  html body.sis-theme .btn.record-selection-action::before { content:"\f341"; }
+  html body.sis-theme .btn[data-theme-edit]::before { content:"\f4ca"; }
+  html body.sis-theme .btn[data-theme-select-all]::before { content:"\f269"; }
+  html body.sis-theme .btn.sis-actions-toggle::before { content:"\f45e"; }
+  html body.sis-theme .record-toolbar-search { flex:1 1 220px; max-width:none; min-width:160px; margin-left:4px; }
+  html body.sis-theme .record-toolbar-search .form-control { width:100%!important; height:30px; min-height:30px; padding:3px 10px 3px 32px; font-size:13px; border:1px solid var(--t-line-strong); border-radius:4px; }
+  html body.sis-theme .record-toolbar-search > svg { left:11px; width:14px; height:14px; color:var(--t-muted); }
+  html body.sis-theme .record-toolbar [data-list-refresh] { display:inline-flex; flex:0 0 auto; width:auto; height:32px; min-height:32px; gap:6px; padding:4px 8px!important; border:0; background:transparent; color:var(--t-ink); font-size:13px; font-weight:500; }
+  html body.sis-theme .record-toolbar [data-list-refresh]:hover:not(:disabled) { background:var(--t-hover); }
+  html body.sis-theme .record-toolbar [data-list-refresh] svg { width:16px; height:16px; color:var(--t-primary-strong); }
+  .sis-theme .form-control:focus, .sis-theme .form-select:focus, .sis-theme .form-check-input:focus { border-color:var(--t-primary); box-shadow:0 0 0 2px color-mix(in srgb,var(--t-primary) 22%,transparent); }
+
+  /* ── Inline filters ── */
+  html body.sis-theme .sis-list-dock { background:var(--t-surface); }
+  html body.sis-theme .sis-list-dock .record-list-controls { padding:6px 0; margin:0; max-height:none; overflow:visible; border-bottom:1px solid var(--t-line); }
+  html body.sis-theme .sis-toolbar-description { margin:0 0 4px!important; font-size:12px!important; color:var(--t-muted)!important; line-height:1.4; }
+  html body.sis-theme .sis-list-dock .record-filter-grid:not([hidden]), html body.sis-theme .sis-list-dock .record-filter-fields:not([hidden]),
+  html body.sis-theme .sis-list-dock [data-record-filters]:not([hidden]):not(:has(.fp-grid)) { display:flex!important; flex-wrap:wrap; align-items:center; gap:6px 18px; margin:0!important; padding:0; border:0; background:transparent; }
+  html body.sis-theme .sis-list-dock .record-filter-cell { display:flex; align-items:center; gap:8px; width:auto!important; flex:0 1 auto; margin:0; }
+  html body.sis-theme .sis-list-dock .record-filter-cell > label { margin:0; font-size:13px; font-weight:500; color:var(--t-ink); white-space:nowrap; }
+  html body.sis-theme .sis-list-dock .record-filter-cell .form-select, html body.sis-theme .sis-list-dock .record-filter-cell .form-control { width:auto; min-width:120px; max-width:220px; height:30px; min-height:30px; padding-block:3px; font-size:13px; border-color:var(--t-line-strong); border-radius:4px; }
+  html body.sis-theme .sis-list-dock [data-record-filters]:has(.fp-grid):not([hidden]) { display:flex!important; flex-wrap:wrap; align-items:flex-end; gap:6px 16px; margin:0!important; padding:0; border:0; background:transparent; }
+  html body.sis-theme .sis-list-dock .or-filters-title { position:absolute; width:1px; height:1px; overflow:hidden; clip:rect(0 0 0 0); white-space:nowrap; }
+  html body.sis-theme .sis-list-dock .fp-grid { display:flex!important; flex-wrap:wrap; align-items:flex-end; gap:6px 14px; }
+  html body.sis-theme .sis-list-dock .fp-row { display:flex!important; flex-direction:column; align-items:stretch; gap:2px; width:auto; min-width:120px; }
+  html body.sis-theme .sis-list-dock .fp-check { display:flex; align-items:center; gap:6px; margin:0; font-size:12.5px; font-weight:500; color:var(--t-ink); white-space:nowrap; }
+  html body.sis-theme .sis-list-dock .fp-ctl { display:flex!important; gap:4px; }
+  html body.sis-theme .sis-list-dock .fp-ctl .form-control, html body.sis-theme .sis-list-dock .fp-ctl .form-select { height:30px; min-height:30px; padding-block:3px; font-size:13px; border-color:var(--t-line-strong); border-radius:4px; }
+  html body.sis-theme .sis-list-dock .fp-ctl > .form-check { min-height:30px; }
+  html body.sis-theme .sis-list-dock .fp-check .form-check-input:checked { background-color:var(--t-primary); border-color:var(--t-primary); }
+  html body.sis-theme .sis-filter-clear { width:auto!important; flex:0 0 auto!important; max-width:none!important; display:inline-flex; align-items:center; min-height:30px; padding:0 4px; border:0; background:none; color:var(--t-primary)!important; font-size:13px; font-weight:600; text-decoration:none; }
+  html body.sis-theme .sis-filter-clear:hover { text-decoration:underline; }
+  html body.sis-theme .record-list-status { margin-top:4px; font-size:12px; color:var(--t-muted); }
+  html body.sis-theme [data-record-list][data-applied="1"]:not(.is-dirty) .record-list-status { position:absolute; width:1px; height:1px; overflow:hidden; clip:rect(0 0 0 0); white-space:nowrap; }
+
+  /* ── Records table ── */
+  html body.sis-theme .sis-record-scroll .table-responsive, html body.sis-theme .sis-record-scroll .or-grid-wrap { border:0!important; border-bottom:1px solid var(--t-line)!important; border-radius:0!important; box-shadow:none; }
+  html body.sis-theme .sis-record-scroll .table, html body.sis-theme .sis-actions-content .table { margin:0; font-variant-numeric:tabular-nums; }
+  html body.sis-theme .sis-record-scroll .form-section:has(> .table-responsive:first-child) { padding:0; border:0; background:transparent; margin:0; }
+  html body.sis-theme .sis-record-scroll .table > :not(caption) > * > *, html body.sis-theme .sis-record-scroll .or-grid > :not(caption) > * > *,
+  html body.sis-theme .sis-actions-content .table > :not(caption) > * > * { padding:5px 9px; font-size:13px; line-height:1.4; white-space:nowrap; border-right:1px solid #eef1ef; border-bottom:1px solid var(--t-line); color:var(--t-ink); vertical-align:middle; }
+  html body.sis-theme .sis-record-scroll table > thead > tr > th, html body.sis-theme .sis-actions-content table > thead > tr > th { height:30px; background:var(--t-head); color:var(--t-ink); font-size:13px; font-weight:650; box-shadow:0 1px 0 var(--t-line-strong); border-right-color:var(--t-line)!important; white-space:nowrap; position:sticky; top:0; z-index:5; }
+  html body.sis-theme .sis-record-scroll table > tbody > tr:nth-child(even) > td, html body.sis-theme .sis-actions-content table > tbody > tr:nth-child(even) > td { background-color:var(--t-zebra); }
+  html body.sis-theme .sis-record-scroll table > tbody > tr:nth-child(odd) > td { background-color:var(--t-surface); }
+  html body.sis-theme .sis-record-scroll table > tbody > tr:hover > td, html body.sis-theme .sis-actions-content table > tbody > tr:hover > td { background-color:var(--t-hover); }
+  html body.sis-theme table > tbody > tr:is(.is-selected,.selected,.workspace-selected) > td { background-color:var(--t-tint)!important; --bs-table-accent-bg:var(--t-tint); --bs-table-bg-state:var(--t-tint); }
+  html body.sis-theme table > tbody > tr:is(.is-selected,.selected) > td:nth-child(2) { font-weight:600; }
+  html body.sis-theme .sis-record-scroll table > tbody > tr:focus-visible { outline:2px solid var(--t-primary); outline-offset:-2px; }
+  html body.sis-theme .sis-num { text-align:right!important; font-variant-numeric:tabular-nums; }
+  html body.sis-theme #main table .font-monospace { font-family:inherit!important; font-variant-numeric:tabular-nums; }
+  .sis-theme .sis-select-table tbody tr { cursor:pointer; }
+  html body.sis-theme .sis-select-cell { width:34px; min-width:34px; padding-inline:0!important; text-align:center; }
+  .sis-theme .sis-select-cell .form-check-input { width:15px; height:15px; margin:0; border-color:#a7b2ac; border-radius:3px; cursor:pointer; vertical-align:middle; }
+  .sis-theme .sis-select-cell .form-check-input:checked { background-color:var(--t-primary); border-color:var(--t-primary); }
+  html body.sis-theme table .sis-row-actions { display:none; }
+  .sis-theme .sis-off-page { display:none; }
+  /* A row's open ⋯ menu may extend past the table box instead of being cut off. */
+  html body.sis-theme .sis-record-scroll .table-responsive:has(details[open]) { overflow:visible; }
+  html body.sis-theme .teacher-action-menu { position:relative; }
+  html body.sis-theme .teacher-action-menu > .teacher-action-items { position:absolute; right:0; top:calc(100% + 2px); z-index:50; width:260px; max-width:none; text-align:left; white-space:normal; box-shadow:0 8px 24px #0b221726; }
+  /* Wrappers emptied when their buttons move to the explorer leave no gap above the table. */
+  html body.sis-theme .sis-record-scroll :is(.d-flex,.row,.page-head):empty, html body.sis-theme .sis-actions-content > :is(.d-flex,.page-head):empty { display:none!important; }
+
+  /* Status pills */
+  .sis-theme .sis-pill { display:inline-flex; align-items:center; min-height:20px; padding:1px 9px; border-radius:999px; font-size:12px; font-weight:600; line-height:1.2; white-space:nowrap; background:#e8ebe9; color:#4a554f; }
+  .sis-theme .sis-pill[data-tone="pending"] { background:#fbe6a4; color:#5e4600; }
+  .sis-theme .sis-pill[data-tone="success"] { background:var(--t-pill); color:#fff; }
+  .sis-theme .sis-pill[data-tone="info"] { background:#d5e6f7; color:#1c4b7a; }
+  .sis-theme .sis-pill[data-tone="returned"] { background:#fde0c2; color:#7a4105; }
+  .sis-theme .sis-pill[data-tone="danger"] { background:#f7d5d1; color:#8a2218; }
+
+  /* List footer */
+  .sis-theme .sis-list-footer { position:sticky; bottom:0; z-index:4; display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:6px 14px; min-height:44px; padding:6px 12px; background:var(--t-surface); border-top:1px solid var(--t-line); font-size:13px; color:var(--t-ink); }
+  .sis-theme .sis-list-count { margin:0; white-space:pre; }
+  .sis-theme .sis-pager { display:flex; align-items:center; gap:5px; }
+  .sis-theme .sis-pager-range { margin-right:14px; }
+  .sis-theme .sis-pager-btn { display:inline-grid; place-items:center; width:30px; height:30px; border:1px solid var(--t-line-strong); border-radius:4px; background:var(--t-surface); color:var(--t-primary-strong); }
+  .sis-theme .sis-pager-btn:hover:not(:disabled) { border-color:var(--t-primary); background:var(--t-hover); }
+  .sis-theme .sis-pager-btn:disabled { color:#b6beba; background:#fafbfa; }
+  .sis-theme .sis-pager-btn:focus-visible { outline:2px solid var(--t-primary); outline-offset:1px; }
+
+  /* ── Actions explorer ── */
+  html body.sis-theme .sis-actions-layout { grid-template-columns:minmax(0,1fr) 236px; gap:0; min-height:100%; }
+  html body.sis-theme .sis-actions-layout.actions-collapsed { grid-template-columns:minmax(0,1fr); }
+  html body.sis-theme .sis-actions-panel { align-self:stretch; padding:0 0 14px; background:var(--t-rail); border:0; border-left:1px solid var(--t-rail-line); border-radius:0; font-size:13px; overflow:auto; }
+  html body.sis-theme .sis-actions-heading { display:flex; align-items:center; justify-content:space-between; min-height:38px; margin:0; padding:6px 8px 6px 14px; background:transparent; border:0; }
+  html body.sis-theme .sis-actions-heading > h2 { margin:0; font-size:15px; font-weight:700; color:var(--t-ink); }
+  html body.sis-theme .sis-actions-heading .btn { padding:0 6px; font-size:18px; line-height:1; color:var(--t-muted); }
+  html body.sis-theme .sis-actions-panel section, html body.sis-theme .sis-actions-panel .or-panel { margin:0 0 6px; padding:0; border:0; background:transparent; }
+  html body.sis-theme .sis-actions-panel section + section { margin-top:0; padding-top:0; }
+  html body.sis-theme .sis-actions-panel section > h2, html body.sis-theme .sis-actions-panel .or-panel-title { margin:0; padding:0; background:var(--t-band); font-size:13px; font-weight:700; color:var(--t-group); text-transform:none; letter-spacing:0; }
+  .sis-theme .sis-panel-toggle { display:flex; align-items:center; justify-content:space-between; width:100%; min-height:32px; padding:6px 12px 6px 14px; border:0; background:transparent; color:inherit; font:inherit; text-align:left; }
+  .sis-theme .sis-panel-toggle .bi { font-size:10px; color:var(--t-muted); transition:transform .15s ease; }
+  .sis-theme .sis-panel-toggle:focus-visible { outline:2px solid var(--t-primary); outline-offset:-2px; }
+  .sis-theme .sis-actions-panel .is-collapsed > :not(h2):not(.or-panel-title) { display:none!important; }
+  .sis-theme .sis-actions-panel .is-collapsed .sis-panel-toggle .bi { transform:rotate(180deg); }
+  html body.sis-theme .sis-actions-panel section > :not(h2), html body.sis-theme .sis-actions-panel .or-panel > :not(.or-panel-title) { margin-inline:6px; }
+  .sis-theme .sis-panel-body { padding:4px 0; }
+  .sis-theme .sis-panel-empty { margin:0; padding:4px 8px!important; font-size:12px!important; color:var(--t-muted); }
+  html body.sis-theme .sis-panel-action, html body.sis-theme .sis-actions-panel section > a, html body.sis-theme .sis-actions-panel section > button:not(.sis-panel-toggle), html body.sis-theme .sis-actions-panel .or-links a { display:flex; align-items:center; gap:10px; width:100%; min-height:30px; margin:1px 0; padding:5px 8px; border:0; border-radius:4px; background:transparent; color:var(--t-ink)!important; font-size:13px; font-weight:400; text-align:left; text-decoration:none; line-height:1.3; }
+  html body.sis-theme .sis-panel-action .bi, html body.sis-theme .sis-actions-panel .or-links a .bi, html body.sis-theme .sis-actions-panel section > a .bi { font-size:16px; width:18px; text-align:center; color:var(--t-group); }
+  html body.sis-theme .sis-panel-action:hover:not(:disabled), html body.sis-theme .sis-actions-panel section > a:hover, html body.sis-theme .sis-actions-panel .or-links a:hover { background:#e2e8e4; color:var(--t-primary-strong)!important; }
+  html body.sis-theme .sis-panel-action:disabled { color:#9aa59f!important; cursor:default; }
+  html body.sis-theme .sis-panel-action:disabled .bi { color:#a9b3ae; }
+  .sis-theme .sis-panel-action:focus-visible { outline:2px solid var(--t-primary); outline-offset:-2px; }
+  html body.sis-theme .sis-actions-panel p { font-size:12px; line-height:1.45; }
+  html body.sis-theme .sis-actions-panel form .btn { font-size:12.5px; padding:4px 8px; min-height:30px; border-radius:4px; }
+  html body.sis-theme .sis-actions-panel .form-control, html body.sis-theme .sis-actions-panel .form-select { height:30px; min-height:30px; font-size:12.5px; padding-block:3px; border-radius:4px; }
+  .sis-theme .sis-panel-hint { display:flex; gap:8px; align-items:flex-start; margin:14px 14px 0; padding:0!important; color:var(--t-muted); font-size:12px!important; }
+  .sis-theme .sis-panel-hint .bi { font-size:14px; line-height:1.2; }
+  .sis-theme .sis-actions-panel.has-selection .sis-panel-hint { display:none; }
+  .sis-theme .sis-legacy-record-actions { display:none!important; }
+
+  /* ── Content pages: compact cards, headings and forms ── */
+  html body.sis-theme .form-section { padding:12px 14px; margin-bottom:10px; border:1px solid var(--t-line); border-radius:4px; box-shadow:none; }
+  html body.sis-theme #main h2.h5, html body.sis-theme #main .h5 { font-size:14px; font-weight:700; }
+  html body.sis-theme #main h2.h6, html body.sis-theme #main .h6, html body.sis-theme #main h3.h6 { font-size:13px; font-weight:700; }
+  html body.sis-theme #main h2:not(.h5):not(.h6):not(.visually-hidden):not(.modal-title), html body.sis-theme #main .page-title { font-size:15px!important; font-weight:700; letter-spacing:0; }
+  html body.sis-theme #main .page-lede, html body.sis-theme #main .form-text { font-size:12px; }
+  html body.sis-theme #main .card { border-color:var(--t-line); border-radius:4px; box-shadow:none; }
+  html body.sis-theme #main .card-body { padding:10px 12px; }
+  html body.sis-theme #main .form-label { margin-bottom:3px; font-size:12.5px; font-weight:500; }
+  html body.sis-theme #main .form-control, html body.sis-theme #main .form-select { min-height:30px; padding-top:3px; padding-bottom:3px; font-size:13px; border-radius:4px; }
+  html body.sis-theme #main textarea.form-control { min-height:56px; }
+  html body.sis-theme #main .btn:not(.sis-panel-action):not(.record-toolbar .btn) { font-size:13px; padding:4px 10px; border-radius:4px; }
+  html body.sis-theme #main .table:not(.sis-select-table) > :not(caption) > * > * { padding:5px 9px; font-size:13px; }
+  html body.sis-theme #main .alert { padding:7px 12px; font-size:13px; border-radius:4px; }
+  html body.sis-theme #main .nav-tabs .nav-link, html body.sis-theme #main .nav-pills .nav-link { padding:5px 12px; font-size:13px; }
+  html body.sis-theme .btn-primary { --bs-btn-bg:var(--t-primary); --bs-btn-border-color:var(--t-primary); --bs-btn-hover-bg:var(--t-primary-strong); --bs-btn-hover-border-color:var(--t-primary-strong); --bs-btn-active-bg:var(--t-primary-strong); --bs-btn-disabled-bg:var(--t-primary); --bs-btn-disabled-border-color:var(--t-primary); }
+  html body.sis-theme .btn-outline-primary { --bs-btn-color:var(--t-primary); --bs-btn-border-color:var(--t-primary); --bs-btn-hover-bg:var(--t-primary); --bs-btn-hover-border-color:var(--t-primary); }
+  .sis-theme #main a:not(.btn):not(.dropdown-item):not(.sis-panel-action) { color:var(--t-primary); }
+  html body.sis-theme .sis-actions-content { padding:10px 14px 14px; min-width:0; }
+  /* Home: the same information in tighter tiles. */
+  html body.sis-theme[data-route="dashboard"] #main :is(h2,h3) { font-size:15px!important; }
+  /* Add Student opens below the list when chosen from the toolbar. */
+  .sis-theme .student-add-panel:not(:target) { display:none; }
+}
+
+@media screen and (min-width:992px) {
+  html body.sis-theme:not(.bare) .sidebar { position:sticky!important; top:var(--t-bar-h); height:calc(100dvh - var(--t-bar-h)); }
+  html body.sis-theme:not(.bare) .sidebar-inner { height:calc(100dvh - var(--t-bar-h)); }
+  html body.sis-theme:not(.bare) .app-shell { min-height:calc(100dvh - var(--t-bar-h)); }
+  html body.sis-theme.fixed-record-shell .app-shell { height:calc(100dvh - var(--t-bar-h)); }
+  html body.sis-theme:not(.bare) .app-content { padding:0; }
+  html body.sis-theme .app-shell #main.sis-header-layout { --sis-header-gutter:14px; padding:0 0 0 14px; }
+  html body.sis-theme .app-shell #main.sis-header-layout > .sis-workspace-header { width:auto; margin:0; padding-right:14px; }
+  html body.sis-theme .app-shell #main.sis-header-layout > .sis-list-dock { padding-right:14px; }
+  html body.sis-theme.fixed-record-shell .sis-record-scroll { padding:0; }
+  html body.sis-theme .sis-record-scroll > .sis-actions-layout { min-height:100%; }
+  html body.sis-theme .sis-actions-layout > :first-child { min-width:0; }
+  .sis-theme .sis-sidebar-head { display:none; }
+  html body.sis-theme:not(.fixed-record-shell) .app-content > :not(.sis-page-heading):not(.sis-actions-layout):not(.alert) { margin-inline:16px; }
+  html body.sis-theme:not(.fixed-record-shell) .app-content > .alert { margin:8px 16px; }
+  html body.sis-theme:not(.fixed-record-shell) .app-content > .sis-page-heading { margin-bottom:0; }
+  html body.sis-theme:not(.fixed-record-shell) .app-content > .sis-actions-layout { min-height:calc(100dvh - var(--t-bar-h) - 37px); }
+  html body.sis-theme:not(.fixed-record-shell) .app-content > :not(.sis-page-heading):not(.sis-actions-layout):first-of-type { margin-top:12px; }
+}
+
+@media screen and (max-width:991.98px) {
+  .sis-theme .sis-appbar { gap:8px; padding:0 10px; }
+  .sis-theme .sis-appbar-year { padding-right:8px; font-size:12px; }
+  html body.sis-theme .sidebar.offcanvas-lg { width:min(290px,86vw); background:var(--t-rail); }
+  html body.sis-theme .side-link { min-height:44px; font-size:14px; }
+  .sis-theme .nav-group-toggle { min-height:44px; font-size:14px; }
+  html body.sis-theme:not(.bare) .app-content { padding:0 0 12px; }
+  html body.sis-theme .app-shell #main.sis-header-layout { --sis-header-gutter:12px; }
+  html body.sis-theme .sis-header-layout > .sis-workspace-header { position:sticky; top:var(--t-bar-h); }
+  html body.sis-theme .sis-workspace-header .sis-toolbar-header .record-toolbar { display:grid; grid-template-columns:minmax(0,1fr) auto; }
+  html body.sis-theme .record-toolbar-buttons { overflow-x:auto; overscroll-behavior-x:contain; scrollbar-width:thin; grid-column:1 / -1; }
+  html body.sis-theme .record-toolbar-search { margin:0; }
+  html body.sis-theme .record-toolbar-search .form-control { height:44px; min-height:44px; font-size:16px; }
+  html body.sis-theme .record-toolbar-buttons .btn, html body.sis-theme .record-toolbar [data-list-refresh] { min-height:44px; height:44px; }
+  html body.sis-theme .record-toolbar [data-list-refresh] .sis-label { display:none; }
+  html body.sis-theme .sis-list-dock .record-filter-grid:not([hidden]), html body.sis-theme .sis-list-dock .record-filter-fields:not([hidden]),
+  html body.sis-theme .sis-list-dock [data-record-filters]:not([hidden]):not(:has(.fp-grid)) { display:grid!important; grid-template-columns:repeat(2,minmax(0,1fr)); gap:8px; }
+  html body.sis-theme .sis-list-dock .record-filter-cell { display:grid; gap:3px; }
+  html body.sis-theme .sis-list-dock .record-filter-cell .form-select, html body.sis-theme .sis-list-dock .record-filter-cell .form-control,
+  html body.sis-theme .sis-list-dock .fp-ctl .form-control, html body.sis-theme .sis-list-dock .fp-ctl .form-select { width:100%; max-width:none; min-width:0; min-height:44px; font-size:16px; }
+  .sis-theme .sis-filter-clear { grid-column:1 / -1; min-height:44px; }
+  html body.sis-theme .sis-record-scroll .table-responsive { overflow-x:auto; -webkit-overflow-scrolling:touch; }
+  html body.sis-theme .sis-record-scroll .table > :not(caption) > * > * { padding:9px 9px; }
+  .sis-theme .sis-pager-btn { width:44px; height:44px; }
+  .sis-theme .sis-select-cell .form-check-input { width:20px; height:20px; }
+  html body.sis-theme .sis-actions-drawer { width:min(320px,90vw); max-height:100dvh; height:100dvh; margin:0 0 0 auto; padding:0; border:0; background:var(--t-rail); }
+  html body.sis-theme .sis-actions-drawer .sis-actions-panel { border:0; min-height:100%; }
+  html body.sis-theme .sis-panel-action, html body.sis-theme .sis-actions-panel .or-links a, html body.sis-theme .sis-panel-toggle { min-height:44px; }
+  html body.sis-theme .sis-actions-heading .btn { min-width:44px; min-height:44px; }
+  html body.sis-theme:not(.bare) .app-content > .sis-page-heading { padding:6px 12px; }
+  html body.sis-theme .sis-actions-content { padding:10px 12px; }
+}
+@media screen and (max-width:575.98px) {
+  .sis-theme .sis-appbar-brand { font-size:16px; }
+  html body.sis-theme .sis-list-dock .record-filter-grid:not([hidden]), html body.sis-theme .sis-list-dock .record-filter-fields:not([hidden]),
+  html body.sis-theme .sis-list-dock [data-record-filters]:not([hidden]):not(:has(.fp-grid)) { grid-template-columns:1fr; }
+  .sis-theme .sis-list-footer { justify-content:center; }
+}
+@media (prefers-reduced-motion:reduce) {
+  .sis-theme .nav-group-chevron, .sis-theme .sis-panel-toggle .bi { transition:none; }
+}
+@media print {
+  .sis-select-cell, .sis-list-footer, .sis-appbar, .sis-actions-panel, .sis-actions-drawer { display:none!important; }
+  .sis-off-page { display:table-row!important; }
+  .sis-pill { padding:0!important; background:none!important; color:#000!important; font-weight:400!important; }
+  .student-add-panel { display:none!important; }
+}
+
+/* ── v38: larger left sidebar and a slightly taller header on desktop; module content keeps its compact size ── */
+@media screen and (min-width:992px) {
+  body.sis-theme { --t-bar-h:50px; --sis-mobile-header:50px; }
+  /* Header */
+  .sis-theme .sis-appbar-brand { font-size:19px; }
+  .sis-theme .sis-appbar-brand img { width:30px; height:30px; }
+  .sis-theme .sis-appbar-search { flex-basis:320px; }
+  .sis-theme .sis-appbar-search .form-control { height:34px; min-height:34px; font-size:14px; }
+  .sis-theme .sis-appbar-year, .sis-theme .sis-appbar-user > .dropdown-toggle { font-size:14px; }
+  .sis-theme .sis-appbar-user > .dropdown-toggle { height:38px; }
+  .sis-theme .sis-appbar-user > .dropdown-toggle .bi { font-size:19px; }
+  html body.sis-theme:not(.bare) .sis-page-heading { min-height:46px; }
+  html body.sis-theme:not(.bare) .sis-module-title { font-size:20px; }
+  html body.sis-theme:not(.bare) .breadcrumbs { font-size:13px; }
+  /* Left sidebar modules */
+  html body.sis-theme:not(.bare) .sidebar { width:260px; }
+  .sis-theme .nav-group { margin-top:8px; }
+  .sis-theme .nav-group-toggle { gap:10px; min-height:40px; padding:8px 16px 6px; font-size:15.5px; }
+  .sis-theme .nav-group-toggle .bi:first-child { font-size:18px; }
+  .sis-theme .nav-group-chevron { font-size:12px; }
+  html body.sis-theme .side-link { gap:12px; min-height:40px; margin:2px 8px; padding:8px 12px; font-size:15px; border-radius:6px; }
+  html body.sis-theme .nav-group .side-link { padding-left:16px; }
+  html body.sis-theme .side-link i { font-size:17px; }
+}
+/* Wide screens: the toolbar buttons keep their full width; when they and the search box do not fit on
+   one line, the search box (and Refresh) move to a second line instead of being drawn over the buttons. */
+@media screen and (min-width:992px) {
+  html body.sis-theme .sis-workspace-header .sis-toolbar-header .record-toolbar { flex-wrap:wrap; column-gap:0; row-gap:4px; }
+  html body.sis-theme .sis-workspace-header .sis-toolbar-header .record-toolbar-buttons { display:contents; }
+  html body.sis-theme .sis-workspace-header .sis-toolbar-header .record-toolbar-buttons > * { flex-shrink:0; max-width:100%; }
+  html body.sis-theme .record-toolbar-search { min-width:180px; }
+}
+/* v40 polish (stress-test Batch 3) */
+@media screen {
+  /* Active Accounting tab: white text on the green fill (UI-14) */
+  html body.sis-theme .accounting-nav-link.is-active, html body.sis-theme .accounting-nav-link[aria-current="page"] { color:#fff!important; }
+  /* Sticky side panels and table headings stop below the app bar instead of sliding under it (UI-10, UI-11) */
+  html body.sis-theme:not(.fixed-record-shell) .settings-side, html body.sis-theme:not(.fixed-record-shell) .reg-side { top:calc(var(--t-bar-h, 50px) + 1rem); }
+  html body.sis-theme:not(.fixed-record-shell) .reg-side { max-height:calc(100vh - var(--t-bar-h, 50px) - 2rem); }
+  html body.sis-theme:not(.fixed-record-shell) #main :not(.table-responsive) > table > thead > tr > th { top:var(--t-bar-h, 50px); }
+  /* Summary tiles show their whole label (UI-16) */
+  html body.sis-theme .admission-stat .stat-label { white-space:normal; overflow:visible; text-overflow:clip; line-height:1.2; }
+  /* Long dropdown choices show in full on hover, and never run under the arrow (UI-18) */
+  html body.sis-theme .form-select { text-overflow:ellipsis; }
+  /* Report remarks wrap to two lines instead of being cut (UI-15) */
+  html body.sis-theme td.rem { white-space:normal; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; }
+  /* Boxes never reach past the screen edge (UI-22) */
+  html body.sis-theme #main .nav-tabs, html body.sis-theme #main .nav-link { max-width:100%; box-sizing:border-box; }
+}
+@media screen and (min-width:1440px) {
+  /* Wide screens have room for the whole account name (UI-19) */
+  .sis-theme .sis-appbar-user > .dropdown-toggle { max-width:360px; }
+}
+@media screen and (max-width:575.98px) {
+  /* Phones: the page heading scrolls away, so it does not cover a third of the screen (UI-11) */
+  html body.sis-theme:not(.fixed-record-shell) .sis-page-heading, html body.sis-theme .sis-header-layout > .sis-workspace-header { position:static; }
+  html body.sis-theme #main :not(.table-responsive) > table > thead > tr > th { top:var(--t-bar-h, 42px); }
+  /* Table headings stay whole words; the table scrolls sideways instead (UI-13) */
+  html body.sis-theme #main .table-responsive > .table > thead th { white-space:nowrap; }
+  /* Registration title wraps so the status badges stay visible (UI-20) */
+  html body.sis-theme .tb-title.text-truncate { white-space:normal; overflow:visible; }
+}
+
+/* View-only pages and hidden menu items stay hidden whatever their display style */
+html body.sis-theme #main [hidden], html body.sis-theme .record-toolbar [hidden] { display:none!important; }
+
+/* ===== v44 interactive workspace (reference: Students mock-up) ===== */
+@media screen {
+  /* Top bar: logo + school name over "School Information System", search with Ctrl K, school year, user, bell */
+  html body.sis-theme .sis-appbar { gap:14px; }
+  html body.sis-theme .sis-appbar-brand { gap:10px; min-width:0; }
+  html body.sis-theme .sis-appbar-brand img { width:36px; height:36px; border-radius:50%; background:#fff; padding:2px; }
+  .sis-theme .sis-brand-text { display:flex; flex-direction:column; line-height:1.1; min-width:0; }
+  .sis-theme .sis-brand-name { font-weight:700; font-size:16px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:34vw; }
+  .sis-theme .sis-brand-sub { font-size:12px; font-weight:400; opacity:.82; white-space:nowrap; }
+  html body.sis-theme .sis-appbar-search { position:relative; flex:0 1 520px; margin-inline:auto; }
+  html body.sis-theme .sis-appbar-search .form-control { border-radius:999px; padding-right:64px; }
+  .sis-theme .sis-kbd { position:absolute; right:10px; top:50%; transform:translateY(-50%); font:600 11px/1 inherit; color:rgba(255,255,255,.75); background:rgba(255,255,255,.14); border:1px solid rgba(255,255,255,.22); border-radius:6px; padding:4px 6px; pointer-events:none; }
+  .sis-theme .sis-appbar-year .dropdown-toggle, .sis-theme .sis-appbar-user > .dropdown-toggle { display:flex; align-items:center; gap:10px; background:transparent; border:0; color:#fff; padding:4px 6px; border-radius:8px; }
+  .sis-theme .sis-appbar-year .dropdown-toggle:hover, .sis-theme .sis-appbar-user > .dropdown-toggle:hover { background:rgba(255,255,255,.1); }
+  .sis-theme .sis-appbar-year .bi-calendar3 { font-size:20px; }
+  .sis-theme .sis-year-text, .sis-theme .sis-user-text { display:flex; flex-direction:column; line-height:1.15; text-align:left; min-width:0; }
+  .sis-theme .sis-year-text small, .sis-theme .sis-user-text small { font-size:12px; opacity:.82; font-weight:400; }
+  .sis-theme .sis-year-text b, .sis-theme .sis-user-text b { font-size:14px; }
+  .sis-theme .sis-user-text b { max-width:180px; }
+  .sis-theme .sis-user-avatar { display:grid; place-items:center; width:34px; height:34px; border-radius:50%; background:#fff; color:var(--t-primary-strong); font-weight:700; font-size:13px; flex:none; }
+  .sis-theme .sis-appbar-bell { position:relative; display:grid; place-items:center; width:38px; height:38px; border-radius:50%; color:#fff; font-size:20px; text-decoration:none; }
+  .sis-theme .sis-appbar-bell:hover { background:rgba(255,255,255,.1); color:#fff; }
+  .sis-theme .sis-dot { position:absolute; top:7px; right:8px; width:9px; height:9px; border-radius:50%; background:#e5484d; box-shadow:0 0 0 2px var(--t-bar); }
+
+  /* Sidebar: small uppercase section labels; badge on Notifications */
+  html body.sis-theme .nav-group-toggle { text-transform:uppercase; letter-spacing:.06em; font-size:12.5px!important; font-weight:700; color:var(--t-primary); }
+  html body.sis-theme .nav-group-toggle .bi:first-child { display:none; }
+  .sis-theme .sis-nav-badge { margin-left:auto; min-width:22px; height:20px; padding:0 6px; border-radius:999px; background:#e5484d; color:#fff; font-size:11.5px; font-weight:700; display:inline-grid; place-items:center; }
+
+  /* Page heading: title, breadcrumb and description */
+  .sis-theme .sis-heading-lede { margin:4px 0 0; color:var(--t-muted); font-size:13.5px; max-width:56%; }
+
+  /* Toolbar buttons */
+  html body.sis-theme .record-toolbar-buttons { gap:8px!important; }
+  html body.sis-theme .record-toolbar-buttons .btn { border:1px solid var(--t-line-strong)!important; background:#fff!important; border-radius:8px!important; padding:5px 14px!important; height:36px!important; min-height:36px!important; font-weight:600!important; gap:7px; }
+  html body.sis-theme .record-toolbar-buttons .btn:hover:not(:disabled) { border-color:var(--t-primary)!important; background:var(--t-hover)!important; }
+  html body.sis-theme .record-toolbar-buttons .btn.sis-tb-primary { background:var(--t-primary)!important; border-color:var(--t-primary)!important; color:#fff!important; }
+  html body.sis-theme .record-toolbar-buttons .btn.sis-tb-primary::before, html body.sis-theme .record-toolbar-buttons .btn.sis-tb-primary .bi { color:#fff!important; }
+  html body.sis-theme .record-toolbar-buttons .btn.sis-tb-primary:hover { background:var(--t-primary-strong)!important; }
+  html body.sis-theme .record-toolbar-buttons .btn.sis-tb-danger { color:#c62828!important; background:#fdecec!important; border-color:#f4c7c7!important; }
+  html body.sis-theme .record-toolbar-buttons .btn.sis-tb-danger .bi { color:#c62828!important; }
+  html body.sis-theme .record-toolbar-buttons .btn:disabled { opacity:.55; }
+  .sis-theme .sis-more-caret { font-size:11px!important; margin-left:2px; }
+  html body.sis-theme .record-toolbar-search .form-control { height:38px!important; border-radius:8px!important; }
+
+  /* Filter card: an icon tile and a label over each filter; Apply and Clear at the end */
+  html[data-system] body.sis-theme .sis-list-dock form.sis-filter-card.record-filter-grid:not([hidden]), html body.sis-theme form.sis-filter-card { display:flex!important; flex-wrap:wrap; align-items:stretch; gap:0!important; margin:10px 0!important; padding:0!important; background:#fff; border:1px solid var(--t-line); border-radius:12px; box-shadow:0 1px 2px rgba(16,40,28,.04); }
+  html body.sis-theme form.sis-filter-card > .record-filter-cell { flex:1 1 180px; width:auto!important; display:grid!important; grid-template-columns:40px minmax(0,1fr); column-gap:10px; align-items:center; padding:10px 14px!important; margin:0!important; border-right:1px solid var(--t-line); }
+  .sis-theme .sis-filter-icon { grid-row:1 / span 2; display:grid; place-items:center; width:40px; height:40px; border-radius:10px; background:var(--t-tint); color:var(--t-primary); font-size:18px; }
+  html body.sis-theme form.sis-filter-card > .record-filter-cell > label { grid-column:2; margin:0 0 2px!important; font-size:12px!important; font-weight:600; color:var(--t-muted); }
+  html body.sis-theme form.sis-filter-card > .record-filter-cell > :is(select,input,.input-group) { grid-column:2; }
+  html body.sis-theme form.sis-filter-card .form-select, html body.sis-theme form.sis-filter-card .form-control { height:34px; min-height:34px; border-radius:8px; }
+  html body.sis-theme form.sis-filter-card > .sis-filter-actions { flex:0 0 auto; grid-column:auto!important; width:auto!important; display:flex; align-items:center; justify-content:flex-end; gap:8px; padding:10px 14px; }
+  html body.sis-theme form.sis-filter-card .sis-filter-apply, html body.sis-theme form.sis-filter-card .sis-filter-clear { flex:0 0 auto; width:auto!important; height:38px; min-height:38px; display:inline-flex; align-items:center; gap:7px; padding:0 16px!important; margin:0!important; border-radius:8px; font-weight:600; text-decoration:none; white-space:nowrap; }
+  html body.sis-theme form.sis-filter-card .sis-filter-clear { background:var(--t-tint); color:var(--t-primary-strong); border:1px solid transparent; }
+  html body.sis-theme form.sis-filter-card .sis-filter-clear:hover { border-color:var(--t-primary); }
+
+  /* Banner: big title, breadcrumb and description stacked; the toolbar runs underneath */
+  html body.sis-theme:not(.bare) .sis-page-heading.sis-workspace-header { display:block; padding:16px 24px 0!important; }
+  html body.sis-theme:not(.bare) .sis-page-heading.sis-workspace-header > .sis-module-title { font-size:30px!important; font-weight:800; margin:0 0 4px; color:#10203a; }
+  html body.sis-theme:not(.bare) .sis-page-heading.sis-workspace-header > .breadcrumbs { display:flex; margin:0; }
+  html body.sis-theme:not(.bare) .sis-page-heading.sis-workspace-header > .sis-heading-lede { display:block; margin:6px 0 12px; }
+  html body.sis-theme:not(.bare) .sis-page-heading.sis-workspace-header .sis-toolbar-header { padding:10px 0!important; }
+
+  /* List bar over the table */
+  .sis-theme .sis-list-bar { display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:8px 16px; padding:10px 14px; background:#fff; border:1px solid var(--t-line); border-bottom:0; border-radius:12px 12px 0 0; }
+  .sis-theme .sis-list-pick { display:flex; align-items:center; gap:10px; margin:0; font-weight:600; color:var(--t-ink); }
+  .sis-theme .sis-list-right { display:flex; align-items:center; flex-wrap:wrap; gap:10px; }
+  .sis-theme .sis-list-bar .sis-pager-range { margin:0 6px 0 0; color:var(--t-muted); font-size:13px; }
+  .sis-theme .sis-list-bar .sis-pager { display:flex; gap:4px; }
+  .sis-theme .sis-list-bar .sis-pager-btn { width:32px; height:32px; border-radius:8px; font-size:13px; font-weight:600; }
+  .sis-theme .sis-list-bar .sis-pager-btn.is-current { background:var(--t-primary); border-color:var(--t-primary); color:#fff; }
+  .sis-theme .sis-per-page { width:auto; height:32px; border-radius:8px; font-size:13px; }
+
+  /* Table: sortable headings, avatars, status pill dots, row action buttons */
+  .sis-theme .sis-sort { display:inline-flex; align-items:center; gap:6px; border:0; background:none; padding:0; font:inherit; color:inherit; cursor:pointer; }
+  .sis-theme .sis-sort i { font-size:11px; color:var(--t-muted); }
+  .sis-theme th[aria-sort="ascending"] .sis-sort i, .sis-theme th[aria-sort="descending"] .sis-sort i { color:var(--t-primary); }
+  .sis-theme .sis-sort:focus-visible { outline:2px solid var(--t-primary); outline-offset:2px; border-radius:3px; }
+  .sis-theme .sis-name-cell { white-space:nowrap; }
+  .sis-theme .sis-avatar { display:inline-grid; place-items:center; width:26px; height:26px; margin-right:10px; border-radius:50%; font-size:11px; font-weight:700; vertical-align:middle; }
+  .sis-theme .sis-avatar[data-tone="0"] { background:#fde7f3; color:#b4237a; } .sis-theme .sis-avatar[data-tone="1"] { background:#e0efff; color:#1e5bb8; }
+  .sis-theme .sis-avatar[data-tone="2"] { background:#e3f6ea; color:#1d7a46; } .sis-theme .sis-avatar[data-tone="3"] { background:#fff1dc; color:#b5630c; }
+  .sis-theme .sis-avatar[data-tone="4"] { background:#efe7ff; color:#6633c6; } .sis-theme .sis-avatar[data-tone="5"] { background:#ffe9e4; color:#c2410c; }
+  .sis-theme .sis-avatar[data-tone="6"] { background:#e2f6f6; color:#0f766e; } .sis-theme .sis-avatar[data-tone="7"] { background:#fff7cc; color:#8a6d00; }
+  html body.sis-theme .sis-pill { display:inline-flex; align-items:center; gap:6px; border-radius:999px!important; padding:3px 10px!important; }
+  html body.sis-theme .sis-pill::before { content:""; width:6px; height:6px; border-radius:50%; background:currentColor; opacity:.9; }
+  html body.sis-theme .sis-pill[data-tone="success"] { background:#e3f4e8!important; color:#1d6b3d!important; }
+  html body.sis-theme table th.sis-row-icons, html body.sis-theme table td.sis-row-icons { width:1%; white-space:nowrap; text-align:center; }
+  .sis-theme .sis-row-btn { display:inline-grid; place-items:center; width:34px; height:28px; margin:0 2px; border:1px solid var(--t-line); border-radius:8px; background:#fff; color:var(--t-primary); font-size:15px; }
+  .sis-theme .sis-row-btn:hover { border-color:var(--t-primary); background:var(--t-hover); }
+  .sis-theme .sis-row-btn:focus-visible { outline:2px solid var(--t-primary); outline-offset:1px; }
+  .sis-theme .sis-row-more { color:var(--t-ink); }
+  .sis-row-menu { position:fixed; z-index:1080; min-width:210px; padding:6px; background:#fff; border:1px solid #dfe4e1; border-radius:10px; box-shadow:0 12px 28px rgba(16,40,28,.16); }
+  .sis-row-menu button { display:flex; align-items:center; gap:10px; width:100%; padding:8px 10px; border:0; border-radius:6px; background:none; text-align:left; font-size:14px; color:#1f2a25; }
+  .sis-row-menu button:hover, .sis-row-menu button:focus-visible { background:#eef5f0; outline:none; }
+  .sis-row-menu button .bi { color:#1d5e3f; width:16px; }
+  .sis-row-menu p { margin:6px 10px; color:#5f6b65; font-size:13px; }
+
+  /* Right panel: School Year card, sections as cards with round icons, › on each item */
+  .sis-theme .sis-year-card { display:flex; align-items:center; gap:12px; margin:10px 10px 4px; padding:12px 14px; background:#fff; border:1px solid var(--t-line); border-radius:12px; }
+  .sis-theme .sis-year-card > .bi { font-size:26px; color:var(--t-primary); }
+  .sis-theme .sis-year-card label { flex:1; margin:0; display:flex; flex-direction:column; gap:2px; }
+  .sis-theme .sis-year-card small { color:var(--t-muted); font-size:12px; }
+  .sis-theme .sis-year-card .form-select { border:0; padding-left:0; font-weight:700; font-size:15px; box-shadow:none; background-color:transparent; }
+  html body.sis-theme .sis-actions-panel > section, html body.sis-theme .sis-actions-panel .or-side .or-panel { margin:10px; background:#fff; border:1px solid var(--t-line); border-radius:12px; overflow:hidden; }
+  html body.sis-theme .sis-panel-toggle { display:flex; align-items:center; gap:10px; }
+  .sis-theme .sis-sec-ic { display:inline-grid; place-items:center; width:22px; height:22px; border-radius:50%; background:var(--t-primary); color:#fff; font-size:12px; flex:none; }
+  html body.sis-theme .sis-panel-toggle > .bi-chevron-up { margin-left:auto; }
+  html body.sis-theme .sis-actions-panel .sis-panel-action, html body.sis-theme .sis-actions-panel .sis-module-tools > a { position:relative; padding-right:28px!important; }
+  html body.sis-theme .sis-actions-panel .sis-panel-action::after, html body.sis-theme .sis-actions-panel .sis-module-tools > a::after { font-family:"bootstrap-icons"; content:"\F285"; position:absolute; right:10px; top:50%; transform:translateY(-50%); font-size:12px; color:var(--t-muted); }
+  html body.sis-theme .sis-actions-panel .sis-panel-action:disabled::after { opacity:.4; }
+}
+@media screen and (max-width:991.98px) {
+  .sis-theme .sis-brand-sub, .sis-theme .sis-kbd { display:none; }
+  .sis-theme .sis-brand-name { max-width:52vw; }
+  .sis-theme .sis-heading-lede { max-width:none; }
+  html body.sis-theme form.sis-filter-card > .record-filter-cell { flex:1 1 100%; border-right:0; border-bottom:1px solid var(--t-line); }
+  .sis-theme .sis-list-bar { border-radius:10px 10px 0 0; }
+  .sis-theme .sis-list-right { width:100%; justify-content:space-between; }
+}
+@media screen and (max-width:575.98px) {
+  .sis-theme .sis-appbar-bell { width:34px; height:34px; }
+  .sis-theme .sis-list-bar .sis-pager-range { width:100%; }
+}
+@media print { .sis-row-icons, .sis-list-bar, .sis-avatar, .sis-sort i, .sis-row-menu { display:none!important; } }
+@media screen { html body.sis-theme form .sis-filter-apply::before { content:none!important; display:none!important; } html body.sis-theme form .sis-filter-apply .bi { color:#fff; } }
+/* View-only pages: no Add, Edit or Delete buttons on the toolbar or the rows (the server refuses changes anyway) */
+html body.sis-theme #main:has(#sisViewOnly) :is(.sis-row-btn[title^="Edit"], .sis-tb-primary, .sis-tb-danger, [data-theme-edit]) { display:none!important; }
+html body:has(#sisViewOnly) .sis-quick .sis-panel-action:first-child { display:none!important; }
+@media screen and (max-width:575.98px) {
+  html body.sis-theme .sis-header-layout > .sis-page-heading.sis-workspace-header { position:relative!important; top:auto!important; padding:10px 16px 0!important; }
+  html body.sis-theme:not(.bare) .sis-page-heading.sis-workspace-header > .sis-module-title { font-size:26px!important; }
+}
+@media screen and (min-width:992px) { html body.sis-theme .record-toolbar-buttons .sis-actions-toggle { display:none!important; } }
+@media screen { html body.sis-theme .btn.sis-actions-toggle::before { font-family:"bootstrap-icons"; font-weight:400; line-height:1; } }
+
+/* v49: fee template → Manage fees pop-ups */
+.fee-dialog { width:min(820px,calc(100% - 24px)); }
+.fee-dialog-sm { width:min(560px,calc(100% - 24px)); }
+.fee-dialog-body { padding:18px 26px 8px; }
+.fee-dialog-section { display:flex; align-items:center; justify-content:space-between; gap:12px; margin:4px 0 8px; }
+.fee-dialog-section h3 { font-size:1rem; font-weight:700; margin:0; }
+.fee-dialog-section h3 span { font-size:.8rem; font-weight:400; color:#64748b; }
+.fee-dialog-foot { display:flex; justify-content:flex-end; gap:8px; padding:12px 26px 20px; }
+.fee-pick-list { max-height:220px; overflow:auto; border:1px solid #dce5ef; border-radius:10px; margin-top:6px; background:#fff; }
+.fee-pick-list [role=option] { display:flex; justify-content:space-between; align-items:baseline; gap:12px; width:100%; padding:8px 12px; border:0; border-bottom:1px solid #eef2f6; background:none; text-align:left; font-size:.9rem; color:#172d50; }
+.fee-pick-list [role=option] small { color:#64748b; white-space:nowrap; }
+.fee-pick-list [role=option]:hover, .fee-pick-list [role=option]:focus { background:#eef6f1; outline:none; }
+.fee-pick-list [role=option][aria-selected=true] { background:#1f6f43; color:#fff; }
+.fee-pick-list [role=option][aria-selected=true] small { color:#d6efe0; }
+.fee-pick-none { margin:0; padding:10px 12px; color:#64748b; font-size:.88rem; }
+.fee-pick.is-chosen input[type=search] { border-color:#1f6f43; background:#f3faf6; }
+@media (max-width:767px) { .fee-dialog-body { padding:16px 16px 6px; } .fee-dialog-foot { padding:10px 16px 16px; } .fee-dialog-section { flex-wrap:wrap; } }
+.fee-total { margin-top:8px; padding:8px 12px; border-radius:8px; background:#eef6f1; color:#1f4d33; font-weight:600; }
+.fee-pick.is-chosen .fee-pick-list { display:none; }
+.fee-pick.is-chosen::after { content:"Chosen. Type in the box to choose another."; display:block; font-size:.78rem; color:#4b6b58; margin-top:4px; }
+
+/* v53: weekly class timetable */
+.sched-grid th, .sched-grid td { vertical-align: top; }
+.sched-grid td { min-width: 110px; }
+.sched-cell { background: #eef6f1; border-left: 3px solid #1f6f43; border-radius: 6px; padding: 4px 6px; margin-bottom: 4px; font-size: .85rem; }
+@media print { .sched-cell { background: none; border: 1px solid #999; } }

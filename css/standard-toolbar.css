@@ -1,0 +1,56 @@
+/* AcadLink standard toolbar (SIS and Grading). Same look on every module. */
+.std-tb { --std-green:#1d6b47; --std-green-soft:#e8f3ee; --std-line:#d5e2dd; --std-ink:#24352e; --std-muted:#7b8a84; --std-red:#b4232c;
+  display:flex; align-items:center; gap:8px; flex-wrap:nowrap; width:100%; min-width:0; font-size:11px; }
+.std-tb-group { display:flex; align-items:center; gap:5px; flex-wrap:nowrap; }
+.std-tb-group-1, .std-tb-group-2 { flex:0 0 auto; padding-right:8px; border-right:1px solid var(--std-line); }
+.std-tb-group-3 { flex:1 1 auto; min-width:0; }
+.std-tb-btn { display:inline-flex; align-items:center; gap:5px; height:32px; padding:0 10px; border:1px solid var(--std-line); border-radius:7px;
+  background:#fff; color:var(--std-ink); font:inherit; font-size:11px; font-weight:600; white-space:nowrap; cursor:pointer; line-height:1; }
+.std-tb-btn i { font-size:12px; }
+.std-tb-btn:hover:not(:disabled) { background:#f3f8f6; border-color:#b9cfc6; }
+.std-tb-btn:focus-visible { outline:2px solid var(--std-green); outline-offset:1px; }
+.std-tb-btn:disabled { opacity:.45; cursor:not-allowed; background:#f7f9f8; }
+.std-tb-primary { background:var(--std-green); border-color:var(--std-green); color:#fff; }
+.std-tb-primary:hover:not(:disabled) { background:#17583a; border-color:#17583a; color:#fff; }
+.std-tb-primary:disabled { background:#f7f9f8; border-color:var(--std-line); color:var(--std-ink); }
+.std-tb-danger:not(:disabled) { color:var(--std-red); border-color:#ecc5c8; }
+.std-tb-danger:hover:not(:disabled) { background:#fdf1f2; border-color:#e3a5aa; }
+.std-tb-apply:not(:disabled) { background:var(--std-green-soft); border-color:#a9cdbb; color:var(--std-green); }
+.std-tb-search { position:relative; flex:1 1 220px; min-width:140px; max-width:420px; }
+.std-tb-search > i { position:absolute; left:10px; top:50%; transform:translateY(-50%); color:var(--std-muted); font-size:12px; pointer-events:none; }
+.std-tb-input { width:100%; height:32px; padding:0 10px 0 30px; border:1px solid var(--std-line); border-radius:7px; font-size:11px; background:#fff; color:var(--std-ink); margin:0!important; }
+.std-tb-input:focus { outline:2px solid var(--std-green); outline-offset:0; border-color:var(--std-green); }
+.std-tb-input:disabled { background:#f7f9f8; cursor:not-allowed; }
+.std-tb-more { margin-left:auto; }
+.std-tb-caret { font-size:9px!important; }
+.std-tb-menu { position:fixed; z-index:2000; min-width:200px; max-width:320px; max-height:60vh; overflow:auto; padding:5px; background:#fff;
+  border:1px solid var(--std-line,#d5e2dd); border-radius:9px; box-shadow:0 10px 28px #1c33281f; font-size:12px; }
+.std-tb-menu button { display:flex; align-items:center; gap:8px; width:100%; padding:7px 9px; border:0; border-radius:6px; background:none; text-align:left; color:#24352e; font:inherit; }
+.std-tb-menu button:hover:not(:disabled), .std-tb-menu button:focus-visible { background:#eef5f1; outline:none; }
+.std-tb-menu button:disabled { opacity:.45; cursor:not-allowed; }
+.std-tb-menu p { margin:0; padding:8px 10px; color:#7b8a84; }
+.std-tb-dirty .std-tb-apply:not(:disabled) { background:var(--std-green); color:#fff; border-color:var(--std-green); box-shadow:0 0 0 3px #1d6b4726; }
+.std-tb-filters-hidden, .std-tb-moved { display:none!important; }
+/* Grading: the toolbar sits in its own card above the list */
+.std-tb-host { position:sticky; top:0; z-index:30; background:#fff; border:1px solid var(--std-line,#d5e2dd); border-radius:10px; padding:7px 9px; margin:0 0 12px; box-shadow:0 2px 6px #173b2b0a; }
+.std-tb-note { font-size:11px; color:#7b8a84; margin:-6px 0 10px 2px; }
+@media (max-width:991.98px) { .sis-std-header { margin:6px 0 10px; } }
+.std-tb-note.is-dirty { color:#9a5b00; }
+.std-row-selected > td { background:#e3f1ea!important; }
+tr.std-row-selectable { cursor:pointer; }
+@media (max-width:991.98px) {
+  .std-tb { flex-wrap:wrap; }
+  .std-tb-group-1, .std-tb-group-2 { border-right:0; padding-right:0; }
+  .std-tb-btn .std-tb-label { display:none; }
+  .std-tb-btn { padding:0 9px; }
+  .std-tb-group-3 { flex:1 1 100%; }
+  .std-tb-search { max-width:none; }
+}
+@media print { .std-tb, .std-tb-host, .std-tb-menu { display:none!important; } }
+/* In-page toolbars (Grading, SIS pages without a list) wrap instead of overflowing a narrow content area. */
+.std-tb-host .std-tb, .sis-std-static .std-tb { flex-wrap:wrap; row-gap:6px; }
+@media (min-width:992px) and (max-width:1279.98px) {
+  .sis-toolbar-header .std-tb [data-std-slot="edit"] .std-tb-label, .sis-toolbar-header .std-tb [data-std-slot="void"] .std-tb-label,
+  .sis-toolbar-header .std-tb [data-std-slot="post"] .std-tb-label, .sis-toolbar-header .std-tb [data-std-slot="selectAll"] .std-tb-label,
+  .sis-toolbar-header .std-tb [data-std-slot="refresh"] .std-tb-label { display:none; }
+}
