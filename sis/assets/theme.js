@@ -10,7 +10,7 @@
  document.querySelectorAll('#sidebar .nav-group').forEach(group=>{
    const button=group.querySelector('.nav-group-toggle'),items=group.querySelector('.nav-group-items'),key='sis.nav.'+group.dataset.navGroup;
    const set=open=>{button.setAttribute('aria-expanded',String(open));items.hidden=!open;group.classList.toggle('is-collapsed',!open);};
-   set(group.querySelector('.side-link.active')?true:(store.get(key)||(['Assessment','Accounting'].includes(group.dataset.navGroup)?'closed':'open'))!=='closed');
+   set(group.querySelector('.side-link.active')?true:(store.get(key)||((document.body.classList.contains('sis-easy')||['Assessment','Accounting'].includes(group.dataset.navGroup))?'closed':'open'))!=='closed');
    if(!button.dataset.bound){button.dataset.bound='1';button.addEventListener('click',()=>{const open=button.getAttribute('aria-expanded')!=='true';set(open);store.set(key,open?'open':'closed');});}
  });
 
@@ -19,6 +19,10 @@
  const main=document.querySelector('.app-shell #main');if(!main||document.body.classList.contains('bare'))return;
  // The page's description sits under the breadcrumb, in the banner.
  const lede=main.querySelector('.sis-toolbar-description'),crumbs=main.querySelector('.sis-page-heading .breadcrumbs');if(lede&&crumbs&&!crumbs.nextElementSibling?.classList.contains('sis-heading-lede')){lede.classList.add('sis-heading-lede');crumbs.after(lede);}
+ if(document.body.classList.contains('sis-easy')){
+   const shortcuts=main.querySelector('.sis-student-shortcuts');
+   if(shortcuts)main.querySelector('.sis-page-heading')?.append(shortcuts);
+ }
  const route=document.body.dataset.route||'',params=new URLSearchParams(location.search),tab=params.get('tab')||'';
  const NOUNS={enrollment:'application',admission:'applicant',registration:'registration',cashier:'receipt',students:'student',teachers:'teacher',sections:'section',yearlevels:'year level',curriculum:'curriculum',assessment:tab==='names'?'fee template':tab==='labels'?'label':'category',discounts:'discount',users:'account',bulkaccounts:'record',migration:'batch',accounting:'entry',notifications:'notification',balance:'student',activity:'activity',history:'record'};
  const plural=n=>/[^aeiou]y$/.test(n)?n.slice(0,-1)+'ies':/(s|x|ch)$/.test(n)?n+'es':n+'s';

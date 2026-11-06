@@ -5,15 +5,12 @@ require_once dirname(__DIR__,3).'/shared/client-state.php';
 
 /** [route, label, icon, permissions, group, hint] — items of one group are listed together under a collapsible heading */
 const NAV = [
-    ['dashboard', 'Home', 'house-door', [], '', ''],
+    ['dashboard', 'Overview', 'house-door', [], '', ''],
     ['notifications', 'Notifications', 'bell', ['admission', 'registration', 'payments.view', 'accounting'], '', 'Special-request approvals'],
     ['my', 'My Account', 'person-badge', ['self'], '', 'Grades, fees, receipts'],
     ['enrollment', 'Enrollment Applications', 'clipboard-check', ['admission', 'admission.view'], 'Enrollment', 'Student Portal applications'],
     ['admission', 'Admission', 'person-plus', ['admission', 'admission.view'], 'Enrollment', 'New applicants'],
     ['registration', 'Registration', 'journal-check', ['registration', 'payments.view', 'registration.view'], 'Enrollment', 'Enroll for a term'],
-    ['cashier', 'Cashier', 'cash-coin', ['payments.view'], 'Enrollment', 'Payments and receipts'],
-    ['docfees', 'Document Fees', 'file-earmark-text', ['payments.view'], 'Enrollment', 'TOR and certificate requests to pay'],
-    ['balance', 'Existing Balances', 'wallet2', ['registration', 'accounting', 'self', 'balances.view'], 'Enrollment', 'Previous-semester balance and approvals'],
     ['clearance', 'Online Clearance', 'patch-check', ['clearance'], 'Enrollment', 'Sign and review student clearance'],
     ['eligibility', 'Enrollment Eligibility', 'shield-check', ['registration', 'eligibility.view'], 'Enrollment', 'Checks, holds and prerequisites'],
     ['students', 'Students', 'people', ['students'], 'Records', ''],
@@ -25,19 +22,22 @@ const NAV = [
     ['history&tab=assessments', 'History of Assessments', 'receipt', ['registration', 'accounting', 'payments.view'], 'Records', 'Permanent assessment records'],
     ['documents', 'TOR & Certificates', 'file-earmark-text', ['documents'], 'Records', 'Issue, sign, reprint and void'],
     ['schedules', 'Class Schedules', 'calendar-week', ['schedules'], 'Records', 'Days, times, rooms and teachers'],
-    ['assessment&tab=categories', 'Categories', 'tags', ['assessment'], 'Assessment', 'Fee groups'],
-    ['assessment&tab=labels', 'Labels', 'tag', ['assessment'], 'Assessment', 'Fee lines'],
-    ['assessment&tab=names', 'Fee Templates', 'card-list', ['assessment'], 'Assessment', 'Fee templates'],
-    ['subjectfees', 'Subject Fees', 'journal-plus', ['assessment'], 'Assessment', 'Fees of particular subjects, per unit'],
-    ['discounts', 'Scholarships & Discounts', 'award', ['assessment', 'discounts.manage'], 'Assessment', 'Less on the fees'],
-    ['assessment&tab=labels&plan=list', 'Payment Setup', 'calendar3', ['assessment'], 'Assessment', 'Installments, due dates and full-payment discount'],
-    ['accounting&tab=overview', 'Overview', 'speedometer2', ['accounting'], 'Accounting', 'What needs attention'],
-    ['accounting&tab=review', 'Review and Post', 'clipboard-check', ['accounting'], 'Accounting', 'Approve transactions'],
-    ['accounting&tab=transactions', 'Expenses and Refunds', 'receipt', ['accounting'], 'Accounting', 'Reviewed financial transactions'],
-    ['accounting&tab=ledger', 'Ledger', 'journal-text', ['accounting'], 'Accounting', 'Journal entries'],
-    ['accounting&tab=accounts', 'Chart of Accounts', 'list-columns', ['accounting'], 'Accounting', ''],
-    ['accounting&tab=mappings', 'Account Mappings', 'diagram-2', ['accounting'], 'Accounting', ''],
-    ['accounting&tab=reconcile', 'Bank Reconciliation', 'bank', ['accounting'], 'Accounting', ''],
+    ['cashier', 'Cashier', 'cash-coin', ['payments.view'], 'Finance', 'Payments and receipts'],
+    ['docfees', 'Document Fees', 'file-earmark-text', ['payments.view'], 'Finance', 'TOR and certificate requests to pay'],
+    ['balance', 'Existing Balances', 'wallet2', ['registration', 'accounting', 'self', 'balances.view'], 'Finance', 'Previous-semester balance and approvals'],
+    ['assessment&tab=categories', 'Fee categories', 'tags', ['assessment'], 'Finance', 'Fee groups'],
+    ['assessment&tab=labels', 'Fee labels', 'tag', ['assessment'], 'Finance', 'Fee lines'],
+    ['assessment&tab=names', 'Fee Templates', 'card-list', ['assessment'], 'Finance', 'Fee templates'],
+    ['subjectfees', 'Subject Fees', 'journal-plus', ['assessment'], 'Finance', 'Fees of particular subjects, per unit'],
+    ['discounts', 'Scholarships & Discounts', 'award', ['assessment', 'discounts.manage'], 'Finance', 'Less on the fees'],
+    ['assessment&tab=labels&plan=list', 'Payment Setup', 'calendar3', ['assessment'], 'Finance', 'Installments, due dates and full-payment discount'],
+    ['accounting&tab=overview', 'Accounting overview', 'speedometer2', ['accounting'], 'Finance', 'What needs attention'],
+    ['accounting&tab=review', 'Review and Post', 'clipboard-check', ['accounting'], 'Finance', 'Approve transactions'],
+    ['accounting&tab=transactions', 'Expenses and Refunds', 'receipt', ['accounting'], 'Finance', 'Reviewed financial transactions'],
+    ['accounting&tab=ledger', 'Ledger', 'journal-text', ['accounting'], 'Finance', 'Journal entries'],
+    ['accounting&tab=accounts', 'Chart of Accounts', 'list-columns', ['accounting'], 'Finance', ''],
+    ['accounting&tab=mappings', 'Account Mappings', 'diagram-2', ['accounting'], 'Finance', ''],
+    ['accounting&tab=reconcile', 'Bank Reconciliation', 'bank', ['accounting'], 'Finance', ''],
     ['reports', 'Report Manager', 'printer', ['admission', 'registration', 'payments.view', 'accounting', 'reports'], 'Administration', 'Census, cashier reports'],
     ['users', 'Users and Groups', 'person-gear', ['users.manage'], 'Administration', 'Sign-in accounts'],
     ['emailsetup', 'Email Sending', 'envelope-at', ['settings.manage'], 'Administration', 'Forgot password emails (EmailJS)'],
@@ -51,11 +51,12 @@ const NAV = [
 ];
 
 /** Icon shown beside each sidebar group heading. */
-const NAV_GROUP_ICONS = ['Enrollment' => 'clipboard-check', 'Records' => 'folder2-open', 'Assessment' => 'calculator', 'Accounting' => 'journal-bookmark', 'Administration' => 'gear-wide-connected'];
+const NAV_GROUP_ICONS = ['Enrollment' => 'clipboard-check', 'Records' => 'folder2-open', 'Assessment' => 'calculator', 'Accounting' => 'journal-bookmark', 'Administration' => 'gear-wide-connected', 'Finance' => 'wallet2'];
 
 /** The sidebar group of the current route, used by the breadcrumb ("Home › Enrollment › Admission"). */
 function nav_group_of(string $route): string
 {
+    if ($route === 'student') $route = 'students';
     foreach (NAV as [$r, , , , $g]) if (explode('&', $r, 2)[0] === $route) return $g;
     return '';
 }
@@ -93,7 +94,7 @@ function layout_start(string $title, bool $bare = false): void
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta name="theme-color" content="<?= $system === 'portal' ? '#2b1866' : '#0f3a29' ?>">
+<meta name="theme-color" content="<?= $system === 'portal' ? '#2b1866' : '#373b80' ?>">
 <title><?= h($title) ?> · <?= h($school) ?></title>
 <link rel="icon" type="image/png" sizes="32x32" href="../icons/favicon-32.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -114,15 +115,17 @@ function layout_start(string $title, bool $bare = false): void
 <link rel="stylesheet" href="assets/theme.css?v=53">
 <link rel="stylesheet" href="assets/unified-toolbar.css?v=57">
 <link rel="stylesheet" href="../css/standard-toolbar.css?v=57">
+<?php if ($system === 'sis' && !$bare && $u): ?><link rel="stylesheet" href="assets/easy-navigation.css?v=1"><?php endif; ?>
 </head>
 <?php $embedFlashes = $bare && isset($_GET['embed']) ? take_flashes() : []; // pop-up pages show their own messages ?>
-<body data-client-scope="<?= h($u ? acadlink_client_scope(Auth::central()) : '') ?>" class="<?= $bare ? 'bare' : 'sis-theme' ?>" data-user-id="<?= h((string) ($u['id'] ?? 'guest')) ?>" data-route="<?= h((string) $route) ?>"<?= array_filter($embedFlashes, fn($f) => $f[0] === 'success') ? ' data-changed="1"' : '' ?>>
+<body data-client-scope="<?= h($u ? acadlink_client_scope(Auth::central()) : '') ?>" class="<?= $bare ? 'bare' : ('sis-theme' . ($system === 'sis' && $u ? ' sis-easy' : '')) ?>" data-user-id="<?= h((string) ($u['id'] ?? 'guest')) ?>" data-route="<?= h((string) $route) ?>"<?= array_filter($embedFlashes, fn($f) => $f[0] === 'success') ? ' data-changed="1"' : '' ?>>
 <?php if ($embedFlashes): ?><div class="embed-wrap pb-0"><?php foreach ($embedFlashes as [$type, $msg]): ?><div class="alert alert-<?= h($type) ?> py-2 mb-0" style="white-space:pre-line" role="alert"><?= h($msg) ?></div><?php endforeach; ?></div><?php endif; ?>
 <?php $LAYOUT_SIDEBAR = !$bare && $u; if ($LAYOUT_SIDEBAR):
     $logo = School::logo();
     $initials = strtoupper(implode('', array_map(fn($w) => mb_substr($w, 0, 1), array_slice(preg_split('/\s+/', trim((string) $u['full_name'])) ?: [], 0, 2))));
     // Unread notifications for the bell and the menu (only for people who can open Notifications)
     $unread = 0; if (Auth::can(...ROUTES['notifications'][1])) { try { $unread = NotificationCenter::unreadCount(); } catch (Throwable) { $unread = 0; } } ?>
+<?php if ($system === 'sis'): ?><a class="sis-skip-link" href="#main">Skip to content</a><?php endif; ?>
 <header class="sis-appbar d-print-none" aria-label="School workspace">
   <button class="sis-appbar-menu d-lg-none" type="button" data-bs-toggle="offcanvas" data-bs-target="#sidebar" aria-controls="sidebar" aria-label="Open menu"><i class="bi bi-list" aria-hidden="true"></i></button>
   <a href="<?= url('dashboard') ?>" class="sis-appbar-brand"><img src="<?= h($logo ?: '../icons/acadlink-mark.png') ?>" alt=""><span class="sis-brand-text"><span class="sis-brand-name"><?= h(School::brand()) ?></span><span class="sis-brand-sub"><?= $system === 'portal' ? 'Student Portal' : 'School Information System' ?></span></span></a>
@@ -153,6 +156,7 @@ function layout_start(string $title, bool $bare = false): void
 <div class="app-shell">
   <aside class="offcanvas-lg offcanvas-start sidebar d-print-none" tabindex="-1" id="sidebar" aria-label="Main navigation">
     <div class="sidebar-inner">
+      <?php if ($system === 'sis'): ?><a class="sis-rail-brand" href="<?= url('dashboard') ?>"><img src="<?= h($logo ?: '../icons/acadlink-mark.png') ?>" alt=""><span><strong><?= h(School::brand()) ?></strong><small>School Information System</small></span></a><?php endif; ?>
       <div class="sis-sidebar-head d-lg-none"><span><?= h(School::brand()) ?> <?= $system === 'portal' ? 'Portal' : 'SIS' ?></span><button type="button" class="btn-close" data-bs-dismiss="offcanvas" data-bs-target="#sidebar" aria-label="Close menu"></button></div>
       <nav class="pb-2"><?php if(in_array(Auth::role(),['TEACHER','STUDENT'],true)): ?><a class="side-link" href="<?= url('history',['tab'=>'grades']) ?>"><i class="bi bi-clock-history"></i><span>History of Grades</span></a><?php if(Auth::role()==='STUDENT'): ?><a class="side-link" href="<?= url('history',['tab'=>'assessments']) ?>"><i class="bi bi-receipt"></i><span>History of Assessments</span></a><?php endif; endif; ?>
       <?php if(Auth::can('self')): ?><a class="side-link" href="<?= url(Auth::studentNumber()?'myenrollment':'myadmission') ?>"><i class="bi bi-person-plus"></i><span><?= Auth::studentNumber()?'Apply for Enrollment':'My admission application' ?></span></a><?php endif; ?>
@@ -163,7 +167,7 @@ function layout_start(string $title, bool $bare = false): void
           if ($r === 'importall' && !ImportAll::can()) continue; // v56: needs both Curriculum and Assessment editing
           [$rr, $qs] = array_pad(explode('&', $r, 2), 2, '');
           parse_str($qs, $params);
-          $active = $here === $r || ($route === $rr && !$qs && !isset($_GET['tab'])) || ($route === 'assessment' && $rr === 'assessment' && !isset($_GET['tab']) && $r === 'assessment&tab=categories') || ($route === 'accounting' && !isset($_GET['tab']) && $r === 'accounting&tab=overview');
+          $active = ($route === 'student' && $rr === 'students') || $here === $r || ($route === $rr && !$qs && !isset($_GET['tab'])) || ($route === 'assessment' && $rr === 'assessment' && !isset($_GET['tab']) && $r === 'assessment&tab=categories') || ($route === 'accounting' && !isset($_GET['tab']) && $r === 'accounting&tab=overview');
           if ($g !== $group) {
               if ($group !== '') echo '</div></div>';
               $group = $g;
@@ -172,6 +176,7 @@ function layout_start(string $title, bool $bare = false): void
         <a class="side-link<?= $active ? ' active' : '' ?>" href="<?= url($rr, $params) ?>"<?= $active ? ' aria-current="page"' : '' ?><?= $hint !== '' ? ' title="' . h($hint) . '"' : '' ?>><i class="bi bi-<?= $icon ?>" aria-hidden="true"></i><span><?= h($label) ?></span><?php if ($rr === 'notifications' && $unread): ?><span class="sis-nav-badge" aria-label="<?= $unread ?> unread"><?= $unread > 99 ? '99+' : $unread ?></span><?php endif; ?></a>
       <?php endforeach; if ($group !== '') echo '</div></div>'; ?>
       </nav>
+      <?php if ($system === 'sis'): ?><a class="sis-rail-profile" href="<?= url('profile') ?>"><span class="sis-user-avatar" aria-hidden="true"><?= h($initials) ?></span><span><strong><?= h($u['full_name']) ?></strong><small><?= h($u['role_name']) ?></small></span><i class="bi bi-chevron-right" aria-hidden="true"></i></a><?php endif; ?>
     </div>
   </aside>
   <div class="app-main">
@@ -214,10 +219,10 @@ function layout_end(bool $bare = false): void
 <script src="assets/accounting-ui.js?v=31" defer></script>
 <script src="assets/app.js?v=41"></script>
 <script src="assets/friendly-ui.js?v=48"></script>
-<script src="assets/sis-actions.js?v=38c"></script>
-<script src="assets/theme.js?v=50"></script>
+<script src="assets/sis-actions.js?v=39"></script>
+<script src="assets/theme.js?v=51"></script>
 <script src="../js/standard-toolbar-core.js?v=57"></script>
-<script src="assets/standard-toolbar.js?v=57"></script>
+<script src="assets/standard-toolbar.js?v=58"></script>
 <script src="assets/eligibility.js?v=31"></script>
 <script src="assets/workspaces.js?v=31"></script>
 <script src="assets/success-sound.js?v=56"></script>

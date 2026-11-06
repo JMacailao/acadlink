@@ -1,0 +1,137 @@
+/* Staff SIS only. Loaded after the legacy themes; print and portal keep their layouts. */
+@media screen {
+  html[data-system="sis"] body.sis-easy {
+    --t-bar: #fff; --t-bar-line: #dde1ed;
+    --t-primary: #373b80; --t-primary-strong: #292d65; --t-primary-ink: #fff;
+    --t-group: #373b80; --t-tint: #e8f5ef; --t-hover: #f0f3fa;
+    --t-rail: #373b80; --t-rail-line: #555993; --t-band: #edf0f7;
+    --t-surface: #fff; --t-zebra: #f7f8fc; --t-line: #dde1ed;
+    --t-line-strong: #bcc2d6; --t-ink: #242744; --t-muted: #5b607a;
+    --t-head: #edf0f7; --t-bar-h: 76px; --sis-mobile-header: 76px;
+    --font-ui: "Segoe UI", system-ui, sans-serif;
+    --font-title: "Trebuchet MS", "Segoe UI", sans-serif;
+    --ui-primary: #373b80; --ui-primary-hover: #292d65;
+    --bs-body-font-family: var(--font-ui); --bs-primary-rgb: 55,59,128;
+    background: #f2f4f8; color: var(--t-ink); font: 15px/1.5 var(--font-ui);
+  }
+  .sis-easy .sis-skip-link { position: fixed; top: -100px; left: 16px; z-index: 2000; padding: 12px; background: white; color: #292d65; }
+  .sis-easy .sis-skip-link:focus { top: 8px; }
+  html[data-system="sis"] body.sis-easy :focus-visible { outline: 3px solid #6974d5; outline-offset: 3px; }
+  html[data-system="sis"] body.sis-easy .sis-appbar { color: var(--t-ink); padding-inline: 24px; gap: 18px; box-shadow: none; }
+  html[data-system="sis"] body.sis-easy .sis-appbar :is(a,.dropdown-toggle,.sis-appbar-menu,.sis-appbar-bell) { color: var(--t-ink); }
+  html[data-system="sis"] body.sis-easy .sis-appbar-search { flex: 1 1 420px; max-width: 640px; margin-right: auto; }
+  html[data-system="sis"] body.sis-easy .sis-appbar-search .form-control { height: 44px; min-height: 44px; background: #fff; border: 1px solid var(--t-line-strong); border-radius: 7px; color: var(--t-ink); font-size: 15px; }
+  html[data-system="sis"] body.sis-easy .sis-appbar-search i, html[data-system="sis"] body.sis-easy .sis-appbar-search .form-control::placeholder { color: var(--t-muted); }
+  html[data-system="sis"] body.sis-easy .sis-appbar-search .form-control:focus { background: #fff; border-color: var(--t-primary); box-shadow: 0 0 0 3px #373b801a; }
+  .sis-easy .sis-kbd { color: var(--t-muted); background: #edf0f7; border-color: var(--t-line); }
+  html[data-system="sis"] body.sis-easy .sis-appbar-year { border: 0; padding: 0; }
+  html[data-system="sis"] body.sis-easy .sis-appbar-year .dropdown-toggle { border: 1px solid var(--t-line-strong); padding: 6px 10px; }
+  html[data-system="sis"] body.sis-easy .sis-appbar-year .sis-year-text small { font-size: 11px; }
+  html[data-system="sis"] body.sis-easy .sis-appbar :is(.dropdown-toggle,.sis-appbar-menu,.sis-appbar-bell):hover { background: #edf0f7; color: var(--t-primary); }
+  .sis-easy .sis-user-avatar { background: #e8eaf5; color: #373b80; width: 38px; height: 38px; }
+  html[data-system="sis"] body.sis-easy .sidebar { --bs-offcanvas-bg: #373b80; --bs-offcanvas-color: #fff; width: 254px; border: 0; }
+  html[data-system="sis"] body.sis-easy:not(.bare) .sidebar-inner { background: #373b80; color: #fff; padding: 0; display: flex; flex-direction: column; overflow: hidden; }
+  .sis-easy .sis-rail-brand { display: flex; align-items: center; gap: 10px; padding: 26px 18px; color: #fff; text-decoration: none; flex-shrink: 0; }
+  .sis-easy .sis-rail-brand img { width: 38px; height: 38px; object-fit: contain; background: white; border-radius: 8px; }
+  .sis-easy .sis-rail-brand span { min-width: 0; }
+  .sis-easy .sis-rail-brand strong { display: block; font: 700 26px/1.2 var(--font-title); overflow-wrap: anywhere; }
+  .sis-easy .sis-rail-brand small { display: block; font-size: 11px; margin-top: 3px; }
+  html[data-system="sis"] body.sis-easy .sidebar-inner > nav { flex: 1 1 auto; min-height: 0; overflow-y: auto; padding: 10px 10px 20px; scrollbar-width: thin; scrollbar-color: #9296c3 #373b80; }
+  html[data-system="sis"] body.sis-easy .side-link { color: #f4f5ff; margin: 3px 0; padding: 10px 12px; min-height: 44px; font-size: 14px; border-radius: 7px; gap: 12px; }
+  html[data-system="sis"] body.sis-easy .side-link i { color: inherit; font-size: 18px; opacity: 1; }
+  html[data-system="sis"] body.sis-easy .nav-group .side-link { padding-left: 28px; }
+  html[data-system="sis"] body.sis-easy .side-link:hover { background: #4a4f94; color: white; }
+  html[data-system="sis"] body.sis-easy .side-link.active { background: #b8e4d4; color: #242744; box-shadow: none; font-weight: 700; }
+  html[data-system="sis"] body.sis-easy .side-link.active i { color: #242744; }
+  html[data-system="sis"] body.sis-easy .nav-group { margin-top: 18px; }
+  html[data-system="sis"] body.sis-easy .nav-group-toggle { text-transform: none; letter-spacing: 0; color: #fff; padding: 10px 12px; min-height: 44px; font-size: 15px !important; }
+  html[data-system="sis"] body.sis-easy .nav-group-toggle:hover { background: #4a4f94; border-radius: 7px; }
+  html[data-system="sis"] body.sis-easy .nav-group-toggle .bi:first-child { display: inline-block; font-size: 20px; }
+  html[data-system="sis"] body.sis-easy .nav-group-chevron { color: #e1e4ff; }
+  html[data-system="sis"] body.sis-easy #sidebar :focus-visible { outline-color: #b8e4d4; outline-offset: -3px; }
+  .sis-easy .sis-rail-profile { display: flex; align-items: center; gap: 10px; padding: 18px; border-top: 1px solid #777bab; color: #fff; text-decoration: none; flex-shrink: 0; }
+  .sis-easy .sis-rail-profile > span:nth-child(2) { min-width: 0; flex: 1; }
+  .sis-easy .sis-rail-profile :is(strong,small) { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .sis-easy .sis-rail-profile small { color: #e0e3fa; font-size: 12px; }
+  .sis-easy .sis-rail-profile:hover { background: #4a4f94; color: #fff; }
+  html[data-system="sis"] body.sis-easy .sis-sidebar-head { color: #fff; }
+  html[data-system="sis"] body.sis-easy .sis-sidebar-head .btn-close { filter: invert(1); }
+  html[data-system="sis"] body.sis-easy .app-shell #main, html[data-system="sis"] body.sis-easy .app-shell #main.sis-header-layout { background: #f2f4f8; padding: 0; }
+  html[data-system="sis"] body.sis-easy .sis-page-heading.sis-workspace-header,
+  html[data-system="sis"] body.sis-easy:not(.bare) .app-content > .sis-page-heading { display: flex !important; width: 100% !important; max-width: 100%; box-sizing: border-box; flex-direction: column; align-items: stretch; gap: 8px; padding: 24px 28px 16px !important; border: 0; background: transparent; }
+  html[data-system="sis"] body.sis-easy:not(.bare) .sis-page-heading .sis-module-title { display: block !important; font: 700 clamp(26px,2.5vw,36px)/1.2 var(--font-title) !important; letter-spacing: -.025em; color: var(--t-ink); margin: 0; order: 1; }
+  html[data-system="sis"] body.sis-easy .sis-page-heading .breadcrumbs { order: 0; font-size: 13px; margin-bottom: 8px !important; }
+  html[data-system="sis"] body.sis-easy .sis-title-row { order: 1; display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+  html[data-system="sis"] body.sis-easy .sis-title-row .sis-module-title { order: 0 !important; }
+  html[data-system="sis"] body.sis-easy .sis-title-row .std-tb-btn { min-height: 42px; padding: 8px 16px; }
+  html[data-system="sis"] body.sis-easy .sis-heading-lede { order: 2; max-width: 75ch; margin: 0; font-size: 15px; }
+  html[data-system="sis"] body.sis-easy .sis-workspace-header .sis-toolbar-header { position: static !important; inset: auto !important; order: 4; height: auto; min-height: 0; width: 100% !important; flex: 0 0 auto; min-width: 0; padding: 12px 0 0 !important; background: transparent !important; border: 0; box-shadow: none; flex-wrap: wrap; }
+  html[data-system="sis"] body.sis-easy .sis-workspace-header .sis-toolbar-header .std-tb { flex-wrap: wrap; gap: 10px; }
+  html[data-system="sis"] body.sis-easy .std-tb { --std-green: #373b80; --std-green-soft: #edf0f7; --std-line: #cdd2e3; --std-ink: #242744; }
+  html[data-system="sis"] body.sis-easy .std-tb [hidden] { display: none !important; }
+  html[data-system="sis"] body.sis-easy .std-tb-group:not(:has(> :not([hidden]))) { display: none; }
+  html[data-system="sis"] body.sis-easy .std-tb-btn { min-height: 38px; height: auto; border-radius: 6px; font-size: 13px; }
+  html[data-system="sis"] body.sis-easy .std-tb-primary { background: #373b80; border-color: #373b80; }
+  html[data-system="sis"] body.sis-easy .std-tb-primary:hover:not(:disabled) { background: #292d65; }
+  html[data-system="sis"] body.sis-easy .sis-record-scroll { padding: 0 28px 24px !important; }
+  html[data-system="sis"] body.sis-easy .sis-list-dock { padding-inline: 28px; }
+  html[data-system="sis"] body.sis-easy form.sis-filter-card { border-radius: 8px; box-shadow: none; }
+  html[data-system="sis"] body.sis-easy form.sis-filter-card > .record-filter-cell { grid-template-columns: minmax(0,1fr); padding: 12px !important; }
+  html[data-system="sis"] body.sis-easy form.sis-filter-card > .record-filter-cell > :is(label,select,input,.input-group) { grid-column: 1; }
+  html[data-system="sis"] body.sis-easy .sis-filter-icon { display: none; }
+  html[data-system="sis"] body.sis-easy .sis-list-bar { border-radius: 8px 8px 0 0; padding: 12px; }
+  html[data-system="sis"] body.sis-easy .sis-record-scroll .table > :not(caption) > * > * { padding: 12px 14px; font-size: 14px; border-right: 0; }
+  html[data-system="sis"] body.sis-easy .sis-record-scroll table > thead > tr > th { height: 44px; font-weight: 650; font-size: 13px; background: #edf0f7; }
+  html[data-system="sis"] body.sis-easy .sis-pill[data-tone="success"],
+  html[data-system="sis"] body.sis-easy .badge.text-bg-success { background: #d8f1df !important; color: #205c37 !important; }
+  html[data-system="sis"] body.sis-easy .sis-student-shortcuts { display: flex; flex-wrap: wrap; gap: 8px 0; margin: 8px 0 0; order: 3; }
+  .sis-easy .sis-student-shortcuts a { display: inline-flex; align-items: center; gap: 8px; padding: 8px 16px; color: #373b80; text-decoration: none; border-right: 1px solid #c6cadd; font-weight: 600; font-size: 14px; }
+  .sis-easy .sis-student-shortcuts a:first-child { padding-left: 0; }
+  .sis-easy .sis-student-shortcuts a:last-child { border: 0; }
+  .sis-easy .sis-student-shortcuts a:hover { text-decoration: underline; }
+  html[data-system="sis"] body.sis-easy .sis-actions-panel { background: #fff; color: #242744; }
+  html[data-system="sis"] body.sis-easy .sis-actions-layout { min-height: 0; }
+  html[data-system="sis"] body.sis-easy #main .nav-pills .nav-link.active { background: #373b80; color: white !important; }
+  html[data-system="sis"] body.sis-easy .sis-record-scroll .table-responsive { overflow-x: auto; }
+  html[data-system="sis"] body.sis-easy .sis-std-static { background: transparent; border: 0; }
+  /* Student records expose View directly; the existing menus retain other actions. */
+  html[data-system="sis"] body.sis-easy[data-route="students"] .sis-row-icons .sis-row-btn { display: inline-flex; align-items: center; justify-content: center; width: auto; height: 34px; padding: 6px 10px; }
+  html[data-system="sis"] body.sis-easy[data-route="students"] .sis-row-icons .sis-row-btn[title^="View"]::after { content: "View"; margin-left: 5px; font: 600 13px var(--font-ui); }
+  html[data-system="sis"] body.sis-easy[data-route="students"] .sis-row-icons .sis-row-btn:not([title^="View"]):not(.sis-row-more) { display: none; }
+  html[data-system="sis"] body.sis-easy .sis-list-footer { min-height: 52px; }
+}
+@media screen and (min-width: 992px) {
+  html[data-system="sis"] body.sis-easy .sis-appbar { padding-left: 282px; }
+  html[data-system="sis"] body.sis-easy .sis-appbar-brand { display: none; }
+  html[data-system="sis"] body.sis-easy .sis-appbar-user .sis-user-text { display: none !important; }
+  html[data-system="sis"] body.sis-easy:not(.bare) .app-shell { margin: 0 0 0 254px; height: auto; min-height: calc(100dvh - var(--t-bar-h)); }
+  html[data-system="sis"] body.sis-easy:not(.bare) .sidebar { position: fixed !important; top: 0 !important; left: 0; height: 100dvh !important; width: 254px; z-index: 1041; }
+  html[data-system="sis"] body.sis-easy:not(.bare) .sidebar-inner { height: 100dvh !important; }
+  html[data-system="sis"] body.sis-easy.fixed-record-shell .app-shell { height: calc(100dvh - var(--t-bar-h)); min-height: 0; }
+  html[data-system="sis"] body.sis-easy .sis-list-dock .record-list-controls { max-height: 38dvh; overflow-y: auto; }
+}
+@media screen and (max-width: 991.98px) {
+  html[data-system="sis"] body.sis-easy { --t-bar-h: 64px; --sis-mobile-header: 64px; }
+  html[data-system="sis"] body.sis-easy .sis-appbar { padding-inline: 12px; gap: 8px; }
+  html[data-system="sis"] body.sis-easy .sis-appbar-brand { margin-right: auto; }
+  html[data-system="sis"] body.sis-easy .sis-workspace-header .sis-toolbar-header { min-width: 0; max-width: 100%; }
+  html[data-system="sis"] body.sis-easy .std-tb { width: 100%; min-width: 0; }
+  html[data-system="sis"] body.sis-easy .std-tb-group-3 { flex-wrap: wrap; min-width: 0; }
+  html[data-system="sis"] body.sis-easy .std-tb-search { min-width: 120px; max-width: 100%; }
+  html[data-system="sis"] body.sis-easy .sis-appbar-brand .sis-brand-name { font-size: 16px; }
+  html[data-system="sis"] body.sis-easy .sis-appbar-search { max-width: 40vw; }
+  html[data-system="sis"] body.sis-easy .sis-appbar-search .sis-kbd { display: none; }
+  html[data-system="sis"] body.sis-easy .sis-appbar-search .form-control { padding-right: 10px; }
+  html[data-system="sis"] body.sis-easy:not(.bare) .sidebar-inner { height: 100%; }
+  .sis-easy .sis-rail-brand { display: none; }
+  html[data-system="sis"] body.sis-easy .sis-page-heading.sis-workspace-header { padding: 20px 16px 12px !important; }
+  html[data-system="sis"] body.sis-easy .sis-record-scroll { padding: 0 16px 20px !important; overflow-x: auto; }
+  html[data-system="sis"] body.sis-easy .sis-list-dock { padding-inline: 16px; }
+  html[data-system="sis"] body.sis-easy .std-tb-group { flex-wrap: wrap; }
+  html[data-system="sis"] body.sis-easy .std-tb-btn .std-tb-label { display: inline; }
+  html[data-system="sis"] body.sis-easy .sis-student-shortcuts a { border: 0; padding: 8px 0; width: 50%; font-size: 13px; }
+  html[data-system="sis"] body.sis-easy .sis-appbar-year { display: none !important; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .sis-easy *, .sis-easy *::before, .sis-easy *::after { scroll-behavior: auto !important; animation: none !important; transition: none !important; }
+}

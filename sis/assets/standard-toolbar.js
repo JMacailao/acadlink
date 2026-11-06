@@ -123,6 +123,13 @@
    s.refresh=refresh&&T.usable(refresh)?{enabled:true,run:()=>refresh.click(),title:'Reload the list with the same filters'}
      :{enabled:true,run:()=>{if(window.SISNavigation&&window.SISNavigation.navigate)window.SISNavigation.navigate(location.href);else location.reload();},title:'Reload this page'};
    Object.entries(s).forEach(([k,v])=>tb.set(k,v));
+   // Staff SIS shows only actions the module supports. Selection-dependent actions
+   // remain visible so users can discover them before selecting a record.
+   if(document.body.classList.contains('sis-easy')){
+     const supported={new:!!newSource,edit:known.edit||!!s.edit?.enabled,void:known.void||!!s.void?.enabled,post:known.post||!!s.post?.enabled,selectAll:!!bulkAll,filters:!!(form||pageForm),apply:!!(apply||pageForm)};
+     Object.entries(supported).forEach(([key,show])=>{const button=tb.el.querySelector('[data-std-slot="'+key+'"]');if(button)button.hidden=!show;});
+     if(newSource)tb.set('new',{...s.new,label:visibleLabel(newSource)});
+   }
    tb.el.classList.toggle('std-tb-dirty',!!list?.classList.contains('is-dirty'));
  }
  let queued=false;const later=()=>{if(queued)return;queued=true;requestAnimationFrame(()=>{queued=false;update();});};
@@ -135,5 +142,9 @@
    scope.cleanup(()=>mo.disconnect());
  }
  scope.cleanup(()=>T.closeMenu());
+ if(document.body.classList.contains('sis-easy')&&route==='students'){
+   const heading=main.querySelector('.sis-page-heading'),title=heading?.querySelector('.sis-module-title'),add=tb.el.querySelector('[data-std-slot="new"]');
+   if(title&&add&&newSource){const row=document.createElement('div');row.className='sis-title-row';title.before(row);row.append(title,add);}
+ }
  update();
 },97);})(window.SISLifecycle?window.SISLifecycle.register:function(){(window.SISModuleQueue=window.SISModuleQueue||[]).push(Array.from(arguments));});
