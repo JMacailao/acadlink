@@ -8,6 +8,8 @@
  const main=document.querySelector('.app-shell #main');
  if(!T||!main||document.body.classList.contains('bare')||document.documentElement.dataset.system==='portal')return;
  const route=document.body.dataset.route||'dashboard';
+ // The overview has no record selection or editing tools.
+ if(route==='dashboard'&&document.body.classList.contains('sis-easy'))return;
  if(['login','forgot','password','logout','signinpic','navstate','receipt','docreceipt','clearanceslip','clearancefile'].includes(route))return;
  if(document.querySelector('.std-tb'))return;
  const moduleName=/[?&](id|new|edit|reg|entry)=/.test(location.search)?'This page':(main.querySelector('.sis-module-title')?.textContent||document.title.split('·')[0]||'This page').trim();
@@ -142,9 +144,26 @@
    scope.cleanup(()=>mo.disconnect());
  }
  scope.cleanup(()=>T.closeMenu());
- if(document.body.classList.contains('sis-easy')&&route==='students'){
-   const heading=main.querySelector('.sis-page-heading'),title=heading?.querySelector('.sis-module-title'),add=tb.el.querySelector('[data-std-slot="new"]');
-   if(title&&add&&newSource){const row=document.createElement('div');row.className='sis-title-row';title.before(row);row.append(title,add);}
+ // Keep the live toolbar with the current module while the app header persists
+ // across navigation. The marker restores its original place on narrow screens.
+ const appbar=document.querySelector('.sis-appbar'),host=document.getElementById('sisAppbarTools');
+ if(document.body.classList.contains('sis-easy')&&appbar&&host){
+   const marker=document.createComment('module toolbar');tb.el.before(marker);
+   const desktop=matchMedia('(min-width:992px)'),wide=matchMedia('(min-width:1700px)');
+   function placeToolbar(){
+     T.closeMenu();
+     if(desktop.matches){
+       const search=appbar.querySelector('.sis-appbar-search');
+       if(wide.matches&&search)search.before(host);else appbar.append(host);
+       host.append(tb.el);host.hidden=false;document.body.classList.add('has-appbar-tools');
+     }else{
+       marker.parentNode?.insertBefore(tb.el,marker);host.hidden=true;document.body.classList.remove('has-appbar-tools');
+     }
+   }
+   scope.on(desktop,'change',placeToolbar);scope.on(wide,'change',placeToolbar);
+   scope.cleanup(()=>{T.closeMenu();tb.el.remove();marker.remove();host.hidden=true;document.body.classList.remove('has-appbar-tools');});
+   placeToolbar();
  }
+
  update();
 },97);})(window.SISLifecycle?window.SISLifecycle.register:function(){(window.SISModuleQueue=window.SISModuleQueue||[]).push(Array.from(arguments));});

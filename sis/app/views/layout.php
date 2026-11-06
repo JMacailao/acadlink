@@ -115,7 +115,7 @@ function layout_start(string $title, bool $bare = false): void
 <link rel="stylesheet" href="assets/theme.css?v=53">
 <link rel="stylesheet" href="assets/unified-toolbar.css?v=57">
 <link rel="stylesheet" href="../css/standard-toolbar.css?v=57">
-<?php if ($system === 'sis' && !$bare && $u): ?><link rel="stylesheet" href="assets/easy-navigation.css?v=1"><?php endif; ?>
+<?php if ($system === 'sis' && !$bare && $u): ?><link rel="stylesheet" href="assets/easy-navigation.css?v=3"><link rel="stylesheet" href="assets/dashboard.css?v=1"><?php endif; ?>
 </head>
 <?php $embedFlashes = $bare && isset($_GET['embed']) ? take_flashes() : []; // pop-up pages show their own messages ?>
 <body data-client-scope="<?= h($u ? acadlink_client_scope(Auth::central()) : '') ?>" class="<?= $bare ? 'bare' : ('sis-theme' . ($system === 'sis' && $u ? ' sis-easy' : '')) ?>" data-user-id="<?= h((string) ($u['id'] ?? 'guest')) ?>" data-route="<?= h((string) $route) ?>"<?= array_filter($embedFlashes, fn($f) => $f[0] === 'success') ? ' data-changed="1"' : '' ?>>
@@ -129,6 +129,7 @@ function layout_start(string $title, bool $bare = false): void
 <header class="sis-appbar d-print-none" aria-label="School workspace">
   <button class="sis-appbar-menu d-lg-none" type="button" data-bs-toggle="offcanvas" data-bs-target="#sidebar" aria-controls="sidebar" aria-label="Open menu"><i class="bi bi-list" aria-hidden="true"></i></button>
   <a href="<?= url('dashboard') ?>" class="sis-appbar-brand"><img src="<?= h($logo ?: '../icons/acadlink-mark.png') ?>" alt=""><span class="sis-brand-text"><span class="sis-brand-name"><?= h(School::brand()) ?></span><span class="sis-brand-sub"><?= $system === 'portal' ? 'Student Portal' : 'School Information System' ?></span></span></a>
+  <?php if ($system === 'sis'): ?><div class="sis-appbar-tools" id="sisAppbarTools" hidden></div><?php endif; ?>
   <?php if (can_search()): ?>
   <form class="sis-appbar-search d-none d-md-flex" method="get" role="search"><input type="hidden" name="r" value="search"><i class="bi bi-search" aria-hidden="true"></i><input class="form-control" id="globalSearch" name="q" value="<?= h($route === 'search' ? (string) ($_GET['q'] ?? '') : '') ?>" placeholder="Find a student, applicant or receipt…" aria-label="Find a student, applicant, registration or receipt" aria-keyshortcuts="Control+K"><kbd class="sis-kbd" aria-hidden="true">Ctrl K</kbd></form>
   <?php endif; ?>
@@ -222,7 +223,7 @@ function layout_end(bool $bare = false): void
 <script src="assets/sis-actions.js?v=39"></script>
 <script src="assets/theme.js?v=51"></script>
 <script src="../js/standard-toolbar-core.js?v=57"></script>
-<script src="assets/standard-toolbar.js?v=58"></script>
+<script src="assets/standard-toolbar.js?v=60"></script>
 <script src="assets/eligibility.js?v=31"></script>
 <script src="assets/workspaces.js?v=31"></script>
 <script src="assets/success-sound.js?v=56"></script>

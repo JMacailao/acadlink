@@ -135,3 +135,88 @@
 @media (prefers-reduced-motion: reduce) {
   .sis-easy *, .sis-easy *::before, .sis-easy *::after { scroll-behavior: auto !important; animation: none !important; transition: none !important; }
 }
+
+/* The desktop toolbar shares the persistent header with global search.
+   At smaller widths its native page location remains the mobile fallback. */
+@media screen and (min-width: 992px) {
+  html[data-system="sis"] body.sis-easy.has-appbar-tools .sis-appbar {
+    gap: 10px; padding-right: 16px;
+  }
+  html[data-system="sis"] body.sis-easy .sis-appbar-tools[hidden] { display: none; }
+  html[data-system="sis"] body.sis-easy .sis-appbar-tools {
+    display: flex; align-items: center; flex: 1 1 auto; min-width: 0;
+  }
+  html[data-system="sis"] body.sis-easy .sis-appbar-tools .std-tb {
+    width: 100%; min-width: 0; flex-wrap: nowrap; gap: 6px;
+  }
+  html[data-system="sis"] body.sis-easy .sis-appbar-tools .std-tb-group {
+    flex-wrap: nowrap; gap: 4px;
+  }
+  html[data-system="sis"] body.sis-easy .sis-appbar-tools .std-tb-group-3 { flex: 1 1 auto; min-width: 0; }
+  html[data-system="sis"] body.sis-easy .sis-appbar-tools .std-tb-group-1,
+  html[data-system="sis"] body.sis-easy .sis-appbar-tools .std-tb-group-2 { padding-right: 6px; }
+  html[data-system="sis"] body.sis-easy .sis-appbar-tools .std-tb-btn {
+    min-height: 38px; padding: 0 8px; font-size: 12px; flex-shrink: 0;
+  }
+  html[data-system="sis"] body.sis-easy .sis-appbar-tools .std-tb-search {
+    flex: 1 1 180px; min-width: 130px; max-width: 240px;
+  }
+  html[data-system="sis"] body.sis-easy .sis-appbar-tools .std-tb-input {
+    height: 38px; font-size: 12px; color: #242744;
+  }
+  html[data-system="sis"] body.sis-easy .sis-appbar-tools .std-tb-more { margin-left: 0; }
+  html[data-system="sis"] body.sis-easy .sis-appbar-tools :is(.std-tb-more,[data-std-slot="refresh"]) .std-tb-label { display: none; }
+  html[data-system="sis"] body.sis-easy.has-appbar-tools #main .sis-toolbar-header { display: none; }
+  html[data-system="sis"] body.sis-easy.has-appbar-tools .sis-appbar-year,
+  html[data-system="sis"] body.sis-easy.has-appbar-tools .sis-appbar-user,
+  html[data-system="sis"] body.sis-easy.has-appbar-tools .sis-appbar-bell { flex-shrink: 0; }
+}
+@media screen and (min-width: 1700px) {
+  /* Keep the module toolbar compact in the open space immediately before global search. */
+  html[data-system="sis"] body.sis-easy.has-appbar-tools .sis-appbar-tools {
+    flex: 0 1 430px; max-width: 430px;
+  }
+  html[data-system="sis"] body.sis-easy.has-appbar-tools .sis-appbar-tools .std-tb-group {
+    gap: 3px;
+  }
+  html[data-system="sis"] body.sis-easy.has-appbar-tools .sis-appbar-tools .std-tb-group-1,
+  html[data-system="sis"] body.sis-easy.has-appbar-tools .sis-appbar-tools .std-tb-group-2 {
+    padding-right: 4px;
+  }
+  html[data-system="sis"] body.sis-easy.has-appbar-tools .sis-appbar-tools .std-tb-btn {
+    min-width: 32px; min-height: 36px; padding-inline: 6px; justify-content: center;
+  }
+  html[data-system="sis"] body.sis-easy.has-appbar-tools .sis-appbar-tools .std-tb-btn .std-tb-label {
+    display: none;
+  }
+  html[data-system="sis"] body.sis-easy.has-appbar-tools .sis-appbar-tools [data-std-slot="new"] .std-tb-label {
+    display: inline;
+  }
+  html[data-system="sis"] body.sis-easy.has-appbar-tools .sis-appbar-tools .std-tb-search {
+    flex: 1 1 110px; min-width: 90px; max-width: 150px;
+  }
+  html[data-system="sis"] body.sis-easy.has-appbar-tools .sis-appbar-search {
+    flex: 0 1 640px; min-width: 380px; max-width: 640px; margin: 0 auto 0 0;
+  }
+  html[data-system="sis"] body.sis-easy.has-appbar-tools .sis-appbar-search .form-control {
+    font-size: 13px; height: 38px; min-height: 38px;
+  }
+}
+@media screen and (min-width: 992px) and (max-width: 1699.98px) {
+  html[data-system="sis"] body.sis-easy.has-appbar-tools { --t-bar-h: 132px; }
+  html[data-system="sis"] body.sis-easy.has-appbar-tools .sis-appbar {
+    flex-wrap: wrap; align-content: center; height: 132px; row-gap: 12px;
+  }
+  html[data-system="sis"] body.sis-easy.has-appbar-tools .sis-appbar-search {
+    flex: 1 1 240px; max-width: none; margin: 0 auto 0 0;
+  }
+  html[data-system="sis"] body.sis-easy.has-appbar-tools .sis-appbar-tools {
+    flex: 1 0 100%; width: 100%;
+  }
+  html[data-system="sis"] body.sis-easy.has-appbar-tools .sis-appbar-tools .std-tb {
+    flex-wrap: wrap;
+  }
+  html[data-system="sis"] body.sis-easy.has-appbar-tools .sis-appbar-tools .std-tb-search {
+    min-width: 120px; max-width: none;
+  }
+}
