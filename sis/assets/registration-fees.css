@@ -19,6 +19,15 @@
   white-space: nowrap;
 }
 
+/* The shared Actions layout makes all its table headings sticky. Keep fee-picker
+   headings in normal flow so they do not cover the first fee row inside the modal. */
+html body.sis-theme #mFee table > thead > tr > th {
+  position: static;
+  top: auto;
+  z-index: auto;
+  box-shadow: none;
+}
+
 .fee-picker-table td,
 .fee-picker-table th {
   padding: .65rem .7rem;
