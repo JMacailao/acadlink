@@ -22,7 +22,7 @@ const NAV = [
     ['history&tab=assessments', 'History of Assessments', 'receipt', ['registration', 'accounting', 'payments.view'], 'Records', 'Permanent assessment records'],
     ['documents', 'TOR & Certificates', 'file-earmark-text', ['documents'], 'Records', 'Issue, sign, reprint and void'],
     ['schedules', 'Class Schedules', 'calendar-week', ['schedules'], 'Records', 'Days, times, rooms and teachers'],
-    ['cashier', 'Cashier', 'cash-coin', ['payments.view'], 'Finance', 'Payments and receipts'],
+    ['cashier', 'Cashier', 'cash-coin', ['payments.view'], '', 'Payments and receipts'],
     ['docfees', 'Document Fees', 'file-earmark-text', ['payments.view'], 'Finance', 'TOR and certificate requests to pay'],
     ['balance', 'Existing Balances', 'wallet2', ['registration', 'accounting', 'self', 'balances.view'], 'Finance', 'Previous-semester balance and approvals'],
     ['assessment&tab=categories', 'Fee categories', 'tags', ['assessment'], 'Finance', 'Fee groups'],
