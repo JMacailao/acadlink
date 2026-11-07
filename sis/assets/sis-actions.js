@@ -2,7 +2,7 @@
 (function(register){register('sis-actions',function(scope){
  'use strict';
  const main=document.querySelector('.app-shell #main');if(!main||document.body.classList.contains('bare')||document.documentElement.dataset.system==='portal')return;
- const route=document.body.dataset.route;if(!['students','teachers','sections','yearlevels','curriculum','assessment','discounts','users','bulkaccounts','migration','admission','registration','cashier','accounting','enrollment','notifications','balance','eligibility','reports','activity','history','settings','help'].includes(route))return;
+ const route=document.body.dataset.route;if(!['students','teachers','sections','yearlevels','curriculum','assessment','discounts','users','bulkaccounts','migration','admission','registration','cashier','accounting','enrollment','balance','eligibility','reports','activity','history','settings','help'].includes(route))return;
  const results=main.querySelector('.sis-record-scroll')||main;
  const labelStatus=main.querySelector('[data-label-status-form]');
  const provided=main.querySelector('[data-sis-actions]'),legacy=main.querySelector('.or-side');

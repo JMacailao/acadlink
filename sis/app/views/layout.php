@@ -222,7 +222,7 @@ function layout_end(bool $bare = false): void
 <script src="assets/accounting-ui.js?v=31" defer></script>
 <script src="assets/app.js?v=42"></script>
 <script src="assets/friendly-ui.js?v=48"></script>
-<script src="assets/sis-actions.js?v=40"></script>
+<script src="assets/sis-actions.js?v=41"></script>
 <script src="assets/theme.js?v=52"></script>
 <script src="../js/standard-toolbar-core.js?v=57"></script>
 <script src="assets/standard-toolbar.js?v=64"></script>
