@@ -694,6 +694,36 @@ final class Registration
         });
     }
 
+    /** Charge several active labels to an open registration in one atomic update. $amounts maps label id to cents or null for the default. */
+    public static function chargeLabels(int $id, array $amounts): void
+    {
+        Auth::require('registration');
+        $charges = [];
+        foreach ($amounts as $labelId => $cents) {
+            if ((!is_int($labelId) && (!is_string($labelId) || !ctype_digit($labelId))) || (int) $labelId < 1) throw new AppError('One of the selected fee items is invalid.');
+            if ($cents !== null && (!is_int($cents) || $cents < 0 || $cents > 99999999999)) throw new AppError('Fee amounts must be zero or more and within the allowed limit.');
+            $charges[(int) $labelId] = $cents;
+        }
+        if (!$charges) throw new AppError('Select at least one fee item.');
+        ksort($charges);
+
+        Db::tx(function () use ($id, $charges) {
+            self::lockOpen($id);
+            $ids = array_keys($charges);
+            $labels = Db::all('SELECT l.* FROM sis_fee_labels l JOIN sis_fee_categories c ON c.id = l.category_id WHERE l.id IN ' . Db::in($ids) . ' AND l.is_active = 1 AND c.is_active = 1 FOR UPDATE', $ids);
+            if (count($labels) !== count($ids)) throw new AppError('One or more selected fee items are no longer active.');
+            $byId = [];
+            foreach ($labels as $label) $byId[(int) $label['id']] = $label;
+            foreach ($charges as $labelId => $cents) {
+                $label = $byId[$labelId];
+                Db::q("INSERT INTO sis_registration_labels (registration_id, label_id, mode, unit_amount) VALUES (?, ?, 'ADD', ?)
+                       ON DUPLICATE KEY UPDATE mode = 'ADD', unit_amount = VALUES(unit_amount)", [$id, $labelId, $cents === null ? null : Money::dec($cents)]);
+                Audit::log('registration_label_charged', 'registration', $id, ['label' => $label['name'], 'amount' => $cents === null ? 'default' : Money::dec($cents)]);
+            }
+            self::recompute($id);
+        });
+    }
+
     /** Take a fee off this student's assessment (a template fee is marked "not charged"; an added one is removed). */
     public static function removeLabel(int $id, int $labelId): void
     {

@@ -115,6 +115,7 @@ function layout_start(string $title, bool $bare = false): void
 <link rel="stylesheet" href="assets/theme.css?v=53">
 <link rel="stylesheet" href="assets/unified-toolbar.css?v=60">
 <link rel="stylesheet" href="../css/standard-toolbar.css?v=57">
+<link rel="stylesheet" href="assets/registration-fees.css?v=1">
 <?php if ($route === 'admission'): ?><link rel="stylesheet" href="assets/admission-form.css?v=1"><?php endif; ?>
 <?php if ($system === 'sis' && !$bare && $u): ?><link rel="stylesheet" href="assets/easy-navigation.css?v=5"><link rel="stylesheet" href="assets/dashboard.css?v=2"><?php endif; ?>
 </head>
@@ -229,6 +230,7 @@ function layout_end(bool $bare = false): void
 <script src="assets/eligibility.js?v=31"></script>
 <script src="assets/workspaces.js?v=31"></script>
 <script src="assets/success-sound.js?v=56"></script>
+<script src="assets/registration-fees.js?v=1"></script>
 </body>
 </html><?php
 }

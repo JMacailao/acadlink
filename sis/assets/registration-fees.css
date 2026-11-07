@@ -1,0 +1,67 @@
+.fee-picker-table-wrap {
+  max-height: min(38vh, 340px);
+  overflow: auto;
+  border: 1px solid var(--bs-border-color);
+  border-radius: .55rem;
+}
+
+.fee-picker-table {
+  min-width: 600px;
+}
+
+.fee-picker-table thead th {
+  position: sticky;
+  z-index: 1;
+  top: 0;
+  background: var(--bs-tertiary-bg);
+  color: var(--bs-emphasis-color);
+  font-size: .8rem;
+  white-space: nowrap;
+}
+
+.fee-picker-table td,
+.fee-picker-table th {
+  padding: .65rem .7rem;
+}
+
+.fee-picker-check {
+  width: 2.75rem;
+  text-align: center;
+}
+
+.fee-picker-table tbody tr.is-selected > * {
+  background: #eaf7f0;
+}
+
+.fee-picker-amount {
+  min-width: 7rem;
+}
+
+.fee-picker-selected {
+  overflow: hidden;
+  border: 1px solid #b9ddc9;
+  border-radius: .6rem;
+  background: #f5fbf7;
+  padding: .85rem;
+}
+
+.fee-picker-selected .table {
+  --bs-table-bg: transparent;
+}
+
+.fee-picker-remove {
+  min-width: 1.5rem;
+  font-size: 1.25rem;
+  line-height: 1;
+  text-decoration: none;
+}
+
+@media (max-width: 575.98px) {
+  .fee-picker-table-wrap {
+    max-height: 42vh;
+  }
+
+  .fee-picker-selected {
+    padding: .65rem;
+  }
+}

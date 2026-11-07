@@ -273,10 +273,25 @@ test('fee labels chosen per student: add, change the amount, take off, charge ag
     eq('4800.00', $total(), 'same name chosen again: the fee taken off is back');
     Registration::removeLabel($R, $id);
     eq('4650.00', $total());
+    $multiA = Assessment::saveLabel(null, ['category_id' => $misc, 'name' => 'Multi fee A', 'charge_type' => 'FIXED', 'default_amount' => '100', 'is_active' => 1]);
+    $multiB = Assessment::saveLabel(null, ['category_id' => $misc, 'name' => 'Multi fee B', 'charge_type' => 'FIXED', 'default_amount' => '250', 'is_active' => 1]);
+    Registration::chargeLabels($R, [$multiA => null, $multiB => 30000]);
+    eq('5050.00', $total(), 'both selected labels are included with their chosen rates');
+    $multiChoices = Registration::chosenLabels($R);
+    eq(['ADD', 'ADD'], [$multiChoices[$multiA]['mode'], $multiChoices[$multiB]['mode']]);
+    eq(null, $multiChoices[$multiA]['unit_amount'], 'blank rate keeps the label default');
+    eq('300.00', $multiChoices[$multiB]['unit_amount'], 'custom rate is saved for this student');
+    throws(fn() => Registration::chargeLabels($R, [$multiA => null, 99999 => 100]), AppError::class, 'no longer active');
+    eq('5050.00', $total(), 'unavailable label rolls back the entire multi-add');
+    throws(fn() => Registration::chargeLabels($R, []), AppError::class, 'Select at least one');
+    Registration::removeLabel($R, $multiA);
+    Registration::removeLabel($R, $multiB);
+    eq('4650.00', $total(), 'removing the multi-added labels restores the original assessment');
     throws(fn() => Registration::chargeLabel($R, 99999, null), AppError::class, 'Choose a fee label');
     throws(fn() => Registration::chargeLabel($R, $id, -100), AppError::class, 'negative');
     as_user('cashier');
     throws(fn() => Registration::chargeLabel($R, $id, null), Forbidden::class);
+    throws(fn() => Registration::chargeLabels($R, [$multiA => null]), Forbidden::class);
 });
 test('remove a fee, void payment, restore charges, and void later payments without balance drift', function () use (&$S, &$L) {
     as_user('registrar');

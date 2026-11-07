@@ -58,6 +58,21 @@ if ($isPost) {
         $label = (string) In::str($_POST, 'label', 100, true, 'Description');
         $added = FormOnce::run($_POST, fn() => Registration::addAdjustment((int) $id, $label, $kind === 'less' ? -$cents : $cents, $kind === 'less' ? 'Less / Discount' : 'Other Charges'));
         flash($added ? 'success' : 'info', $added ? 'Adjustment added.' : 'This adjustment was already added. It was not added again.');
+    } elseif ($a === 'charge_labels') {
+        $selected = $_POST['label_ids'] ?? [];
+        $amounts = $_POST['amounts'] ?? [];
+        if (!is_array($selected) || !is_array($amounts)) throw new AppError('Choose fee items to charge.');
+        $charges = [];
+        foreach ($selected as $rawId) {
+            if (!is_scalar($rawId) || !ctype_digit((string) $rawId) || (int) $rawId < 1) throw new AppError('One of the selected fee items is invalid.');
+            $labelId = (int) $rawId;
+            $rawAmount = $amounts[$labelId] ?? '';
+            if (!is_scalar($rawAmount)) throw new AppError('Enter a valid fee amount.');
+            $amountText = trim((string) $rawAmount);
+            $charges[$labelId] = $amountText === '' ? null : In::money(['amount' => $amountText], 'amount', true, 'Fee amount', true);
+        }
+        Registration::chargeLabels((int) $id, $charges);
+        flash('success', count($charges) . ' fee item(s) added to this student\'s assessment.');
     } elseif ($a === 'charge_label') {
         $amt = trim((string) ($_POST['amount'] ?? ''));
         Registration::chargeLabel((int) $id, (int) ($_POST['label_id'] ?? 0), $amt === '' ? null : (int) In::money($_POST, 'amount', true, 'Amount', true));
@@ -501,15 +516,34 @@ if ($id) {
       </form>
     </div></div></div>
 
-    <div class="modal fade" id="mFee" tabindex="-1" aria-labelledby="mFeeT" aria-hidden="true"><div class="modal-dialog modal-dialog-centered"><div class="modal-content">
-      <form method="post"><?= csrf_field() ?><input type="hidden" name="action" value="charge_label">
-      <div class="modal-header"><h2 class="modal-title fs-5" id="mFeeT"><i class="bi bi-tag me-1"></i>Add a fee (from Labels)</h2><button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button></div>
+    <?php $feeLabels = Assessment::labels(true); ?>
+    <div class="modal fade" id="mFee" tabindex="-1" aria-labelledby="mFeeT" aria-hidden="true"><div class="modal-dialog modal-dialog-centered modal-dialog-scrollable modal-lg modal-fullscreen-sm-down"><div class="modal-content">
+      <form method="post" id="feeLabelForm" data-fee-picker><?= csrf_field() ?><input type="hidden" name="action" value="charge_labels">
+      <div class="modal-header"><h2 class="modal-title fs-5" id="mFeeT"><i class="bi bi-tag me-1"></i>Add fee items</h2><button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button></div>
       <div class="modal-body">
-        <label class="form-label small" for="mFlabel">Fee label</label><select class="form-select mb-3" id="mFlabel" name="label_id" required><option value="">— choose a fee label —</option><?= label_options(Assessment::labels(true)) ?></select>
-        <label class="form-label small" for="mFamt">Amount</label><div class="input-group"><span class="input-group-text">₱</span><input class="form-control" id="mFamt" name="amount" inputmode="decimal" placeholder="Leave empty for the default amount"></div>
-        <div class="form-text">Per-unit and per-subject fees are multiplied by this student's units or subjects. Adding a fee that is already listed changes its amount for this student only.</div>
+        <p class="small text-muted mb-2">Check each fee item to charge this student. Checked items are listed below before you add them.</p>
+        <?php if ($feeLabels): ?>
+        <div class="fee-picker-table-wrap"><table class="table table-sm align-middle fee-picker-table mb-0">
+          <thead><tr><th scope="col" class="fee-picker-check"><span class="visually-hidden">Charge</span></th><th scope="col">Fee item</th><th scope="col">Charge type</th><th scope="col">Rate / amount</th></tr></thead>
+          <tbody>
+          <?php foreach ($feeLabels as $feeLabel): $feeLabelId = (int) $feeLabel['id']; $feeChoice = $feeChoices[$feeLabelId] ?? null; $alreadyAdded = $feeChoice && $feeChoice['mode'] === 'ADD'; $wasExcluded = $feeChoice && $feeChoice['mode'] === 'EXCLUDE'; $customRate = $alreadyAdded && $feeChoice['unit_amount'] !== null ? Money::dec(Money::cents($feeChoice['unit_amount'])) : ''; $defaultRate = Money::dec(Money::cents($feeLabel['default_amount'])); ?>
+          <tr data-fee-option data-fee-name="<?= h($feeLabel['name']) ?>" data-fee-category="<?= h($feeLabel['category_name']) ?>" data-charge-type="<?= h($feeLabel['charge_type']) ?>" data-charge-label="<?= h(['FIXED' => 'Fixed', 'PER_UNIT' => 'Per unit', 'PER_SUBJECT' => 'Per subject'][$feeLabel['charge_type']] ?? $feeLabel['charge_type']) ?>" data-default-amount="<?= h($defaultRate) ?>">
+            <td class="fee-picker-check"><input class="form-check-input" type="checkbox" name="label_ids[]" value="<?= $feeLabelId ?>" data-fee-select aria-label="Charge <?= h($feeLabel['name']) ?>"></td>
+            <td><strong><?= h($feeLabel['name']) ?></strong><?php if ($alreadyAdded): ?> <span class="badge text-bg-success">Already added</span><?php elseif ($wasExcluded): ?> <span class="badge text-bg-secondary">Currently excluded</span><?php endif; ?><small class="d-block text-muted"><?= h($feeLabel['category_name']) ?></small></td>
+            <td class="small"><?= h(CHARGE_TYPES[$feeLabel['charge_type']] ?? $feeLabel['charge_type']) ?></td>
+            <td><div class="small text-muted mb-1">Default ₱<?= Money::fmt(Money::cents($feeLabel['default_amount'])) ?></div><div class="input-group input-group-sm"><span class="input-group-text">₱</span><input class="form-control fee-picker-amount" type="number" min="0" step="0.01" inputmode="decimal" name="amounts[<?= $feeLabelId ?>]" value="<?= h($customRate) ?>" placeholder="Use default" data-fee-amount aria-label="Optional custom rate for <?= h($feeLabel['name']) ?>" disabled></div></td>
+          </tr>
+          <?php endforeach; ?>
+          </tbody>
+        </table></div>
+        <section class="fee-picker-selected mt-3" data-fee-summary hidden aria-live="polite">
+          <div class="d-flex align-items-start justify-content-between gap-2 mb-2"><h3 class="h6 mb-0 text-success">Checked items to charge (<span data-fee-count>0</span>)</h3><span class="small text-muted">Only checked items will be added.</span></div>
+          <div class="table-responsive"><table class="table table-sm align-middle mb-0"><thead><tr><th scope="col">Fee item</th><th scope="col">Charge type</th><th scope="col">Rate / amount</th><th scope="col"><span class="visually-hidden">Remove</span></th></tr></thead><tbody data-fee-summary-list></tbody></table></div>
+        </section>
+        <?php else: ?><p class="alert alert-light border mb-0">No active fee labels are available. Add labels in Assessment before charging an extra fee.</p><?php endif; ?>
+        <p class="small text-muted mt-2 mb-0" data-fee-empty<?= $feeLabels ? '' : ' hidden' ?>>Select fee items above to review them here. Leave a custom rate blank to use the label's default; per-unit and per-subject fees use the student's registered units or subjects.</p>
       </div>
-      <div class="modal-footer"><button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button><button class="btn btn-primary">Add fee</button></div>
+      <div class="modal-footer"><button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button><button type="submit" class="btn btn-primary" data-fee-submit disabled>Add selected fees</button></div>
       </form>
     </div></div></div>
 
