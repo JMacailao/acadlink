@@ -52,39 +52,95 @@ if ($id || isset($_GET['new'])) {
         <?php if (!$reg && Auth::can('admission.approve')): ?><button type="button" class="btn btn-sm btn-outline-danger" data-bs-toggle="modal" data-bs-target="#mCancelDetail"><i class="bi bi-slash-circle"></i> Cancel Admission</button><?php endif; ?>
       <?php endif; ?></div>
   <?php endif; ?>
-  <form method="post" action="<?= url('admission', ($id ? ['id' => $id] : ['new' => 1]) + $E) ?>" class="form-section"><?= csrf_field() ?>
-    <fieldset <?= $editable ? '' : 'disabled' ?>>
-    <h2 class="h6"><?= $e ? h($e['admission_no']) . ' · ' . h($e['last_name'] . ', ' . $e['first_name']) : 'New applicant' ?></h2>
-    <div class="row g-2">
-      <div class="col-md-4"><label class="form-label small" for="aType">Student classification *</label><select class="form-select form-select-sm" id="aType" name="applicant_type" required data-doc-type><option value="">— choose —</option><?php foreach (Admission::TYPES as $k => $l): ?><option value="<?= $k ?>"<?= ($e['applicant_type'] ?? ($_POST['applicant_type'] ?? '')) === $k ? ' selected' : '' ?>><?= h($l) ?></option><?php endforeach; ?></select><div class="form-text">Continuing students and returnees keep the Student ID they already have.</div></div>
-      <div class="col-md-4"><label class="form-label small" for="aStudentNo">Student ID (continuing / returnee)</label><input class="form-control form-control-sm font-monospace" id="aStudentNo" name="student_number" maxlength="40" value="<?= h((string) ($e['student_number'] ?? '')) ?>" placeholder="e.g. 20240015"></div>
-      <div class="col-md-4"><label class="form-label small" for="aSy">School year</label><input class="form-control form-control-sm" id="aSy" name="school_year" required value="<?= $v('school_year', selected_sy()) ?>"></div>
-      <div class="col-md-4"><label class="form-label small" for="aLevel">Year level</label><select class="form-select form-select-sm" id="aLevel" name="year_level"><?= list_options(YEAR_LEVELS, $e['year_level'] ?? '1st Year') ?></select></div>
-      <div class="col-md-4"><label class="form-label small" for="aProgram">Program</label><input class="form-control form-control-sm" id="aProgram" name="program" list="programs" maxlength="40" value="<?= $v('program') ?>"></div>
-      <div class="col-md-8"><label class="form-label small" for="aPrev">Previous school (transferee)</label><input class="form-control form-control-sm" id="aPrev" name="previous_school" maxlength="150" value="<?= $v('previous_school') ?>"></div>
-      <div class="col-md-4"><label class="form-label small" for="aLast">Last name *</label><input class="form-control form-control-sm" id="aLast" name="last_name" required maxlength="80" value="<?= $v('last_name') ?>"></div>
-      <div class="col-md-4"><label class="form-label small" for="aFirst">First name *</label><input class="form-control form-control-sm" id="aFirst" name="first_name" required maxlength="80" value="<?= $v('first_name') ?>"></div>
-      <div class="col-md-4"><label class="form-label small" for="aMiddle">Middle name</label><input class="form-control form-control-sm" id="aMiddle" name="middle_name" maxlength="80" value="<?= $v('middle_name') ?>"></div>
-      <div class="col-md-4"><label class="form-label small" for="aBirth">Birth date</label><input class="form-control form-control-sm" type="date" id="aBirth" name="birth_date" value="<?= $v('birth_date') ?>"></div>
-      <div class="col-md-2"><label class="form-label small" for="aSex">Sex</label><select class="form-select form-select-sm" id="aSex" name="sex"><?= list_options(['F', 'M'], $e['sex'] ?? null, '—') ?></select></div>
-      <div class="col-md-6"><label class="form-label small" for="aEmail">Email</label><input class="form-control form-control-sm" type="email" id="aEmail" name="email" maxlength="191" value="<?= $v('email') ?>"></div>
-      <div class="col-md-4"><label class="form-label small" for="aPhone">Mobile</label><input class="form-control form-control-sm" id="aPhone" name="phone" maxlength="30" value="<?= $v('phone') ?>"></div>
-      <div class="col-md-8"><label class="form-label small" for="aAddr">Complete address *</label><input class="form-control form-control-sm" id="aAddr" name="address" required minlength="5" maxlength="255" placeholder="House no. / street, barangay, town or city, province" value="<?= $v('address') ?>"></div>
-      <div class="col-md-6"><label class="form-label small" for="aGuard">Parent / guardian</label><input class="form-control form-control-sm" id="aGuard" name="guardian_name" maxlength="150" value="<?= $v('guardian_name') ?>"></div>
-      <div class="col-md-6"><label class="form-label small" for="aGuardPh">Guardian's mobile</label><input class="form-control form-control-sm" id="aGuardPh" name="guardian_phone" maxlength="30" value="<?= $v('guardian_phone') ?>"></div>
-      <div class="col-12"><label class="form-label small" for="aRemarks">Remarks (requirements submitted, etc.)</label><input class="form-control form-control-sm" id="aRemarks" name="remarks" maxlength="255" value="<?= $v('remarks') ?>"></div>
+  <?php
+    $tabNames = ['student' => 'Student information', 'guardian' => 'Parent / guardian', 'placement' => 'School placement', 'documents' => 'Documents'];
+    $shownTabs = array_keys($tabNames);
+    $docType = (string) ($e['applicant_type'] ?? ($_POST['applicant_type'] ?? ''));
+  ?>
+  <div class="admission-workflow">
+    <div class="admission-tabs" role="tablist" aria-label="Applicant information" data-admission-tablist>
+      <?php foreach ($shownTabs as $index => $key): ?>
+      <button class="admission-tab" type="button" role="tab" id="admission-tab-<?= $key ?>" aria-controls="admission-panel-<?= $key ?>" aria-selected="<?= $index === 0 ? 'true' : 'false' ?>" tabindex="<?= $index === 0 ? '0' : '-1' ?>" data-admission-tab="<?= $key ?>"><?= h($tabNames[$key]) ?></button>
+      <?php endforeach; ?>
     </div>
-    <datalist id="programs"><?php foreach (GS::programs() as $pg): ?><option><?= h($pg) ?></option><?php endforeach; ?></datalist>
-    <?php if (!$e): $docType = (string) ($_POST['applicant_type'] ?? ''); $docChecked = array_flip(array_map('intval', (array) ($_POST['docs'] ?? []))); $docEditable = true; ?><input type="hidden" name="docs_sent" value="1"><?php require __DIR__ . '/../views/admission_docs.php'; endif; ?>
-    <?php if ($editable): ?><button class="btn btn-sm btn-primary mt-2"><i class="bi bi-save"></i> <?= $e ? 'Save' : 'Save applicant' ?></button><?php endif; ?>
-    </fieldset>
-  </form>
-  <?php if ($e): $docType = (string) $e['applicant_type']; $docSubmitted = EnrollmentDocs::submitted((int) $e['id']); $docChecked = $docSubmitted; $docEditable = in_array($e['status'], ['PENDING', 'ADMITTED'], true) && Auth::can('admission'); ?>
-  <form method="post" action="<?= url('admission', ['id' => $id] + $E) ?>" class="form-section"><?= csrf_field() ?><input type="hidden" name="action" value="docs">
-    <?php require __DIR__ . '/../views/admission_docs.php'; ?>
-    <?php if ($docEditable): ?><button class="btn btn-sm btn-primary mt-2"><i class="bi bi-check2-square"></i> Save checklist</button><?php endif; ?>
-  </form>
-  <?php endif; ?>
+    <form id="admissionDetailsForm" method="post" action="<?= url('admission', ($id ? ['id' => $id] : ['new' => 1]) + $E) ?>" class="form-section admission-record-form"><?= csrf_field() ?>
+      <?php if (!$e): ?><input type="hidden" name="docs_sent" value="1"><?php endif; ?>
+      <h2 class="h5 admission-record-title"><?= $e ? h($e['admission_no']) . ' · ' . h($e['last_name'] . ', ' . $e['first_name']) : 'New applicant' ?></h2>
+      <p class="admission-required-note">Fields marked <span aria-hidden="true">*</span> are required.</p>
+
+      <section class="admission-panel" id="admission-panel-student" role="tabpanel" aria-labelledby="admission-tab-student" data-admission-panel="student">
+        <h3 class="admission-panel-title">Student information</h3>
+        <p class="admission-panel-description">Enter the applicant’s identity and contact details.</p>
+        <fieldset <?= $editable ? '' : 'disabled' ?>><div class="row g-3">
+          <div class="col-md-4"><label class="form-label" for="aType">Student classification <span class="admission-required" aria-hidden="true">*</span></label><select class="form-select" id="aType" name="applicant_type" required data-doc-type><option value="">— choose —</option><?php foreach (Admission::TYPES as $k => $l): ?><option value="<?= $k ?>"<?= ($e['applicant_type'] ?? ($_POST['applicant_type'] ?? '')) === $k ? ' selected' : '' ?>><?= h($l) ?></option><?php endforeach; ?></select><div class="form-text">Continuing students and returnees keep their current Student ID.</div></div>
+          <div class="col-md-4"><label class="form-label" for="aStudentNo">Student ID <span class="text-muted fw-normal">(continuing / returnee)</span></label><input class="form-control font-monospace" id="aStudentNo" name="student_number" maxlength="40" value="<?= h((string) ($e['student_number'] ?? ($_POST['student_number'] ?? ''))) ?>" placeholder="e.g. 20240015"></div>
+          <div class="col-md-4"><label class="form-label" for="aSy">School year <span class="admission-required" aria-hidden="true">*</span></label><input class="form-control" id="aSy" name="school_year" required value="<?= $v('school_year', selected_sy()) ?>" placeholder="e.g. 2026-2027"></div>
+          <div class="col-md-4"><label class="form-label" for="aFirst">First name <span class="admission-required" aria-hidden="true">*</span></label><input class="form-control" id="aFirst" name="first_name" required maxlength="80" value="<?= $v('first_name') ?>" placeholder="e.g. Maria" autocomplete="given-name"></div>
+          <div class="col-md-4"><label class="form-label" for="aLast">Last name <span class="admission-required" aria-hidden="true">*</span></label><input class="form-control" id="aLast" name="last_name" required maxlength="80" value="<?= $v('last_name') ?>" placeholder="e.g. Santos" autocomplete="family-name"></div>
+          <div class="col-md-4"><label class="form-label" for="aMiddle">Middle name</label><input class="form-control" id="aMiddle" name="middle_name" maxlength="80" value="<?= $v('middle_name') ?>" autocomplete="additional-name"></div>
+          <div class="col-md-4"><label class="form-label" for="aBirth">Birthday <span class="admission-required" aria-hidden="true">*</span></label><input class="form-control" type="date" id="aBirth" name="birth_date" required max="<?= date('Y-m-d') ?>" value="<?= $v('birth_date') ?>" aria-describedby="aBirthHelp"><div class="form-text" id="aBirthHelp">Use the date shown on the applicant’s birth record.</div></div>
+          <div class="col-md-3"><label class="form-label" for="aAge">Age <span class="admission-required" aria-hidden="true">*</span></label><input class="form-control admission-age" type="text" id="aAge" value="" placeholder="Calculated from birthday" readonly aria-required="true" aria-describedby="aAgeHelp"><div class="form-text" id="aAgeHelp">Calculated automatically from birthday.</div></div>
+          <div class="col-md-2"><label class="form-label" for="aSex">Sex</label><select class="form-select" id="aSex" name="sex"><?= list_options(['F', 'M'], $e['sex'] ?? ($_POST['sex'] ?? null), '—') ?></select></div>
+          <div class="col-md-6"><label class="form-label" for="aEmail">Email</label><input class="form-control" type="email" id="aEmail" name="email" maxlength="191" value="<?= $v('email') ?>" autocomplete="email"></div>
+          <div class="col-md-6"><label class="form-label" for="aPhone">Mobile</label><input class="form-control" id="aPhone" name="phone" maxlength="30" value="<?= $v('phone') ?>" autocomplete="tel" placeholder="e.g. 09XX XXX XXXX"></div>
+          <div class="col-12"><label class="form-label" for="aAddr">Complete address <span class="admission-required" aria-hidden="true">*</span></label><input class="form-control" id="aAddr" name="address" required minlength="5" maxlength="255" placeholder="House no. / street, barangay, town or city, province" value="<?= $v('address') ?>" autocomplete="street-address"></div>
+        </div></fieldset>
+      </section>
+
+      <section class="admission-panel" id="admission-panel-guardian" role="tabpanel" aria-labelledby="admission-tab-guardian" data-admission-panel="guardian">
+        <h3 class="admission-panel-title">Parent / guardian</h3>
+        <p class="admission-panel-description">Add a contact person the school can reach about the applicant.</p>
+        <fieldset <?= $editable ? '' : 'disabled' ?>><div class="row g-3">
+          <div class="col-md-6"><label class="form-label" for="aGuard">Parent / guardian name</label><input class="form-control" id="aGuard" name="guardian_name" maxlength="150" value="<?= $v('guardian_name') ?>" autocomplete="name"></div>
+          <div class="col-md-6"><label class="form-label" for="aGuardPh">Guardian’s mobile</label><input class="form-control" id="aGuardPh" name="guardian_phone" maxlength="30" value="<?= $v('guardian_phone') ?>" autocomplete="tel" placeholder="e.g. 09XX XXX XXXX"></div>
+          <div class="col-12"><label class="form-label" for="aRemarks">Remarks</label><input class="form-control" id="aRemarks" name="remarks" maxlength="255" value="<?= $v('remarks') ?>" placeholder="Optional notes about the application"></div>
+        </div></fieldset>
+      </section>
+
+      <section class="admission-panel" id="admission-panel-placement" role="tabpanel" aria-labelledby="admission-tab-placement" data-admission-panel="placement">
+        <h3 class="admission-panel-title">School placement</h3>
+        <p class="admission-panel-description">Choose the intended program and year level. Transferees need a previous school.</p>
+        <fieldset <?= $editable ? '' : 'disabled' ?>><div class="row g-3">
+          <div class="col-md-4"><label class="form-label" for="aLevel">Year level</label><select class="form-select" id="aLevel" name="year_level"><?= list_options(YEAR_LEVELS, $e['year_level'] ?? ($_POST['year_level'] ?? '1st Year')) ?></select></div>
+          <div class="col-md-4"><label class="form-label" for="aProgram">Program</label><input class="form-control" id="aProgram" name="program" list="programs" maxlength="40" value="<?= $v('program') ?>" placeholder="e.g. BSIT"></div>
+          <div class="col-md-8"><label class="form-label" for="aPrev">Previous school <span class="text-muted fw-normal">(transferees)</span><span class="admission-required" aria-hidden="true" data-transfer-required hidden> *</span></label><input class="form-control" id="aPrev" name="previous_school" maxlength="150" value="<?= $v('previous_school') ?>" placeholder="Name of the previous school" data-previous-school><div class="form-text">Required when the student classification is Transferee.</div></div>
+        </div></fieldset>
+      </section>
+
+      <?php if (!$e): $docChecked = array_flip(array_map('intval', (array) ($_POST['docs'] ?? []))); $docEditable = true; ?>
+      <section class="admission-panel" id="admission-panel-documents" role="tabpanel" aria-labelledby="admission-tab-documents" data-admission-panel="documents">
+        <h3 class="admission-panel-title">Documents</h3>
+        <p class="admission-panel-description">Track the documents received with this application. You can update the checklist later.</p>
+        <?php require __DIR__ . '/../views/admission_docs.php'; ?>
+      </section>
+      <?php endif; ?>
+      <datalist id="programs"><?php foreach (GS::programs() as $pg): ?><option><?= h($pg) ?></option><?php endforeach; ?></datalist>
+      <div class="admission-form-actions" data-admission-show="<?= $e ? 'student,guardian,placement' : 'student,guardian,placement,documents' ?>">
+        <a class="btn btn-outline-secondary" href="<?= url('admission') ?>"<?= $embed ? ' target="_top"' : '' ?>>Cancel</a>
+        <div class="admission-form-actions-end">
+          <button class="btn btn-outline-secondary" type="button" data-admission-prev><i class="bi bi-arrow-left me-1" aria-hidden="true"></i>Back</button>
+          <button class="btn btn-outline-primary" type="button" data-admission-next><span>Continue</span><i class="bi bi-arrow-right ms-1" aria-hidden="true"></i></button>
+          <?php if ($editable): ?><button class="btn btn-primary" type="submit"><i class="bi bi-save me-1" aria-hidden="true"></i><?= $e ? 'Save changes' : 'Save applicant' ?></button><?php endif; ?>
+        </div>
+      </div>
+    </form>
+    <?php if ($e): $docSubmitted = EnrollmentDocs::submitted((int) $e['id']); $docChecked = $docSubmitted; $docEditable = in_array($e['status'], ['PENDING', 'ADMITTED'], true) && Auth::can('admission'); ?>
+    <form id="admissionDocumentsForm" method="post" action="<?= url('admission', ['id' => $id] + $E) ?>" class="form-section admission-record-form admission-documents-form"><?= csrf_field() ?><input type="hidden" name="action" value="docs">
+      <section class="admission-panel" id="admission-panel-documents" role="tabpanel" aria-labelledby="admission-tab-documents" data-admission-panel="documents">
+        <h3 class="admission-panel-title">Documents</h3>
+        <p class="admission-panel-description">Track the documents received with this application.</p>
+        <?php require __DIR__ . '/../views/admission_docs.php'; ?>
+      </section>
+      <div class="admission-form-actions" data-admission-show="documents">
+        <a class="btn btn-outline-secondary" href="<?= url('admission') ?>"<?= $embed ? ' target="_top"' : '' ?>>Cancel</a>
+        <div class="admission-form-actions-end">
+          <button class="btn btn-outline-secondary" type="button" data-admission-prev><i class="bi bi-arrow-left me-1" aria-hidden="true"></i>Back to school placement</button>
+          <?php if ($docEditable): ?><button class="btn btn-primary" type="submit"><i class="bi bi-check2-square me-1" aria-hidden="true"></i>Save checklist</button><?php endif; ?>
+        </div>
+      </div>
+    </form>
+    <?php endif; ?>
+  </div>
   <?php if ($e && $e['status'] === 'ADMITTED' && Auth::can('admission.approve')): ?><div class="modal fade" id="mCancelDetail" tabindex="-1" aria-hidden="true"><div class="modal-dialog modal-dialog-centered"><div class="modal-content"><form method="post" action="<?= url('admission', ['id' => $id] + $E) ?>" data-confirm="Cancel this admitted applicant? The record will be kept as voided."><?= csrf_field() ?><input type="hidden" name="action" value="cancel"><div class="modal-header"><h2 class="modal-title fs-5 text-danger">Cancel Admission</h2><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div><div class="modal-body"><p class="small">This is allowed only because the student has no active registration. The admission will be kept and hidden from the default list.</p><input class="form-control" name="reason" required maxlength="255" placeholder="Reason for cancellation"></div><div class="modal-footer"><button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Keep admission</button><button class="btn btn-danger">Cancel Admission</button></div></form></div></div></div><?php endif; ?>
   <?php if ($e && $e['status'] === 'PENDING' && Auth::can('admission.approve')): $missingDocs = EnrollmentDocs::missing($e); ?>
   <?php if ($missingDocs): ?><div class="alert alert-warning py-2 small mb-2" role="status"><strong><i class="bi bi-exclamation-triangle me-1" aria-hidden="true"></i>Missing required documents:</strong> <?= h(implode(', ', $missingDocs)) ?>. You can still admit; the checklist keeps track of what is still to be submitted.</div><?php endif; ?>

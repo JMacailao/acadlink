@@ -115,6 +115,7 @@ function layout_start(string $title, bool $bare = false): void
 <link rel="stylesheet" href="assets/theme.css?v=53">
 <link rel="stylesheet" href="assets/unified-toolbar.css?v=57">
 <link rel="stylesheet" href="../css/standard-toolbar.css?v=57">
+<?php if ($route === 'admission'): ?><link rel="stylesheet" href="assets/admission-form.css?v=1"><?php endif; ?>
 <?php if ($system === 'sis' && !$bare && $u): ?><link rel="stylesheet" href="assets/easy-navigation.css?v=5"><link rel="stylesheet" href="assets/dashboard.css?v=2"><?php endif; ?>
 </head>
 <?php $embedFlashes = $bare && isset($_GET['embed']) ? take_flashes() : []; // pop-up pages show their own messages ?>
@@ -200,7 +201,7 @@ function layout_start(string $title, bool $bare = false): void
 function layout_end(bool $bare = false): void
 {
     if (defined('PORTAL_ROOT')) { portal_layout_end($bare); return; }
-    global $LAYOUT_SIDEBAR;
+    global $route, $LAYOUT_SIDEBAR;
     if (!$bare) echo "    </main>\n";
     if ($LAYOUT_SIDEBAR) echo "  </div>\n</div>\n";
     if ($LAYOUT_SIDEBAR): // the pop-up used by buttons with data-frame="url" (New registration, View assessment)
@@ -224,6 +225,7 @@ function layout_end(bool $bare = false): void
 <script src="assets/theme.js?v=51"></script>
 <script src="../js/standard-toolbar-core.js?v=57"></script>
 <script src="assets/standard-toolbar.js?v=61"></script>
+<?php if ($route === 'admission'): ?><script src="assets/admission-form.js?v=1" defer></script><?php endif; ?>
 <script src="assets/eligibility.js?v=31"></script>
 <script src="assets/workspaces.js?v=31"></script>
 <script src="assets/success-sound.js?v=56"></script>

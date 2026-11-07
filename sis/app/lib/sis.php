@@ -216,7 +216,7 @@ final class Admission
         $d = [
             'applicant_type' => In::enum($in, 'applicant_type', array_keys(self::TYPES), true, 'Student classification'),
             'last_name' => In::str($in, 'last_name', 80, true, 'Last name'), 'first_name' => In::str($in, 'first_name', 80, true, 'First name'),
-            'middle_name' => In::str($in, 'middle_name', 80), 'birth_date' => In::date($in, 'birth_date', false, 'Birth date'),
+            'middle_name' => In::str($in, 'middle_name', 80), 'birth_date' => In::date($in, 'birth_date', true, 'Birthday'),
             'sex' => In::enum($in, 'sex', ['M', 'F'], false), 'email' => In::str($in, 'email', 191), 'phone' => In::str($in, 'phone', 30),
             'address' => In::str($in, 'address', 255, true, 'Complete address'), 'guardian_name' => In::str($in, 'guardian_name', 150), 'guardian_phone' => In::str($in, 'guardian_phone', 30),
             'program' => ($p = In::str($in, 'program', 40)) === null ? null : strtoupper($p),
@@ -225,7 +225,7 @@ final class Admission
         ];
         if ($d['email'] !== null && !filter_var($d['email'], FILTER_VALIDATE_EMAIL)) throw new AppError('Email address is not valid.');
         if (mb_strlen((string) $d['address']) < 5) throw new AppError('Complete address: enter the house number / street, barangay, town or city and province.');
-        if ($d['birth_date'] !== null && $d['birth_date'] > date('Y-m-d')) throw new AppError('Birth date cannot be in the future.');
+        if ($d['birth_date'] > date('Y-m-d')) throw new AppError('Birthday cannot be in the future.');
         if (!GS::validSchoolYear($d['school_year'])) throw new AppError('School year must look like 2026-2027.');
         if ($d['applicant_type'] === 'TRANSFEREE' && !$d['previous_school']) throw new AppError('Enter the previous school of the transferee.');
         // A returnee asks for readmission with the Student ID they already have (no new ID)

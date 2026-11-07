@@ -1,0 +1,154 @@
+.admission-workflow {
+  display: grid;
+  gap: .75rem;
+  min-width: 0;
+}
+
+.admission-tabs {
+  display: flex;
+  align-items: stretch;
+  gap: .2rem;
+  overflow-x: auto;
+  border-bottom: 1px solid var(--bs-border-color);
+  scrollbar-width: thin;
+}
+
+.admission-tab {
+  flex: 1 0 auto;
+  min-height: 46px;
+  padding: .65rem 1rem;
+  border: 0;
+  border-bottom: 3px solid transparent;
+  border-radius: .4rem .4rem 0 0;
+  background: transparent;
+  color: #46544d;
+  font: inherit;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.admission-tab:hover {
+  background: #f2f8f4;
+  color: #174f37;
+}
+
+.admission-tab[aria-selected="true"] {
+  border-bottom-color: #1d6b47;
+  background: #eef7f1;
+  color: #174f37;
+}
+
+.admission-tab:focus-visible,
+.admission-form-actions button:focus-visible,
+.admission-form-actions a:focus-visible {
+  outline: 3px solid rgba(29, 107, 71, .32);
+  outline-offset: 2px;
+}
+
+.admission-record-form {
+  min-width: 0;
+  padding: clamp(.9rem, 2vw, 1.35rem);
+}
+
+.admission-record-title {
+  margin: 0 0 .3rem;
+  color: #202b25;
+  font-weight: 700;
+}
+
+.admission-required-note {
+  margin: 0 0 .5rem;
+  color: #526159;
+  font-size: .875rem;
+}
+
+.admission-required {
+  color: #b42318;
+  font-weight: 700;
+}
+
+.admission-panel {
+  min-width: 0;
+  padding: .85rem 0 .5rem;
+}
+
+.admission-panel[hidden],
+.admission-form-actions[hidden],
+.admission-record-form[hidden] {
+  display: none !important;
+}
+
+.admission-panel-title {
+  margin: 0 0 .25rem;
+  color: #202b25;
+  font-size: 1.15rem;
+  font-weight: 700;
+}
+
+.admission-panel-description {
+  margin: 0 0 1.15rem;
+  color: #526159;
+  font-size: .925rem;
+}
+
+.admission-panel fieldset {
+  min-width: 0;
+}
+
+.admission-panel .form-label {
+  margin-bottom: .35rem;
+  color: #26352d;
+  font-size: .9rem;
+  font-weight: 600;
+}
+
+.admission-panel .form-control::placeholder {
+  color: #526159;
+  opacity: 1;
+}
+
+.admission-age {
+  background-color: #f5f8f6;
+}
+
+.admission-form-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: .75rem;
+  margin-top: 1rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--bs-border-color);
+}
+
+.admission-form-actions-end {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: .5rem;
+}
+
+@media (max-width: 575.98px) {
+  .admission-tab {
+    min-height: 44px;
+    padding-inline: .8rem;
+  }
+
+  .admission-panel {
+    padding-top: .7rem;
+  }
+
+  .admission-form-actions {
+    align-items: stretch;
+    flex-direction: column-reverse;
+  }
+
+  .admission-form-actions > a,
+  .admission-form-actions-end > button {
+    justify-content: center;
+  }
+
+  .admission-form-actions-end > button {
+    flex: 1 1 auto;
+  }
+}
