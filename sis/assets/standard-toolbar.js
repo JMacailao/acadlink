@@ -90,7 +90,10 @@
    const makeHeaderAction=(key,label,icon,primary=false)=>{
      const source=registrationActions[key];if(!source)return;
      const control=source.matches('a[href]')?document.createElement('a'):document.createElement('button');
-     if(control.tagName==='A')control.href=source.href;else{control.type='button';control.disabled=!!source.disabled;control.addEventListener('click',()=>{if(!source.disabled)source.click();});}
+     if(control.tagName==='A'){
+       control.href=source.href;
+       ['data-frame','data-frame-title','data-frame-size','target','rel'].forEach(attr=>{if(source.hasAttribute(attr))control.setAttribute(attr,source.getAttribute(attr));});
+     }else{control.type='button';control.disabled=!!source.disabled;control.addEventListener('click',()=>{if(!source.disabled)source.click();});}
      control.className='std-tb-btn std-tb-registration-action'+(primary?' std-tb-primary':'');
      control.innerHTML='<i class="bi bi-'+icon+'" aria-hidden="true"></i><span class="std-tb-label"></span>';
      control.querySelector('.std-tb-label').textContent=label;control.setAttribute('aria-label',label);control.title=label;
@@ -99,6 +102,7 @@
    makeHeaderAction('back','Back','arrow-left');
    makeHeaderAction('print','Print Assessment','printer');
    makeHeaderAction('confirm','Confirm Enrollment','check2-circle',true);
+   makeHeaderAction('pay','Pay at Cashier','cash-coin');
    ['new','edit','post','selectAll','filters','apply'].forEach(k=>{const control=tb.el.querySelector('[data-std-slot="'+k+'"]');if(control)control.hidden=true;});
    const filterGroup=tb.el.querySelector('.std-tb-group-2');if(filterGroup)filterGroup.hidden=true;
    const group3=tb.el.querySelector('.std-tb-group-3');
@@ -123,7 +127,7 @@
  // More Actions: everything else this page offers, run through the original control.
  function moreItems(){
    const items=[],seen=new Set(),used=new Set([newSource,toggle,apply,refresh].filter(Boolean));
-   if(registrationBar)['back','print','confirm','refresh'].forEach(k=>{if(registrationActions[k])used.add(registrationActions[k]);});
+   if(registrationBar)['back','print','confirm','pay','refresh'].forEach(k=>{if(registrationActions[k])used.add(registrationActions[k]);});
    ['edit','void','post'].forEach(k=>sourcesFor(k).forEach(el=>used.add(el)));
    const add=(el,text)=>{text=text||visibleLabel(el);if(!text||seen.has(text.toLowerCase())||used.has(el))return;seen.add(text.toLowerCase());
      items.push({text,icon:el.dataset.icon||T.iconFor(text),disabled:!T.usable(el),title:el.title,run:()=>el.click()});};

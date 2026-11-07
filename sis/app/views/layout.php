@@ -117,7 +117,7 @@ function layout_start(string $title, bool $bare = false): void
 <link rel="stylesheet" href="../css/standard-toolbar.css?v=57">
 <link rel="stylesheet" href="assets/registration-fees.css?v=3">
 <?php if ($route === 'admission'): ?><link rel="stylesheet" href="assets/admission-form.css?v=1"><?php endif; ?>
-<?php if ($system === 'sis' && !$bare && $u): ?><link rel="stylesheet" href="assets/easy-navigation.css?v=5"><link rel="stylesheet" href="assets/dashboard.css?v=2"><?php endif; ?>
+<?php if ($system === 'sis' && !$bare && $u): ?><link rel="stylesheet" href="assets/easy-navigation.css?v=6"><link rel="stylesheet" href="assets/dashboard.css?v=2"><?php endif; ?>
 </head>
 <?php $embedFlashes = $bare && isset($_GET['embed']) ? take_flashes() : []; // pop-up pages show their own messages ?>
 <body data-client-scope="<?= h($u ? acadlink_client_scope(Auth::central()) : '') ?>" class="<?= $bare ? 'bare' : ('sis-theme' . ($system === 'sis' && $u ? ' sis-easy' : '')) ?>" data-user-id="<?= h((string) ($u['id'] ?? 'guest')) ?>" data-route="<?= h((string) $route) ?>"<?= array_filter($embedFlashes, fn($f) => $f[0] === 'success') ? ' data-changed="1"' : '' ?>>
@@ -225,7 +225,7 @@ function layout_end(bool $bare = false): void
 <script src="assets/sis-actions.js?v=40"></script>
 <script src="assets/theme.js?v=52"></script>
 <script src="../js/standard-toolbar-core.js?v=57"></script>
-<script src="assets/standard-toolbar.js?v=63"></script>
+<script src="assets/standard-toolbar.js?v=64"></script>
 <?php if ($route === 'admission'): ?><script src="assets/admission-form.js?v=1" defer></script><?php endif; ?>
 <script src="assets/eligibility.js?v=31"></script>
 <script src="assets/workspaces.js?v=31"></script>

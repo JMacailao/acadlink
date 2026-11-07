@@ -179,6 +179,7 @@
 }
 @media screen and (min-width: 1700px) {
   /* Keep the full, labeled module toolbar beside global search on wide workspaces. */
+  html[data-system="sis"] body.sis-easy.has-appbar-tools .sis-appbar-year { margin-left: auto; }
   html[data-system="sis"] body.sis-easy.has-appbar-tools .sis-appbar-tools {
     flex: 0 1 860px; max-width: 860px;
   }
