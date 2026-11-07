@@ -334,9 +334,7 @@ if ($id) {
     require SIS_ROOT . '/app/views/portal-assessment.php';
     $bal = Registration::balance($r);
     $curText = $usedCur ? trim(($usedCur['program'] ?? '') . ' · ' . ($usedCur['yearLevel'] ?? '') . ' · ' . ($usedCur['term'] ?? ''), ' ·') : ($subs ? 'Subjects picked by hand' : 'No curriculum chosen yet');
-    $tool = fn(string $target, string $icon, string $label, string $note = '', bool $featured = false) => '<li><button type="button" class="registration-tool-button' . ($featured ? ' is-payment-plan' : '') . '" data-bs-toggle="modal" data-bs-target="#' . $target . '"><i class="bi bi-' . $icon . '" aria-hidden="true"></i><span class="registration-tool-copy"><strong>' . $label . '</strong>' . ($note !== '' ? '<small>' . $note . '</small>' : '') . '</span></button></li>';
-    $paymentPlanNote = $currentPaymentPlan ? h((string) ($currentPaymentPlan['terms']['name'] ?? 'Plan selected'))
-        : (Settings::on('cashier_require_plan') ? 'Required before payment' : 'No plan selected');
+    $tool = fn(string $target, string $icon, string $label, bool $featured = false) => '<li><button type="button" class="registration-tool-button' . ($featured ? ' is-payment-plan' : '') . '" data-bs-toggle="modal" data-bs-target="#' . $target . '"><i class="bi bi-' . $icon . '" aria-hidden="true"></i><span class="registration-tool-copy"><strong>' . $label . '</strong></span></button></li>';
     ?>
     <div class="or-screen" data-registration-detail>
       <div class="or-toolbar d-print-none" role="toolbar" aria-label="Registration">
@@ -411,21 +409,19 @@ if ($id) {
           <?= sub_explorer() ?>
           <div class="or-panel">
             <div class="or-panel-title" data-panel-static>Sub-Components</div>
-            <?php $schedReg = Schedules::forRegistration($r, array_column($subs, 'subject_doc_id')); $schedNote = $schedReg['rows'] ? count($schedReg['rows']) . ' meeting(s) a week' . ($schedReg['clashes'] ? ' · <span class="text-danger">time conflict</span>' : '') : 'No schedule set for these subjects yet'; ?>
             <?php if ($open): ?>
             <ul class="or-links tools registration-tool-list">
-              <?= $tool('mSchedule', 'calendar-week', 'Class schedule', $schedNote) ?>
-              <?= $tool('mSubjects', 'journal-check', 'Subjects', h(count($subs) . ' subject(s) · ' . $r['total_units'] . ' units · ' . ($usedCur ? 'Curriculum: ' : '') . $curText)) ?>
-              <?= $tool('mAname', 'card-list', 'Assessment name', $r['assessment_name'] ? h($r['assessment_name']) : 'None chosen: no fees yet') ?>
-              <?= $tool('mDiscount', 'award', 'Scholarship / discount', $given ? count($given) . ' given' : 'None given') ?>
-              <?= $tool('mFee', 'tag', 'Add a fee', 'Charge a fee label to this student') ?>
-              <?= $tool('mAdjust', 'plus-slash-minus', 'Charge or less (discount)', 'Any other charge or amount off') ?>
-              <?php $pendingT = count(array_filter($subs, fn($s) => $s['teacher_name'] === '')); ?>
-              <?= Auth::can('teachers.edit') ? $tool('mTeachers', 'person-workspace', 'Teachers', $subs ? ($pendingT ? $pendingT . ' subject(s) without a teacher' : 'All subjects have a teacher') : 'No subjects yet') : '' ?>
-              <?= $canSetPaymentPlan ? $tool('mPaymentPlan', 'calendar-check', 'Payment plan', $paymentPlanNote, true) : '' ?>
+              <?= $tool('mSchedule', 'calendar-week', 'Class schedule') ?>
+              <?= $tool('mSubjects', 'journal-check', 'Subjects') ?>
+              <?= $tool('mAname', 'card-list', 'Assessment name') ?>
+              <?= $tool('mDiscount', 'award', 'Scholarship / discount') ?>
+              <?= $tool('mFee', 'tag', 'Add a fee') ?>
+              <?= $tool('mAdjust', 'plus-slash-minus', 'Charge or less (discount)') ?>
+              <?= Auth::can('teachers.edit') ? $tool('mTeachers', 'person-workspace', 'Teachers') : '' ?>
+              <?= $canSetPaymentPlan ? $tool('mPaymentPlan', 'calendar-check', 'Payment plan', true) : '' ?>
             </ul>
             <?php else: ?>
-            <ul class="or-links tools registration-tool-list"><?= $tool('mSchedule', 'calendar-week', 'Class schedule', $schedNote) ?><?php if ($r['status'] !== 'CANCELLED' && ($r['record_origin'] ?? '') !== 'MIGRATION' && Auth::can('registration')): ?><?= $tool('mAddDrop', 'arrow-left-right', 'Add / drop subjects', 'After enrollment · withdrawal') ?><?php endif; ?><?= $canSetPaymentPlan ? $tool('mPaymentPlan', 'calendar-check', 'Payment plan', $paymentPlanNote, true) : '' ?></ul>
+            <ul class="or-links tools registration-tool-list"><?= $tool('mSchedule', 'calendar-week', 'Class schedule') ?><?php if ($r['status'] !== 'CANCELLED' && ($r['record_origin'] ?? '') !== 'MIGRATION' && Auth::can('registration')): ?><?= $tool('mAddDrop', 'arrow-left-right', 'Add / drop subjects') ?><?php endif; ?><?= $canSetPaymentPlan ? $tool('mPaymentPlan', 'calendar-check', 'Payment plan', true) : '' ?></ul>
             <?php endif; ?>
           </div>
           <div class="or-panel">
