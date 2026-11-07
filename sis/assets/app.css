@@ -1,7 +1,7 @@
 /* ==========================================================
-   SIS — the same look as the grading system (css/style.css):
-   navy sidebar with a gold top line, Public Sans for the interface,
-   Source Serif 4 for titles, navy / green / maroon buttons and badges.
+   SIS base styles: Public Sans interface, Source Serif 4 titles,
+   and semantic success / warning / error colors. palette.css
+   applies the staff workspace brand colors after the module layers.
    ========================================================== */
 
 :root {
@@ -1291,8 +1291,8 @@ body[data-route="accounting"] .nav-tabs .nav-link.active {
 
 /* ============================================================================
    AcadLink reference design
-   Shared SIS shell: deep-green navigation, green actions, pale workspace,
-   rounded registry panels, compact filters, and sans-serif management headings.
+   Shared SIS shell: colors in palette.css, pale workspace, rounded
+   registry panels, compact filters, and sans-serif management headings.
    ============================================================================ */
 :root {
   --acad-green-950: #063b2a;

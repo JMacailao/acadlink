@@ -1,5 +1,5 @@
 /* Final reference layer. Shared by full pages and add/edit dialogs. */
-/* Student Portal branding: scoped so staff SIS keeps its green theme.
+/* Student Portal branding stays scoped to portal pages; SIS colors are defined by its final palette layer.
    The shared shell's legacy --acad-green-* tokens also drive portal actions. */
 html[data-system="portal"] {
   --acad-green-950:#2b1866; --acad-green-900:#3a2384; --acad-green-800:#4a2a9b;
