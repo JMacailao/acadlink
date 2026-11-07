@@ -23,14 +23,14 @@ const NAV = [
     ['documents', 'TOR & Certificates', 'file-earmark-text', ['documents'], 'Records', 'Issue, sign, reprint and void'],
     ['schedules', 'Class Schedules', 'calendar-week', ['schedules'], 'Records', 'Days, times, rooms and teachers'],
     ['cashier', 'Cashier', 'cash-coin', ['payments.view'], '', 'Payments and receipts'],
-    ['docfees', 'Document Fees', 'file-earmark-text', ['payments.view'], 'Finance', 'TOR and certificate requests to pay'],
-    ['balance', 'Existing Balances', 'wallet2', ['registration', 'accounting', 'self', 'balances.view'], 'Finance', 'Previous-semester balance and approvals'],
-    ['assessment&tab=categories', 'Fee categories', 'tags', ['assessment'], 'Finance', 'Fee groups'],
-    ['assessment&tab=labels', 'Fee labels', 'tag', ['assessment'], 'Finance', 'Fee lines'],
-    ['assessment&tab=names', 'Fee Templates', 'card-list', ['assessment'], 'Finance', 'Fee templates'],
-    ['subjectfees', 'Subject Fees', 'journal-plus', ['assessment'], 'Finance', 'Fees of particular subjects, per unit'],
-    ['discounts', 'Scholarships & Discounts', 'award', ['assessment', 'discounts.manage'], 'Finance', 'Less on the fees'],
-    ['assessment&tab=labels&plan=list', 'Payment Setup', 'calendar3', ['assessment'], 'Finance', 'Installments, due dates and full-payment discount'],
+    ['assessment&tab=categories', 'Fee categories', 'tags', ['assessment'], 'Assessment', 'Fee groups'],
+    ['assessment&tab=labels', 'Fee labels', 'tag', ['assessment'], 'Assessment', 'Fee lines'],
+    ['assessment&tab=names', 'Fee Templates', 'card-list', ['assessment'], 'Assessment', 'Fee templates'],
+    ['subjectfees', 'Subject Fees', 'journal-plus', ['assessment'], 'Assessment', 'Fees of particular subjects, per unit'],
+    ['discounts', 'Scholarships & Discounts', 'award', ['assessment', 'discounts.manage'], 'Assessment', 'Less on the fees'],
+    ['assessment&tab=labels&plan=list', 'Payment Setup', 'calendar3', ['assessment'], 'Assessment', 'Installments, due dates and full-payment discount'],
+    ['docfees', 'Document Fees', 'file-earmark-text', ['payments.view'], 'Fees', 'TOR and certificate requests to pay'],
+    ['balance', 'Existing Balances', 'wallet2', ['registration', 'accounting', 'self', 'balances.view'], 'Fees', 'Previous-semester balance and approvals'],
     ['accounting&tab=overview', 'Accounting overview', 'speedometer2', ['accounting'], 'Finance', 'What needs attention'],
     ['accounting&tab=review', 'Review and Post', 'clipboard-check', ['accounting'], 'Finance', 'Approve transactions'],
     ['accounting&tab=transactions', 'Expenses and Refunds', 'receipt', ['accounting'], 'Finance', 'Reviewed financial transactions'],
@@ -51,7 +51,7 @@ const NAV = [
 ];
 
 /** Icon shown beside each sidebar group heading. */
-const NAV_GROUP_ICONS = ['Enrollment' => 'clipboard-check', 'Records' => 'folder2-open', 'Assessment' => 'calculator', 'Accounting' => 'journal-bookmark', 'Administration' => 'gear-wide-connected', 'Finance' => 'wallet2'];
+const NAV_GROUP_ICONS = ['Enrollment' => 'clipboard-check', 'Records' => 'folder2-open', 'Assessment' => 'calculator', 'Fees' => 'cash-stack', 'Accounting' => 'journal-bookmark', 'Administration' => 'gear-wide-connected', 'Finance' => 'wallet2'];
 
 /** The sidebar group of the current route, used by the breadcrumb ("Home › Enrollment › Admission"). */
 function nav_group_of(string $route): string

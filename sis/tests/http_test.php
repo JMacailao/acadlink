@@ -67,6 +67,16 @@ foreach ($accounts as $role => [$u, $p]) {
         $isDenied = in_array($r, $denied[$role] ?? [], true) || in_array(explode('&', $r)[0], $denied[$role] ?? [], true);
         if ($isDenied) check("$role denied $r", $code === 403, "(got $code)");
         else check("$role $r", in_array($code, [200, 302], true), "(got $code)");
+        if ($role === 'admin' && $r === 'students') {
+            $assessmentNav = $feesNav = [];
+            preg_match('/<div class="nav-group" data-nav-group="Assessment">(.*?)<\/div><\/div>/s', $body, $assessmentNav);
+            preg_match('/<div class="nav-group" data-nav-group="Fees">(.*?)<\/div><\/div>/s', $body, $feesNav);
+            check('sidebar separates assessment setup, fees, and accounting', isset($assessmentNav[1], $feesNav[1])
+                && str_contains($assessmentNav[1], 'Fee categories') && str_contains($assessmentNav[1], 'Payment Setup')
+                && !str_contains($assessmentNav[1], 'Existing Balances')
+                && str_contains($feesNav[1], 'Document Fees') && str_contains($feesNav[1], 'Existing Balances')
+                && str_contains($body, 'data-nav-group="Finance"'), '');
+        }
         if (preg_match('/<b>(Warning|Notice|Deprecated|Fatal error)<\/b>|Uncaught/', $body, $m)) check("$role $r no PHP errors", false, strip_tags(substr($body, strpos($body, $m[0]), 300)));
     }
 }
