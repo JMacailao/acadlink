@@ -68,7 +68,7 @@ function current_school_year(): string
     return $sy;
 }
 
-/** The color theme: "portal" (purple) for students and the Student Portal sign-in, "sis" (navy and teal) for staff. */
+/** The color theme: "portal" (purple) for students and the Student Portal sign-in, "sis" (green) for staff. */
 function sis_system(): string
 {
     $u = Auth::user();
@@ -94,7 +94,7 @@ function layout_start(string $title, bool $bare = false): void
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta name="theme-color" content="<?= $system === 'portal' ? '#2b1866' : '#172c3e' ?>">
+<meta name="theme-color" content="<?= $system === 'portal' ? '#2b1866' : '#1d6b47' ?>">
 <title><?= h($title) ?> · <?= h($school) ?></title>
 <link rel="icon" type="image/png" sizes="32x32" href="../icons/favicon-32.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -121,7 +121,6 @@ function layout_start(string $title, bool $bare = false): void
 <?php if ($route === 'documents' && ($_GET['tab'] ?? '') === 'settings'): ?><script src="assets/documents-template-preview.js?v=1" defer></script><?php endif; ?>
 <?php if ($route === 'admission'): ?><link rel="stylesheet" href="assets/admission-form.css?v=1"><?php endif; ?>
 <?php if ($system === 'sis' && !$bare && $u): ?><link rel="stylesheet" href="assets/easy-navigation.css?v=6"><link rel="stylesheet" href="assets/dashboard.css?v=2"><?php endif; ?>
-<link rel="stylesheet" href="assets/palette.css?v=1">
 </head>
 <?php $embedFlashes = $bare && isset($_GET['embed']) ? take_flashes() : []; // pop-up pages show their own messages ?>
 <body data-client-scope="<?= h($u ? acadlink_client_scope(Auth::central()) : '') ?>" class="<?= $bare ? 'bare' : ('sis-theme' . ($system === 'sis' && $u ? ' sis-easy' : '')) ?>" data-user-id="<?= h((string) ($u['id'] ?? 'guest')) ?>" data-route="<?= h((string) $route) ?>"<?= array_filter($embedFlashes, fn($f) => $f[0] === 'success') ? ' data-changed="1"' : '' ?>>

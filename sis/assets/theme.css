@@ -1,7 +1,7 @@
 /* SIS workspace theme (v34): compact, spreadsheet-like explorer.
    Slim top bar · light-gray grouped sidebar · small title with breadcrumb · flat toolbar · inline filters ·
-   dense records table · light-gray Actions explorer · list footer. Loaded before the final screen palette,
-   so printed documents keep their own layouts. The Student Portal keeps its separate purple theme. */
+   dense records table · light-gray Actions explorer · list footer. Loaded last; screen only, so printed
+   documents keep their own layouts. Staff use forest green; the Student Portal swaps in purple. */
 @media screen {
   body.sis-theme {
     --t-bar:#0f3b29; --t-bar-line:#0b2f20;
