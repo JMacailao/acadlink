@@ -49,6 +49,7 @@ html body.sis-theme .sis-tools-hint { display:none!important; }
 html body.sis-theme .or-toolbar.std-tb-legacy { display:none!important; }
 html[data-system="sis"] body.sis-theme[data-route="registration"] .sis-page-heading.std-registration-detail { min-height:0!important; margin-bottom:0!important; padding:6px 16px 4px!important; gap:0!important; }
 html[data-system="sis"] body.sis-theme[data-route="registration"] .sis-page-heading.std-registration-detail .sis-module-title { display:none!important; }
+html[data-system="sis"] body.sis-theme[data-route="registration"] .sis-page-heading.std-registration-detail > .sis-actions-toggle { display:none!important; }
 html[data-system="sis"] body.sis-theme .std-tb-registration .std-tb-group-1 { flex:0 1 auto; min-width:0; }
 html[data-system="sis"] body.sis-theme .std-tb-registration .std-tb-group-3 { flex:1 1 auto; min-width:0; }
 html[data-system="sis"] body.sis-theme .std-tb-registration .std-tb-group-3 .sis-appbar-search { display:flex!important; align-items:center; position:relative; flex:1 1 240px; min-width:220px; max-width:420px; margin:0; }

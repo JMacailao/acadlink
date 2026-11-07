@@ -113,7 +113,7 @@ function layout_start(string $title, bool $bare = false): void
 <link rel="stylesheet" href="assets/sis-actions.css?v=20261021plans">
 <link rel="stylesheet" href="assets/compact-workspace.css?v=20261025toolbar11">
 <link rel="stylesheet" href="assets/theme.css?v=53">
-<link rel="stylesheet" href="assets/unified-toolbar.css?v=59">
+<link rel="stylesheet" href="assets/unified-toolbar.css?v=60">
 <link rel="stylesheet" href="../css/standard-toolbar.css?v=57">
 <?php if ($route === 'admission'): ?><link rel="stylesheet" href="assets/admission-form.css?v=1"><?php endif; ?>
 <?php if ($system === 'sis' && !$bare && $u): ?><link rel="stylesheet" href="assets/easy-navigation.css?v=5"><link rel="stylesheet" href="assets/dashboard.css?v=2"><?php endif; ?>
