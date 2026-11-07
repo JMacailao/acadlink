@@ -24,6 +24,7 @@
    if(shortcuts)main.querySelector('.sis-page-heading')?.append(shortcuts);
  }
  const route=document.body.dataset.route||'',params=new URLSearchParams(location.search),tab=params.get('tab')||'';
+ const registrationDetail=route==='registration'&&!!main.querySelector('[data-registration-detail]');
  const NOUNS={enrollment:'application',admission:'applicant',registration:'registration',cashier:'receipt',students:'student',teachers:'teacher',sections:'section',yearlevels:'year level',curriculum:'curriculum',assessment:tab==='names'?'fee template':tab==='labels'?'label':'category',discounts:'discount',users:'account',bulkaccounts:'record',migration:'batch',accounting:'entry',notifications:'notification',balance:'student',activity:'activity',history:'record'};
  const plural=n=>/[^aeiou]y$/.test(n)?n.slice(0,-1)+'ies':/(s|x|ch)$/.test(n)?n+'es':n+'s';
  const title=s=>s.replace(/\b\w/g,c=>c.toUpperCase());
@@ -217,7 +218,7 @@
  const actionButton=(icon,text)=>{const b=document.createElement('button');b.type='button';b.className='sis-panel-action';b.innerHTML='<i class="bi bi-'+icon+'" aria-hidden="true"></i>';b.append(document.createTextNode(text));return b;};
  function section(name,cls){const s=document.createElement('section');s.className='sis-panel-section '+(cls||'');const h=document.createElement('h2');h.textContent=name;const body=document.createElement('div');body.className='sis-panel-body';s.append(h,body);return s;}
  function collapsible(sec){
-   const h=sec.querySelector(':scope > h2, :scope > .or-panel-title');if(!h||h.querySelector('.sis-panel-toggle'))return;
+   const h=sec.querySelector(':scope > h2, :scope > .or-panel-title');if(!h||h.hasAttribute('data-panel-static')||h.querySelector('.sis-panel-toggle'))return;
    const text=h.textContent.trim(),key='sis.panel.'+route+'.'+text;const b=document.createElement('button');b.type='button';b.className='sis-panel-toggle';
    b.append(document.createTextNode(text));b.insertAdjacentHTML('beforeend','<i class="bi bi-chevron-up" aria-hidden="true"></i>');h.replaceChildren(b);
    const set=open=>{b.setAttribute('aria-expanded',String(open));sec.classList.toggle('is-collapsed',!open);};
@@ -233,9 +234,17 @@
      else if(name==='Other Actions'){if(!s.querySelector('a,button,form'))s.remove();else{h.textContent='Tools';s.classList.add('sis-module-tools');}}
    });
    panel.querySelectorAll('.or-panel-title').forEach(t=>{if(/sub-?components/i.test(t.textContent))t.textContent='Tools';});
+   if(registrationDetail){
+     panel.querySelector('.or-side')?.querySelectorAll(':scope > .or-panel').forEach(card=>{
+       const title=card.querySelector(':scope > .or-panel-title')?.textContent.trim().toLowerCase();
+       if(!['tools','summaries'].includes(title))card.remove();
+     });
+     const toolsTitle=panel.querySelector('.or-side > .or-panel .or-panel-title[data-panel-static]');
+     if(toolsTitle&&!toolsTitle.querySelector('.bi'))toolsTitle.insertAdjacentHTML('afterbegin','<i class="bi bi-tools me-1" aria-hidden="true"></i>');
+   }
    const top=panel.querySelector('.sis-actions-heading');let after=top;
    const place=s=>{if(after)after.after(s);else panel.prepend(s);after=s;};
-   if(all.length){
+   if(all.length&&!registrationDetail){
      // Every distinct row action, in first-seen order, grouped like the rows group them.
      const groups=new Map();
      all.forEach(tr=>controlsOf(tr).forEach(el=>{const g=el.dataset.panelGroup||'',t=labelOf(el);if(!groups.has(g))groups.set(g,new Map());if(!groups.get(g).has(t))groups.get(g).set(t,iconFor(el,t));}));
@@ -249,22 +258,24 @@
      });
    }
    const tools=[...panel.querySelectorAll('.sis-module-tools,.or-side')];tools.forEach(t=>{if(after)after.after(t);after=t;});
-   const related=(RELATED[route]||[]).map(sideLink).filter(Boolean).filter(a=>!a.classList.contains('active'));
+   const related=registrationDetail?[]:(RELATED[route]||[]).map(sideLink).filter(Boolean).filter(a=>!a.classList.contains('active'));
    if(related.length){const s=section('Related Modules','sis-related');const body=s.querySelector('.sis-panel-body');related.forEach(a=>{const link=document.createElement('a');link.className='sis-panel-action';link.href=a.href;link.innerHTML=a.querySelector('i')?.outerHTML||'';link.append(document.createTextNode(a.textContent.trim()));body.append(link);});panel.append(s);}
-   if(all.length){const hint=document.createElement('p');hint.className='sis-panel-hint';hint.innerHTML='<i class="bi bi-info-circle" aria-hidden="true"></i>';hint.append(document.createTextNode(`Select ${/^[aeiou]/.test(noun)?'an':'a'} ${noun} to use record actions.`));panel.append(hint);}
+   if(all.length&&!registrationDetail){const hint=document.createElement('p');hint.className='sis-panel-hint';hint.innerHTML='<i class="bi bi-info-circle" aria-hidden="true"></i>';hint.append(document.createTextNode(`Select ${/^[aeiou]/.test(noun)?'an':'a'} ${noun} to use record actions.`));panel.append(hint);}
    // Quick Actions: the list's own Add, Import, Print and Reports, when this person has them.
-   const quick=section('Quick Actions','sis-quick'),qb=quick.querySelector('.sis-panel-body');
-   const qAdd=document.querySelector('.record-toolbar [data-list-add] > *');
-   if(qAdd){const b=actionButton('plus-lg',title((qAdd.title||qAdd.textContent).replace(/^new\b/i,'Add').toLowerCase()));b.addEventListener('click',()=>qAdd.click());qb.append(b);}
-   const qImport=[...panel.querySelectorAll('.sis-module-tools a, .or-side a')].find(a=>/import/i.test(a.textContent));
-   if(qImport){const a=document.createElement('a');a.className='sis-panel-action';a.href=qImport.href;a.innerHTML='<i class="bi bi-upload" aria-hidden="true"></i>';a.append(document.createTextNode(qImport.textContent.trim()));qb.append(a);}
-   const qPrint=document.querySelector('.record-toolbar [data-list-print]');
-   if(qPrint&&all.length){const b=actionButton('printer','Print '+title(plural(noun))+' List');b.addEventListener('click',()=>qPrint.click());qb.append(b);}
-   const qReports=route!=='reports'&&sideLink('reports');
-   if(qReports){const a=document.createElement('a');a.className='sis-panel-action';a.href=qReports.href;a.innerHTML='<i class="bi bi-file-earmark-bar-graph" aria-hidden="true"></i>Generate Reports';qb.append(a);}
-   if(qb.children.length)top?top.after(quick):panel.prepend(quick);
+   if(!registrationDetail){
+     const quick=section('Quick Actions','sis-quick'),qb=quick.querySelector('.sis-panel-body');
+     const qAdd=document.querySelector('.record-toolbar [data-list-add] > *');
+     if(qAdd){const b=actionButton('plus-lg',title((qAdd.title||qAdd.textContent).replace(/^new\b/i,'Add').toLowerCase()));b.addEventListener('click',()=>qAdd.click());qb.append(b);}
+     const qImport=[...panel.querySelectorAll('.sis-module-tools a, .or-side a')].find(a=>/import/i.test(a.textContent));
+     if(qImport){const a=document.createElement('a');a.className='sis-panel-action';a.href=qImport.href;a.innerHTML='<i class="bi bi-upload" aria-hidden="true"></i>';a.append(document.createTextNode(qImport.textContent.trim()));qb.append(a);}
+     const qPrint=document.querySelector('.record-toolbar [data-list-print]');
+     if(qPrint&&all.length){const b=actionButton('printer','Print '+title(plural(noun))+' List');b.addEventListener('click',()=>qPrint.click());qb.append(b);}
+     const qReports=route!=='reports'&&sideLink('reports');
+     if(qReports){const a=document.createElement('a');a.className='sis-panel-action';a.href=qReports.href;a.innerHTML='<i class="bi bi-file-earmark-bar-graph" aria-hidden="true"></i>Generate Reports';qb.append(a);}
+     if(qb.children.length)top?top.after(quick):panel.prepend(quick);
+   }
    // School Year card: the same choice as the top bar.
-   const years=[...document.querySelectorAll('.sis-appbar-year .dropdown-item')];
+   const years=registrationDetail?[]:[...document.querySelectorAll('.sis-appbar-year .dropdown-item')];
    if(years.length){
      const card=document.createElement('div');card.className='sis-year-card';
      card.innerHTML='<i class="bi bi-calendar3" aria-hidden="true"></i><label><small>School Year</small><select class="form-select form-select-sm" aria-label="School year"></select></label>';

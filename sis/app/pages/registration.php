@@ -326,11 +326,10 @@ if ($id) {
     layout_start($r['reg_no']);
     require SIS_ROOT . '/app/views/portal-assessment.php';
     $bal = Registration::balance($r);
-    $off = array_filter($feeChoices, fn($c) => $c['mode'] === 'EXCLUDE');
     $curText = $usedCur ? trim(($usedCur['program'] ?? '') . ' · ' . ($usedCur['yearLevel'] ?? '') . ' · ' . ($usedCur['term'] ?? ''), ' ·') : ($subs ? 'Subjects picked by hand' : 'No curriculum chosen yet');
     $tool = fn(string $target, string $icon, string $label, string $note = '') => '<li><a href="#" data-bs-toggle="modal" data-bs-target="#' . $target . '"><i class="bi bi-' . $icon . '"></i><span class="min-w-0">' . $label . ($note !== '' ? '<small>' . $note . '</small>' : '') . '</span></a></li>';
     ?>
-    <div class="or-screen">
+    <div class="or-screen" data-registration-detail>
       <div class="or-toolbar d-print-none" role="toolbar" aria-label="Registration">
         <a class="tb" href="<?= url('registration') ?>" data-registration-action="back"><i class="bi bi-arrow-left"></i>Back</a>
         <button type="button" class="tb" data-print data-registration-action="print"><i class="bi bi-printer"></i>Print Assessment</button>
@@ -402,7 +401,7 @@ if ($id) {
         <aside class="or-side tools-first d-print-none">
           <?= sub_explorer() ?>
           <div class="or-panel">
-            <div class="or-panel-title">Sub-Components</div>
+            <div class="or-panel-title" data-panel-static>Sub-Components</div>
             <?php $schedReg = Schedules::forRegistration($r, array_column($subs, 'subject_doc_id')); $schedNote = $schedReg['rows'] ? count($schedReg['rows']) . ' meeting(s) a week' . ($schedReg['clashes'] ? ' · <span class="text-danger">time conflict</span>' : '') : 'No schedule set for these subjects yet'; ?>
             <?php if ($open): ?>
             <ul class="or-links tools">
@@ -423,24 +422,6 @@ if ($id) {
             </ul>
             <?php endif; ?>
           </div>
-          <?php if ($given): ?>
-          <div class="or-panel">
-            <div class="or-panel-title">Scholarships &amp; Discounts</div>
-            <ul class="or-list">
-            <?php foreach ($given as $g): ?><li><span class="min-w-0 me-auto"><strong><?= h($g['name']) ?></strong><small><?= h(Discounts::describe($g)) ?><?= $g['remarks'] ? ' · ' . h($g['remarks']) : '' ?></small></span>
-              <?php if ($open): ?><?= post_button('registration', ['id' => $id], ['action' => 'remove_discount', 'discount_id' => $g['discount_id']], '<i class="bi bi-x-lg"></i>', 'btn-sm btn-link text-danger p-0', 'Remove ' . $g['name'] . ' from this registration?') ?><?php endif; ?></li><?php endforeach; ?>
-            </ul>
-          </div>
-          <?php endif; ?>
-          <?php if ($off): ?>
-          <div class="or-panel">
-            <div class="or-panel-title">Fees Not Charged</div>
-            <ul class="or-list">
-            <?php foreach ($off as $c): ?><li><span class="me-auto"><s><?= h($c['label_name']) ?></s> <small class="d-inline">not charged</small></span>
-              <?php if ($open): ?><?= post_button('registration', ['id' => $id], ['action' => 'reset_label', 'label_id' => $c['label_id']], 'Charge again', 'btn-sm btn-link p-0') ?><?php endif; ?></li><?php endforeach; ?>
-            </ul>
-          </div>
-          <?php endif; ?>
           <div class="or-panel">
             <div class="or-panel-title">Summaries</div>
             <div class="or-sum">

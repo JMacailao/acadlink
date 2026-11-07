@@ -223,7 +223,7 @@ function layout_end(bool $bare = false): void
 <script src="assets/app.js?v=41"></script>
 <script src="assets/friendly-ui.js?v=48"></script>
 <script src="assets/sis-actions.js?v=39"></script>
-<script src="assets/theme.js?v=51"></script>
+<script src="assets/theme.js?v=52"></script>
 <script src="../js/standard-toolbar-core.js?v=57"></script>
 <script src="assets/standard-toolbar.js?v=63"></script>
 <?php if ($route === 'admission'): ?><script src="assets/admission-form.js?v=1" defer></script><?php endif; ?>
