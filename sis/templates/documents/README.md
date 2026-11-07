@@ -14,6 +14,12 @@ appears in both the issue screen and its settings selector right away; nothing e
 | `good-moral/` | Certificate of Good Moral Character |
 | `honorable-dismissal/` | Certificate of Honorable Dismissal |
 
+Each type includes five designs: **Standard** plus **Modern**, **Compact**, **Detailed / Ledger**, and
+**Formal** variations. TOR uses an Academic Ledger variation; enrollment uses Detailed Enrollment;
+grades uses Grade Summary; good moral uses Student Conduct; honorable dismissal uses Transfer and
+Student Separation variations. The Settings tab's Default template selector discovers these files
+automatically.
+
 ## First lines of a template
 
 ```php
