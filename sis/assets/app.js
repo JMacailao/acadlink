@@ -177,6 +177,9 @@ document.querySelectorAll('table[data-select]').forEach(function (grid) {
     var t = document.getElementById(bar.dataset.collapse); if (t) wire(bar, t, 'sis.' + bar.dataset.collapse);
   });
   document.querySelectorAll('.or-panel').forEach(function (panel, i) {
+    // The Actions explorer binds its own accessible collapse controls after moving .or-side.
+    // Avoid a second click handler on those panels so a collapsed heading can reopen reliably.
+    if (panel.closest('.or-side')) return;
     var bar = panel.querySelector('.or-panel-title'); if (!bar) return;
     bar.setAttribute('role', 'button'); bar.setAttribute('tabindex', '0');
     var ic = document.createElement('i'); ic.className = 'bi bi-chevron-double-up pc'; ic.setAttribute('aria-hidden', 'true'); bar.appendChild(ic);
