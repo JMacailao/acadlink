@@ -308,13 +308,20 @@ if ($id) {
         return;
     }
 
-    // Rendered inside the page below the assessment; output before layout_start() would land above the document.
+    // Keep the current schedule below the assessment; editing is handled in the Payment plan tool modal.
+    $canSetPaymentPlan = $r['status'] !== 'CANCELLED' && ($r['record_origin'] ?? 'ENROLLMENT') === 'ENROLLMENT'
+        && Auth::can('registration') && !Db::val('SELECT id FROM sis_payments WHERE registration_id = ? LIMIT 1', [$id]);
+    $currentPaymentPlan = PaymentPlans::saved((int) $id);
+    $paymentPlanChoices = [];
+    if ($canSetPaymentPlan) {
+        foreach (Db::all('SELECT id, name, kind, rules FROM sis_payment_plans WHERE is_active = 1 ORDER BY name') as $choice) {
+            $rules = json_decode((string) $choice['rules'], true);
+            if (PaymentPlans::applicable($r, is_array($rules) ? $rules : [])) $paymentPlanChoices[] = $choice;
+        }
+    }
+    $currentPaymentPlanAvailable = !$currentPaymentPlan || in_array((int) $currentPaymentPlan['plan_id'], array_map('intval', array_column($paymentPlanChoices, 'id')), true);
     ob_start();
-    if($r['status']!=='CANCELLED'&&($r['record_origin']??'ENROLLMENT')==='ENROLLMENT'&&Auth::can('registration')&&!Db::val('SELECT id FROM sis_payments WHERE registration_id=?',[$id])): ?>
-    <section class="form-section"><h2 class="h6">Payment plan<?= Settings::on('cashier_require_plan') ? ' <span class="badge text-bg-danger">Required before payment</span>' : '' ?></h2><?php if (!PaymentPlans::saved((int) $id) && Settings::on('cashier_require_plan')): ?><p class="small text-danger mb-2"><i class="bi bi-exclamation-triangle me-1" aria-hidden="true"></i>No payment plan yet. The Cashier cannot receive a payment until a plan is chosen.</p><?php endif; ?><form method="post"><?= csrf_field() ?><input type="hidden" name="action" value="payment_plan"><label for="registrationPlan" class="form-label">Choose a saved plan</label><select name="plan_id" id="registrationPlan" class="form-select mb-2" data-plan-preview="<?= h(url('registration', ['id' => $id, 'plan_preview' => ''])) ?>"><option value="">No payment plan</option><?php $currentPlan=PaymentPlans::saved((int)$id);foreach(Db::all('SELECT * FROM sis_payment_plans WHERE is_active=1 ORDER BY name') as $choice): if(!PaymentPlans::applicable($r,json_decode($choice['rules'],true)))continue; ?><option value="<?= (int)$choice['id'] ?>"<?= (int)($currentPlan['plan_id']??0)===(int)$choice['id']?' selected':'' ?>><?= h($choice['name']) ?></option><?php endforeach; ?></select><p class="form-text">Select before the first payment. Saved terms are preserved. Full-payment discounts are conditional until earned.</p><button class="btn btn-outline-primary">Save plan</button></form></section>
-    <?php endif;
     require __DIR__.'/../views/payment-plan-summary.php';
-    echo '<script src="assets/plan-preview.js?v=56" defer></script>';
     $paymentPlanHtml = (string) ob_get_clean();
     $eligibility = null;
     $eligibilityHistorical = false;
@@ -327,7 +334,9 @@ if ($id) {
     require SIS_ROOT . '/app/views/portal-assessment.php';
     $bal = Registration::balance($r);
     $curText = $usedCur ? trim(($usedCur['program'] ?? '') . ' · ' . ($usedCur['yearLevel'] ?? '') . ' · ' . ($usedCur['term'] ?? ''), ' ·') : ($subs ? 'Subjects picked by hand' : 'No curriculum chosen yet');
-    $tool = fn(string $target, string $icon, string $label, string $note = '') => '<li><a href="#" data-bs-toggle="modal" data-bs-target="#' . $target . '"><i class="bi bi-' . $icon . '"></i><span class="min-w-0">' . $label . ($note !== '' ? '<small>' . $note . '</small>' : '') . '</span></a></li>';
+    $tool = fn(string $target, string $icon, string $label, string $note = '', bool $featured = false) => '<li><button type="button" class="registration-tool-button' . ($featured ? ' is-payment-plan' : '') . '" data-bs-toggle="modal" data-bs-target="#' . $target . '"><i class="bi bi-' . $icon . '" aria-hidden="true"></i><span class="registration-tool-copy"><strong>' . $label . '</strong>' . ($note !== '' ? '<small>' . $note . '</small>' : '') . '</span></button></li>';
+    $paymentPlanNote = $currentPaymentPlan ? h((string) ($currentPaymentPlan['terms']['name'] ?? 'Plan selected'))
+        : (Settings::on('cashier_require_plan') ? 'Required before payment' : 'No plan selected');
     ?>
     <div class="or-screen" data-registration-detail>
       <div class="or-toolbar d-print-none" role="toolbar" aria-label="Registration">
@@ -404,22 +413,19 @@ if ($id) {
             <div class="or-panel-title" data-panel-static>Sub-Components</div>
             <?php $schedReg = Schedules::forRegistration($r, array_column($subs, 'subject_doc_id')); $schedNote = $schedReg['rows'] ? count($schedReg['rows']) . ' meeting(s) a week' . ($schedReg['clashes'] ? ' · <span class="text-danger">time conflict</span>' : '') : 'No schedule set for these subjects yet'; ?>
             <?php if ($open): ?>
-            <ul class="or-links tools">
+            <ul class="or-links tools registration-tool-list">
               <?= $tool('mSchedule', 'calendar-week', 'Class schedule', $schedNote) ?>
-              <?= $tool('mSubjects', 'journal-check', 'Subjects (curriculum)', h(count($subs) . ' subject(s) · ' . $r['total_units'] . ' units · ' . ($usedCur ? 'Curriculum: ' : '') . $curText)) ?>
+              <?= $tool('mSubjects', 'journal-check', 'Subjects', h(count($subs) . ' subject(s) · ' . $r['total_units'] . ' units · ' . ($usedCur ? 'Curriculum: ' : '') . $curText)) ?>
               <?= $tool('mAname', 'card-list', 'Assessment name', $r['assessment_name'] ? h($r['assessment_name']) : 'None chosen: no fees yet') ?>
               <?= $tool('mDiscount', 'award', 'Scholarship / discount', $given ? count($given) . ' given' : 'None given') ?>
               <?= $tool('mFee', 'tag', 'Add a fee', 'Charge a fee label to this student') ?>
               <?= $tool('mAdjust', 'plus-slash-minus', 'Charge or less (discount)', 'Any other charge or amount off') ?>
               <?php $pendingT = count(array_filter($subs, fn($s) => $s['teacher_name'] === '')); ?>
               <?= Auth::can('teachers.edit') ? $tool('mTeachers', 'person-workspace', 'Teachers', $subs ? ($pendingT ? $pendingT . ' subject(s) without a teacher' : 'All subjects have a teacher') : 'No subjects yet') : '' ?>
+              <?= $canSetPaymentPlan ? $tool('mPaymentPlan', 'calendar-check', 'Payment plan', $paymentPlanNote, true) : '' ?>
             </ul>
             <?php else: ?>
-            <ul class="or-links tools"><?= $tool('mSchedule', 'calendar-week', 'Class schedule', $schedNote) ?><?php if ($r['status'] !== 'CANCELLED' && ($r['record_origin'] ?? '') !== 'MIGRATION' && Auth::can('registration')): ?><?= $tool('mAddDrop', 'arrow-left-right', 'Add / drop subjects', 'After enrollment · withdrawal') ?><?php endif; ?></ul>
-            <ul class="or-links">
-              <li><a href="<?= url('registration') ?>"><i class="bi bi-list-ul"></i>All Registrations</a></li>
-              <?php if (Auth::can('payments.view')): ?><li><a href="<?= url('cashier') ?>"><i class="bi bi-cash-coin"></i>Cashier · Official Receipts</a></li><?php endif; ?>
-            </ul>
+            <ul class="or-links tools registration-tool-list"><?= $tool('mSchedule', 'calendar-week', 'Class schedule', $schedNote) ?><?php if ($r['status'] !== 'CANCELLED' && ($r['record_origin'] ?? '') !== 'MIGRATION' && Auth::can('registration')): ?><?= $tool('mAddDrop', 'arrow-left-right', 'Add / drop subjects', 'After enrollment · withdrawal') ?><?php endif; ?><?= $canSetPaymentPlan ? $tool('mPaymentPlan', 'calendar-check', 'Payment plan', $paymentPlanNote, true) : '' ?></ul>
             <?php endif; ?>
           </div>
           <div class="or-panel">
@@ -439,6 +445,27 @@ if ($id) {
         </aside>
       </div>
     </div>
+
+    <?php if ($canSetPaymentPlan): ?>
+    <div class="modal fade" id="mPaymentPlan" tabindex="-1" aria-labelledby="mPaymentPlanTitle" aria-hidden="true"><div class="modal-dialog modal-dialog-centered modal-md modal-fullscreen-sm-down"><div class="modal-content">
+      <form method="post" action="<?= url('registration', ['id' => $id] + $E) ?>"><?= csrf_field() ?><input type="hidden" name="action" value="payment_plan">
+        <div class="modal-header"><h2 class="modal-title fs-5" id="mPaymentPlanTitle"><i class="bi bi-calendar-check me-1 text-success" aria-hidden="true"></i>Payment plan<?php if (Settings::on('cashier_require_plan')): ?> <span class="badge text-bg-danger">Required before payment</span><?php endif; ?></h2><button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button></div>
+        <div class="modal-body">
+          <?php if (!$paymentPlanChoices): ?><p class="alert alert-warning py-2 small">No active payment plan applies to this registration. Ask an administrator to add one for this school year, term, program, and year level.</p><?php endif; ?>
+          <?php if (!$currentPaymentPlan && Settings::on('cashier_require_plan')): ?><p class="small text-danger"><i class="bi bi-exclamation-triangle me-1" aria-hidden="true"></i>The Cashier cannot receive a payment until a plan is selected.</p><?php endif; ?>
+          <label class="form-label small" for="registrationPlan">Choose a saved plan</label>
+          <select name="plan_id" id="registrationPlan" class="form-select" data-plan-preview="<?= h(url('registration', ['id' => $id, 'plan_preview' => ''])) ?>"<?= $currentPaymentPlan && !$currentPaymentPlanAvailable ? ' required' : '' ?>>
+            <?php if ($currentPaymentPlan && !$currentPaymentPlanAvailable): ?><option value="" selected disabled>Current plan is unavailable — choose an active plan</option><?php endif; ?>
+            <option value="0"<?= !$currentPaymentPlan ? ' selected' : '' ?>>No payment plan</option>
+            <?php foreach ($paymentPlanChoices as $choice): ?><option value="<?= (int) $choice['id'] ?>"<?= (int) ($currentPaymentPlan['plan_id'] ?? 0) === (int) $choice['id'] ? ' selected' : '' ?>><?= h($choice['name']) ?><?= $choice['kind'] === 'FULL' ? ' · Full payment' : ' · Installment' ?></option><?php endforeach; ?>
+          </select>
+          <p class="form-text mb-0">Choose before the first payment. Saved terms are preserved; full-payment discounts remain conditional until earned. The statement preview updates when you choose a plan.</p>
+        </div>
+        <div class="modal-footer"><button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button><button class="btn btn-success"><i class="bi bi-check2 me-1" aria-hidden="true"></i>Save plan</button></div>
+      </form>
+    </div></div></div>
+    <script src="assets/plan-preview.js?v=56" defer></script>
+    <?php endif; ?>
 
     <?php // ---------------- pop-ups (forms) ---------------- ?>
     <?php if ($open): $all = GS::subjects(); $chosen = array_column($subs, 'subject_doc_id'); $progs = array_filter(Discounts::all(true), fn($d) => !in_array((int) $d['id'], array_map('intval', array_column($given, 'discount_id')), true)); ?>

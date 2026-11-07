@@ -28,7 +28,7 @@
   if(!main||document.body.classList.contains('bare')){document.addEventListener('DOMContentLoaded',mount,{once:true});return;}
   if('scrollRestoration' in history)history.scrollRestoration='manual';
   const allowed=new Set(['dashboard','notifications','enrollment','my','myenrollment','myadmission','admission','registration','cashier','balance','eligibility','students','student','sections','yearlevels','teachers','curriculum','assessment','discounts','accounting','reports','users','bulkaccounts','migration','settings','orseries','terms','activity','help','history','search']);
-  const assets=new Set(['record-list','fixed-shell','accounting-ui','app','friendly-ui','eligibility','workspaces','bulk-accounts','migration','central-accounts','accounting-workflow','portal-enrollment','sis-actions','fee-manage','clearance']);
+  const assets=new Set(['record-list','fixed-shell','accounting-ui','app','friendly-ui','eligibility','workspaces','bulk-accounts','migration','central-accounts','accounting-workflow','portal-enrollment','sis-actions','fee-manage','clearance','plan-preview']);
   const cache=new Map(), loaded=new Map(); let bytes=0, epoch=0, sequence=0, active=null, renderedURL=location.href;
   let scopeKey=document.body.dataset.clientScope||'';
   const channel=typeof BroadcastChannel==='function'?new BroadcastChannel('acadlink-data-v31'):null;

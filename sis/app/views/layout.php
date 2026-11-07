@@ -115,7 +115,7 @@ function layout_start(string $title, bool $bare = false): void
 <link rel="stylesheet" href="assets/theme.css?v=53">
 <link rel="stylesheet" href="assets/unified-toolbar.css?v=60">
 <link rel="stylesheet" href="../css/standard-toolbar.css?v=57">
-<link rel="stylesheet" href="assets/registration-fees.css?v=1">
+<link rel="stylesheet" href="assets/registration-fees.css?v=2">
 <?php if ($route === 'admission'): ?><link rel="stylesheet" href="assets/admission-form.css?v=1"><?php endif; ?>
 <?php if ($system === 'sis' && !$bare && $u): ?><link rel="stylesheet" href="assets/easy-navigation.css?v=5"><link rel="stylesheet" href="assets/dashboard.css?v=2"><?php endif; ?>
 </head>
@@ -215,14 +215,14 @@ function layout_end(bool $bare = false): void
 </div>
 <?php endif; ?>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" crossorigin="anonymous"></script>
-<script src="assets/navigation.js?v=55"></script>
+<script src="assets/navigation.js?v=56"></script>
 <script src="assets/activity.js?v=31"></script>
 <script src="assets/record-list.js?v=48" defer></script>
 <script src="assets/fixed-shell.js?v=31" defer></script>
 <script src="assets/accounting-ui.js?v=31" defer></script>
 <script src="assets/app.js?v=41"></script>
 <script src="assets/friendly-ui.js?v=48"></script>
-<script src="assets/sis-actions.js?v=39"></script>
+<script src="assets/sis-actions.js?v=40"></script>
 <script src="assets/theme.js?v=52"></script>
 <script src="../js/standard-toolbar-core.js?v=57"></script>
 <script src="assets/standard-toolbar.js?v=63"></script>
