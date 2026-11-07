@@ -153,8 +153,8 @@
    function placeToolbar(){
      T.closeMenu();
      if(desktop.matches){
-       const search=appbar.querySelector('.sis-appbar-search');
-       if(wide.matches&&search)search.before(host);else appbar.append(host);
+       const anchor=appbar.querySelector('.sis-appbar-search,.sis-appbar-year,.sis-appbar-user,.sis-appbar-bell');
+       if(wide.matches&&anchor)anchor.before(host);else appbar.append(host);
        host.append(tb.el);host.hidden=false;document.body.classList.add('has-appbar-tools');
      }else{
        marker.parentNode?.insertBefore(tb.el,marker);host.hidden=true;document.body.classList.remove('has-appbar-tools');

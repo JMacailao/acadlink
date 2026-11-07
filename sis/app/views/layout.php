@@ -94,7 +94,7 @@ function layout_start(string $title, bool $bare = false): void
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta name="theme-color" content="<?= $system === 'portal' ? '#2b1866' : '#373b80' ?>">
+<meta name="theme-color" content="<?= $system === 'portal' ? '#2b1866' : '#1d6b47' ?>">
 <title><?= h($title) ?> · <?= h($school) ?></title>
 <link rel="icon" type="image/png" sizes="32x32" href="../icons/favicon-32.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -115,7 +115,7 @@ function layout_start(string $title, bool $bare = false): void
 <link rel="stylesheet" href="assets/theme.css?v=53">
 <link rel="stylesheet" href="assets/unified-toolbar.css?v=57">
 <link rel="stylesheet" href="../css/standard-toolbar.css?v=57">
-<?php if ($system === 'sis' && !$bare && $u): ?><link rel="stylesheet" href="assets/easy-navigation.css?v=3"><link rel="stylesheet" href="assets/dashboard.css?v=1"><?php endif; ?>
+<?php if ($system === 'sis' && !$bare && $u): ?><link rel="stylesheet" href="assets/easy-navigation.css?v=5"><link rel="stylesheet" href="assets/dashboard.css?v=2"><?php endif; ?>
 </head>
 <?php $embedFlashes = $bare && isset($_GET['embed']) ? take_flashes() : []; // pop-up pages show their own messages ?>
 <body data-client-scope="<?= h($u ? acadlink_client_scope(Auth::central()) : '') ?>" class="<?= $bare ? 'bare' : ('sis-theme' . ($system === 'sis' && $u ? ' sis-easy' : '')) ?>" data-user-id="<?= h((string) ($u['id'] ?? 'guest')) ?>" data-route="<?= h((string) $route) ?>"<?= array_filter($embedFlashes, fn($f) => $f[0] === 'success') ? ' data-changed="1"' : '' ?>>
@@ -223,7 +223,7 @@ function layout_end(bool $bare = false): void
 <script src="assets/sis-actions.js?v=39"></script>
 <script src="assets/theme.js?v=51"></script>
 <script src="../js/standard-toolbar-core.js?v=57"></script>
-<script src="assets/standard-toolbar.js?v=60"></script>
+<script src="assets/standard-toolbar.js?v=61"></script>
 <script src="assets/eligibility.js?v=31"></script>
 <script src="assets/workspaces.js?v=31"></script>
 <script src="assets/success-sound.js?v=56"></script>
