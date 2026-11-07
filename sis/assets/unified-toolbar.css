@@ -46,6 +46,20 @@ html body.sis-theme .record-toolbar.std-tb-legacy { display:none!important; }
 html body.sis-theme .sis-toolbar-header .std-tb { flex:1 1 auto; padding-left:2px; }
 html body.sis-theme .sis-std-static { margin:6px 0 10px; padding:7px 9px; background:#fff; border:1px solid #dce7e4; border-radius:10px; }
 html body.sis-theme .sis-tools-hint { display:none!important; }
+html body.sis-theme .or-toolbar.std-tb-legacy { display:none!important; }
+html[data-system="sis"] body.sis-theme[data-route="registration"] .sis-page-heading.std-registration-detail { min-height:0!important; margin-bottom:0!important; padding:6px 16px 4px!important; gap:0!important; }
+html[data-system="sis"] body.sis-theme[data-route="registration"] .sis-page-heading.std-registration-detail .sis-module-title { display:none!important; }
+html[data-system="sis"] body.sis-theme .std-tb-registration .std-tb-group-1 { flex:0 1 auto; min-width:0; }
+html[data-system="sis"] body.sis-theme .std-tb-registration .std-tb-group-3 { flex:1 1 auto; min-width:0; }
+html[data-system="sis"] body.sis-theme .std-tb-registration .std-tb-group-3 .sis-appbar-search { display:flex!important; align-items:center; position:relative; flex:1 1 240px; min-width:220px; max-width:420px; margin:0; }
+html[data-system="sis"] body.sis-theme .std-tb-registration .std-tb-group-3 .sis-appbar-search .form-control { width:100%; min-width:0; height:38px; min-height:38px; padding-right:64px; color:var(--std-ink,#24352e); background:#fff; border-color:var(--std-line,#d5e2dd); font-size:12px; }
+html[data-system="sis"] body.sis-theme .std-tb-registration .std-tb-group-3 .sis-appbar-search .sis-kbd { color:var(--std-muted,#7b8a84); background:#f3f6f5; border-color:var(--std-line,#d5e2dd); }
+html body.sis-theme .std-tb-registration [hidden] { display:none!important; }
+@media (max-width:991.98px) {
+  html[data-system="sis"] body.sis-theme .std-tb-registration .std-tb-group-1 { max-width:100%; overflow-x:auto; overscroll-behavior-inline:contain; scrollbar-width:thin; }
+  html[data-system="sis"] body.sis-theme .std-tb-registration .std-tb-group-3 { flex:1 1 100%; width:100%; }
+  html[data-system="sis"] body.sis-theme .std-tb-registration .std-tb-group-3 .sis-appbar-search { flex:1 1 180px; min-width:180px; max-width:none; }
+}
 @media screen and (max-width:991.98px) {
   html body.sis-theme .sis-toolbar-header .std-tb { padding:6px 0; }
 }

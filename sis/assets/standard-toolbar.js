@@ -50,6 +50,14 @@
  const note=el=>{const k=slotOf(visibleLabel(el));if(k)known[k]=true;};
  allRows().forEach(tr=>rowControls(tr).forEach(note));rowTools.forEach(note);accounting.forEach(b=>{const k=ACC_SLOT[b.dataset.accountingAction];if(k)known[k]=true;});
  const params=new URLSearchParams(location.search);
+ const registrationDetail=route==='registration'&&params.has('id');
+ const registrationBar=registrationDetail?main.querySelector('.or-toolbar[aria-label="Registration"]'):null;
+ const registrationHeading=registrationBar?main.querySelector('.sis-page-heading'):null;
+ const registrationActions=registrationBar?Object.fromEntries(['back','print','confirm','pay','reopen','void','refresh'].map(k=>[k,registrationBar.querySelector('[data-registration-action="'+k+'"]')])):{};
+ const registrationSearchForm=registrationBar&&document.body.classList.contains('sis-easy')?document.querySelector('.sis-appbar-search'):null;
+ const registrationSearchParent=registrationSearchForm?.parentNode||null;
+ const registrationSearchNext=registrationSearchForm?.nextSibling||null;
+ const registrationSearchClass=registrationSearchForm?.getAttribute('class')||'';
  // A single-record page (or a tool page without rows): page-level buttons act on the open record.
  const detail=['id','new','edit','reg','entry'].some(k=>params.has(k))||!allRows().length;
  // An action that only exists as a confirmation pop-up (e.g. Cancel Admission) opens that pop-up.
@@ -73,6 +81,36 @@
  const search=searchInput||pageSearch||null;
  const tb=T.create({search,searchPlaceholder:'Search',searchTitle:list?'':'This page has no list to search',more:moreItems});
  tb.el.dataset.route=route;
+ if(registrationBar){
+   if(registrationHeading){registrationHeading.classList.add('std-registration-detail');scope.cleanup(()=>registrationHeading.classList.remove('std-registration-detail'));}
+   registrationBar.classList.add('std-tb-legacy');
+   tb.el.classList.add('std-tb-registration');
+   const group=tb.el.querySelector('.std-tb-group-1');
+   const pivot=group?.querySelector('[data-std-slot="new"]')||group?.firstChild||null;
+   const makeHeaderAction=(key,label,icon,primary=false)=>{
+     const source=registrationActions[key];if(!source)return;
+     const control=source.matches('a[href]')?document.createElement('a'):document.createElement('button');
+     if(control.tagName==='A')control.href=source.href;else{control.type='button';control.disabled=!!source.disabled;control.addEventListener('click',()=>{if(!source.disabled)source.click();});}
+     control.className='std-tb-btn std-tb-registration-action'+(primary?' std-tb-primary':'');
+     control.innerHTML='<i class="bi bi-'+icon+'" aria-hidden="true"></i><span class="std-tb-label"></span>';
+     control.querySelector('.std-tb-label').textContent=label;control.setAttribute('aria-label',label);control.title=label;
+     group?.insertBefore(control,pivot);
+   };
+   makeHeaderAction('back','Back','arrow-left');
+   makeHeaderAction('print','Print Assessment','printer');
+   makeHeaderAction('confirm','Confirm Enrollment','check2-circle',true);
+   ['new','edit','post','selectAll','filters','apply'].forEach(k=>{const control=tb.el.querySelector('[data-std-slot="'+k+'"]');if(control)control.hidden=true;});
+   const filterGroup=tb.el.querySelector('.std-tb-group-2');if(filterGroup)filterGroup.hidden=true;
+   const group3=tb.el.querySelector('.std-tb-group-3');
+   const localSearch=group3?.querySelector('.std-tb-search');
+   const refreshSlot=group3?.querySelector('[data-std-slot="refresh"]');
+   if(registrationSearchForm&&group3&&refreshSlot){
+     localSearch?.remove();
+     registrationSearchForm.classList.remove('d-none','d-md-flex');
+     registrationSearchForm.classList.add('std-tb-registration-search');
+     group3.insertBefore(registrationSearchForm,refreshSlot);
+   }
+ }
  if(old){old.classList.add('std-tb-legacy');old.before(tb.el);}
  else{
    // Same place as on list pages: the fixed bar under the top bar (in the page heading on phones).
@@ -85,6 +123,7 @@
  // More Actions: everything else this page offers, run through the original control.
  function moreItems(){
    const items=[],seen=new Set(),used=new Set([newSource,toggle,apply,refresh].filter(Boolean));
+   if(registrationBar)['back','print','confirm','refresh'].forEach(k=>{if(registrationActions[k])used.add(registrationActions[k]);});
    ['edit','void','post'].forEach(k=>sourcesFor(k).forEach(el=>used.add(el)));
    const add=(el,text)=>{text=text||visibleLabel(el);if(!text||seen.has(text.toLowerCase())||used.has(el))return;seen.add(text.toLowerCase());
      items.push({text,icon:el.dataset.icon||T.iconFor(text),disabled:!T.usable(el),title:el.title,run:()=>el.click()});};
@@ -161,7 +200,14 @@
      }
    }
    scope.on(desktop,'change',placeToolbar);scope.on(wide,'change',placeToolbar);
-   scope.cleanup(()=>{T.closeMenu();tb.el.remove();marker.remove();host.hidden=true;document.body.classList.remove('has-appbar-tools');});
+   scope.cleanup(()=>{
+     T.closeMenu();tb.el.remove();marker.remove();host.hidden=true;document.body.classList.remove('has-appbar-tools');
+     if(registrationSearchForm&&registrationSearchParent){
+       registrationSearchForm.classList.remove('std-tb-registration-search');
+       registrationSearchForm.setAttribute('class',registrationSearchClass);
+       registrationSearchParent.insertBefore(registrationSearchForm,registrationSearchNext?.parentNode===registrationSearchParent?registrationSearchNext:null);
+     }
+   });
    placeToolbar();
  }
 

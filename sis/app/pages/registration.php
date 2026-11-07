@@ -30,12 +30,11 @@ if ($isPost) {
         $curId = trim((string) ($_POST['curriculum_id'] ?? ''));
         $cur = $curId !== '' ? GS::get('curriculum', $curId) : null;
         if ($curId !== '' && !$cur) throw new AppError('Curriculum not found.');
-        [$newId, $notes] = Registration::create($adm, $adm ? null : In::str($_POST, 'student_number', 40, true, 'Student ID'),
+        [$newId] = Registration::create($adm, $adm ? null : In::str($_POST, 'student_number', 40, true, 'Student ID'),
             (string) In::str($_POST, 'section_id', 191, true, 'Section'), (string) In::str($_POST, 'term', 20, true, 'Term'), In::int($_POST, 'assessment_name_id'),
             $cur ? array_values((array) ($cur['subjectIds'] ?? [])) : null, array_map('intval', array_filter((array) ($_POST['extra_labels'] ?? []), fn($v) => is_string($v) && ctype_digit($v))),
             In::str($_POST, 'override_reason', 255));
         if ($did = In::int($_POST, 'discount_id')) Discounts::give($newId, $did, In::str($_POST, 'discount_remarks', 255));
-        flash('success', "Registration draft created. Review eligibility, subjects and fees, then click Confirm Enrollment." . ($notes ? "\n" . implode("\n", $notes) : ''));
         redirect('registration', ['id' => $newId]);
     }
     if ($a === 'update' || $a === 'subjects' || $a === 'aname') {
@@ -318,17 +317,16 @@ if ($id) {
     ?>
     <div class="or-screen">
       <div class="or-toolbar d-print-none" role="toolbar" aria-label="Registration">
-        <a class="tb" href="<?= url('registration') ?>"><i class="bi bi-arrow-left"></i>Back</a>
-        <button type="button" class="tb" data-print><i class="bi bi-printer"></i>Print Assessment</button>
-        <?php if ($open && Auth::can('enrollment.confirm')): ?><button type="button" class="tb" data-bs-toggle="modal" data-bs-target="#mConfirm"><i class="bi bi-check2-circle"></i>Confirm Enrollment</button><?php endif; ?>
-        <?php if (Auth::can('payments.record') && $state !== 'VOIDED' && $bal > 0): ?><a class="tb" href="<?= url('cashier', ['reg' => $id]) ?>" data-frame="<?= url('cashier', ['reg' => $id, 'embed' => 1]) ?>" data-frame-title="Receive payment" data-frame-size="xl"><i class="bi bi-cash-coin"></i>Pay at Cashier</a><?php endif; ?>
-        <?php if ($state === 'DONE' && Auth::can('enrollment.reopen')): ?><button type="button" class="tb" data-bs-toggle="modal" data-bs-target="#mReopen"><i class="bi bi-unlock text-primary"></i>Reopen</button><?php endif; ?>
-        <?php if ($canEdit && $state !== 'VOIDED'): ?><button type="button" class="tb" data-bs-toggle="modal" data-bs-target="#mVoid"><i class="bi bi-slash-circle text-danger"></i>Void</button><?php endif; ?>
+        <a class="tb" href="<?= url('registration') ?>" data-registration-action="back"><i class="bi bi-arrow-left"></i>Back</a>
+        <button type="button" class="tb" data-print data-registration-action="print"><i class="bi bi-printer"></i>Print Assessment</button>
+        <?php if ($open && Auth::can('enrollment.confirm')): ?><button type="button" class="tb" data-bs-toggle="modal" data-bs-target="#mConfirm" data-registration-action="confirm"><i class="bi bi-check2-circle"></i>Confirm Enrollment</button><?php endif; ?>
+        <?php if (Auth::can('payments.record') && $state !== 'VOIDED' && $bal > 0): ?><a class="tb" href="<?= url('cashier', ['reg' => $id]) ?>" data-frame="<?= url('cashier', ['reg' => $id, 'embed' => 1]) ?>" data-frame-title="Receive payment" data-frame-size="xl" data-registration-action="pay"><i class="bi bi-cash-coin"></i>Pay at Cashier</a><?php endif; ?>
+        <?php if ($state === 'DONE' && Auth::can('enrollment.reopen')): ?><button type="button" class="tb" data-bs-toggle="modal" data-bs-target="#mReopen" data-registration-action="reopen"><i class="bi bi-unlock text-primary"></i>Reopen</button><?php endif; ?>
+        <?php if ($canEdit && $state !== 'VOIDED'): ?><button type="button" class="tb" data-bs-toggle="modal" data-bs-target="#mVoid" data-registration-action="void"><i class="bi bi-slash-circle text-danger"></i>Void</button><?php endif; ?>
         <span class="tb-sep"></span>
         <span class="tb-title me-auto text-truncate"><span class="font-monospace"><?= h($r['reg_no']) ?></span> · <?= h($r['student_name']) ?> <?= badge($state) ?><?= $state !== 'VOIDED' ? ' ' . badge(Registration::payStatus($r)) : '' ?></span>
-        <a class="tb" href="<?= url('registration', ['id' => $id]) ?>"><i class="bi bi-arrow-clockwise"></i>Refresh</a>
+        <a class="tb" href="<?= url('registration', ['id' => $id]) ?>" data-registration-action="refresh"><i class="bi bi-arrow-clockwise"></i>Refresh</a>
       </div>
-      <?php if ($eligibility) require __DIR__ . '/../views/eligibility_panel.php'; ?>
       <?php if ($open): $rv = Registration::review($id); $bd = $rv['build']; $canEligibilityException = Auth::can('users.manage') && !$eligibility['can_confirm'] && !array_filter($eligibility['checks'], fn($c) => in_array($c['state'], ['BLOCKED','NEEDS_APPROVAL'], true) && !$c['overrideable']); $icon = ['error' => 'x-circle-fill text-danger', 'warn' => 'exclamation-triangle-fill text-warning', 'ok' => 'check-circle-fill text-success', 'info' => 'info-circle text-secondary']; ?>
       <div class="modal fade" id="mConfirm" tabindex="-1" aria-labelledby="mConfirmT" aria-hidden="true"><div class="modal-dialog modal-dialog-centered modal-lg modal-fullscreen-sm-down"><div class="modal-content">
         <div class="modal-header"><h2 class="modal-title fs-5" id="mConfirmT"><i class="bi bi-clipboard-check me-1"></i>Assessment correct? Confirm the enrollment</h2><button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button></div>
@@ -374,8 +372,6 @@ if ($id) {
       <div class="or-note is-done d-print-none"><i class="bi bi-lock-fill"></i><span><strong>Enrollment confirmed.</strong> This registration can only be viewed<?= $r['locked_at'] ? ' (confirmed ' . h(substr($r['locked_at'], 0, 16)) . ($by ? ' by ' . h($by) : '') . ')' : '' ?>.<?= Registration::balance($r) > 0 ? ' Balance ₱' . Money::fmt(Registration::balance($r)) . ' is not settled yet: the cashier can still receive payments.' : ' Fully paid.' ?></span></div>
       <?php elseif ($state === 'VOIDED'): ?>
       <div class="or-note is-void d-print-none"><i class="bi bi-x-octagon"></i><span><strong>Voided.</strong> <?= h($r['remarks']) ?> This registration is kept for the record and can only be viewed.</span></div>
-      <?php elseif ($canEdit): ?>
-      <div class="or-note d-print-none"><i class="bi bi-pencil"></i><span><strong>Open:</strong> change the subjects and fees with the Sub-Components on the right; the assessment updates right away. When everything is right, click <strong>Confirm Enrollment</strong> (the balance does not need to be paid first).</span></div>
       <?php endif; ?>
 
       <div class="or-body">
