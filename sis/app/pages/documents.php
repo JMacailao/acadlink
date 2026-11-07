@@ -67,13 +67,16 @@ $docRows = function (array $rows, bool $showStudent) use ($statusBadge, $typeNam
 if ($studentId !== '') {
     $s = GS::get('students', $studentId) ?: throw new AppError('Student not found.');
     $terms = Documents::terms($studentId);
-    $choice = (string) ($_GET['doc'] ?? 'tor:standard');
-    [$type, $template] = array_pad(explode(':', $choice), 2, '');
-    if (!isset(Documents::templates($type)[$template])) { $type = 'tor'; $template = 'standard'; $choice = 'tor:standard'; }
-    $term = (string) ($_GET['term'] ?? ($terms[0] ?? ''));
-    $purpose = (string) ($_GET['purpose'] ?? '');
     $request = isset($_GET['request']) ? DocumentRequests::get((int) $_GET['request']) : null;
     if ($request && $request['student_doc_id'] !== $studentId) $request = null;
+    $defaultType = (string) ($request['doc_type'] ?? 'tor');
+    if (!isset(Documents::TYPES[$defaultType])) $defaultType = 'tor';
+    $defaultChoice = $defaultType . ':' . Documents::defaultTemplate($defaultType);
+    $choice = (string) ($_GET['doc'] ?? $defaultChoice);
+    [$type, $template] = array_pad(explode(':', $choice), 2, '');
+    if (!isset(Documents::templates($type)[$template])) { $type = $defaultType; $template = Documents::defaultTemplate($type); $choice = $type . ':' . $template; }
+    $term = (string) ($_GET['term'] ?? ($terms[0] ?? ''));
+    $purpose = (string) ($_GET['purpose'] ?? '');
     $missing = Documents::blockers($type, $s);
     $signer = Documents::signer($type);
     $iSign = $signer === null || $signer === $me || ESign::isPowerUser($me);
@@ -147,8 +150,11 @@ page_title('TOR & Certificates', '', 'Issue from a student\'s record (Students �
 <form method="post" class="form-section" data-record-detail><?= csrf_field() ?><input type="hidden" name="action" value="settings">
   <h2 class="h6">Who signs each document</h2>
   <p class="small text-muted">The signatory's e-signature is placed when they issue it. Others with Documents → Edit prepare it for the signatory's To sign list. Leave "Anyone" to let whoever issues it sign. Power Users always issue with an "APPROVED" stamp.</p>
-  <div class="table-responsive"><table class="table table-sm align-middle"><thead><tr><th>Document</th><th>Signatory</th><th>Position printed under the name</th><th>Fee per copy (₱)</th><th>Processing (working days)</th><th>Students can request online</th></tr></thead><tbody>
+  <div class="table-responsive"><table class="table table-sm align-middle"><thead><tr><th>Document</th><th>Default template</th><th>Signatory</th><th>Position printed under the name</th><th>Fee per copy (₱)</th><th>Processing (working days)</th><th>Students can request online</th></tr></thead><tbody>
   <?php foreach (Documents::TYPES as $t => [$title]): ?><tr><td><?= h($title) ?></td>
+    <td><select class="form-select form-select-sm" name="doc_template_<?= h($t) ?>" aria-label="Default template for <?= h($title) ?>">
+      <?php foreach (Documents::templates($t) as $tid => $tpl): ?><option value="<?= h($tid) ?>"<?= Documents::defaultTemplate($t) === $tid ? ' selected' : '' ?>><?= h($tpl['name'] . ' · ' . $tpl['paper']) ?></option><?php endforeach; ?>
+    </select></td>
     <td><select class="form-select form-select-sm" name="doc_signer_<?= h($t) ?>" aria-label="Signatory for <?= h($title) ?>"><option value="">Anyone who issues it</option>
       <?php foreach ($staff as $st): ?><option value="<?= (int) $st['id'] ?>"<?= Settings::get('doc_signer_' . $t) === (string) $st['id'] ? ' selected' : '' ?>><?= h($st['display_name']) ?><?= ESign::isPowerUser((int) $st['id']) ? ' (Power User: "Approved")' : (ESign::has((int) $st['id']) ? '' : ' (no e-signature yet)') ?></option><?php endforeach; ?></select></td>
     <td><input class="form-control form-control-sm" name="doc_signer_position_<?= h($t) ?>" maxlength="80" value="<?= h(Settings::get('doc_signer_position_' . $t)) ?>" aria-label="Position for <?= h($title) ?>"></td>
@@ -156,10 +162,11 @@ page_title('TOR & Certificates', '', 'Issue from a student\'s record (Students �
     <td><input class="form-control form-control-sm" style="max-width:80px" name="doc_days_<?= h($t) ?>" inputmode="numeric" value="<?= h(Settings::get('doc_days_' . $t)) ?>" aria-label="Processing days for <?= h($title) ?>"></td>
     <td class="text-center"><input class="form-check-input" type="checkbox" name="doc_online_<?= h($t) ?>" value="1"<?= DocumentRequests::online($t) ? ' checked' : '' ?> aria-label="<?= h($title) ?> can be requested online"></td></tr><?php endforeach; ?>
   </tbody></table></div>
+  <p class="small text-muted">The selected template is preselected when preparing a new document. Previously issued documents keep their saved copy.</p>
   <div class="row g-2 mb-3"><div class="col-md-6"><label class="form-label small" for="dPrep">Prepared by (name on the TOR)</label><input class="form-control" id="dPrep" name="doc_prepared_by" maxlength="120" value="<?= h(Settings::get('doc_prepared_by')) ?>"></div>
     <div class="col-md-6"><label class="form-label small" for="dChk">Checked by (name on the TOR)</label><input class="form-control" id="dChk" name="doc_checked_by" maxlength="120" value="<?= h(Settings::get('doc_checked_by')) ?>"></div></div>
   <button class="btn btn-primary">Save</button>
-  <p class="small text-muted mt-3 mb-0">Templates are files in <code>sis/templates/documents/</code>. Copy a <code>standard.php</code> to a new name in the same folder to add your own (see the README there).</p>
+  <p class="small text-muted mt-3 mb-0">Templates are files in <code>sis/templates/documents/</code>. Copy a <code>standard.php</code> to a new name in the same folder to add your own; new templates appear in the matching selector automatically (see the README there).</p>
 </form>
 <?php elseif ($tab === 'requests'):
     $rs = in_array($_GET['status'] ?? '', array_merge(['OPEN', 'ALL'], array_keys(DocumentRequests::STATUS)), true) ? $_GET['status'] : 'OPEN';

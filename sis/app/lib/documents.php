@@ -308,6 +308,16 @@ final class Documents
         return $out;
     }
 
+    /** The saved default template for a document type, falling back safely if a template was removed. */
+    public static function defaultTemplate(string $type): string
+    {
+        $templates = self::templates($type);
+        if (!$templates) return '';
+        $saved = (string) Settings::get('doc_template_' . $type);
+        if (isset($templates[$saved])) return $saved;
+        return isset($templates['standard']) ? 'standard' : (string) array_key_first($templates);
+    }
+
     /** Renders a template with $doc; a template with a mistake gives a message naming its file and line. */
     public static function render(string $type, string $template, array $doc): string
     {
@@ -500,6 +510,9 @@ final class Documents
         Auth::require('settings.manage');
         $v = [];
         foreach (self::TYPES as $type => $_) {
+            $template = trim((string) ($in['doc_template_' . $type] ?? 'standard'));
+            if (!isset(self::templates($type)[$template])) throw new AppError('Choose an available template for ' . self::TYPES[$type][0] . '.');
+            $v['doc_template_' . $type] = $template;
             $signer = (int) ($in['doc_signer_' . $type] ?? 0);
             if ($signer > 0) {
                 $a = Auth::central()->account($signer);

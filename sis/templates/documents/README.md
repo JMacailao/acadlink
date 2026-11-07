@@ -1,9 +1,10 @@
 # Document templates (TOR and certificates)
 
 Each folder is one document type. Every `.php` file in it is a template the registrar can choose in
-**SIS → student → Documents**. To add your own, copy `standard.php` to a new name in the same
+**SIS → student → Documents**. An administrator can set the default for each document type in
+**TOR & Certificates → Settings**. To add your own, copy `standard.php` to a new name in the same
 folder (lowercase letters, numbers, `-` or `_`, e.g. `tor/lgc-legal-2026.php`) and edit it. It
-appears in the template list right away; nothing else needs to change.
+appears in both the issue screen and its settings selector right away; nothing else needs to change.
 
 | Folder | Document |
 |---|---|

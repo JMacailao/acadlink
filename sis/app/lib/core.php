@@ -290,6 +290,7 @@ final class Settings
         'or_note'         => 'Thank you for your payment. Please keep this receipt.',
         // TOR and certificates (Documents → Settings; saved by Documents::saveSettings, not the main form)
         'doc_prepared_by' => '', 'doc_checked_by' => '',
+        'doc_template_tor' => 'standard', 'doc_template_enrollment' => 'standard', 'doc_template_grades' => 'standard', 'doc_template_good-moral' => 'standard', 'doc_template_honorable-dismissal' => 'standard',
         'doc_signer_tor' => '', 'doc_signer_enrollment' => '', 'doc_signer_grades' => '', 'doc_signer_good-moral' => '', 'doc_signer_honorable-dismissal' => '',
         'doc_signer_position_tor' => 'Registrar', 'doc_signer_position_enrollment' => 'Registrar', 'doc_signer_position_grades' => 'Registrar',
         'doc_signer_position_good-moral' => 'Guidance Counselor', 'doc_signer_position_honorable-dismissal' => 'Registrar',
