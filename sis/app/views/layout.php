@@ -118,6 +118,7 @@ function layout_start(string $title, bool $bare = false): void
 <link rel="stylesheet" href="assets/registration-fees.css?v=4">
 <link rel="stylesheet" href="assets/assessment-fee-templates.css?v=1">
 <?php if ($route === 'assessment' && ($_GET['tab'] ?? '') === 'names'): ?><script src="assets/fee-templates.js?v=1" defer></script><?php endif; ?>
+<?php if ($route === 'documents' && ($_GET['tab'] ?? '') === 'settings'): ?><script src="assets/documents-template-preview.js?v=1" defer></script><?php endif; ?>
 <?php if ($route === 'admission'): ?><link rel="stylesheet" href="assets/admission-form.css?v=1"><?php endif; ?>
 <?php if ($system === 'sis' && !$bare && $u): ?><link rel="stylesheet" href="assets/easy-navigation.css?v=6"><link rel="stylesheet" href="assets/dashboard.css?v=2"><?php endif; ?>
 </head>

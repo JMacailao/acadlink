@@ -414,6 +414,43 @@ final class Documents
         ];
     }
 
+    /** Safe fictional data for previewing a template from Settings without opening a real student's record. */
+    public static function sampleData(string $type, string $template): array
+    {
+        if (!isset(self::TYPES[$type]) || !isset(self::templates($type)[$template])) throw new AppError('Choose an available document template.');
+        $scale = GradeScale::current();
+        $numbers = match ($scale->scale()) {
+            'point1' => [1.75, 1.50],
+            'point5' => [4.25, 4.50],
+            default => [88.0, 92.0],
+        };
+        $subjects = [];
+        foreach ([['ENG101', 'Academic Communication', 3.0], ['IT101', 'Introduction to Computing', 3.0]] as $i => [$code, $title, $units]) {
+            $grade = $numbers[$i];
+            $subjects[] = ['code' => $code, 'title' => $title, 'units' => $units, 'grade' => $scale->gradeText($grade),
+                'equivalent' => $scale->finalDiffers() ? number_format((float) $scale->toFinal($grade), 2) : '', 'remarks' => $scale->remarksFor($grade),
+                'finalGrade' => $grade, 'mark' => ''];
+        }
+        $period = ['school_year' => '2025-2026', 'term' => '1st Semester', 'year_level' => '1st Year', 'section' => 'BSIT 1A', 'subjects' => $subjects] + self::average($scale, $subjects);
+        $totals = self::average($scale, $subjects);
+        $totals['units_earned'] = array_sum(array_map(fn($s) => $s['remarks'] === 'Passed' ? $s['units'] : 0, $subjects));
+        return [
+            'type' => $type, 'title' => self::TYPES[$type][0], 'template' => $template, 'control_no' => '', 'purpose' => 'Template preview',
+            'issued_at' => date('Y-m-d'), 'preview' => true, 'school' => self::school(),
+            'student' => ['id' => 'SAMPLE-001', 'name' => 'Alex Sample', 'email' => '', 'program' => 'BS Information Technology', 'year_level' => '1st Year',
+                'section' => 'BSIT 1A', 'status' => 'Active', 'sex' => 'Female', 'birth_date' => '2007-04-18', 'birth_place' => 'Sample City',
+                'home_address' => '123 Sample Street, Sample City', 'date_admitted' => '2025-06-02', 'entrance_credentials' => 'High School Record',
+                'graduation_date' => '', 'so_number' => ''],
+            'periods' => [$period], 'totals' => $totals,
+            'scale' => ['grading' => $scale->label(), 'final' => $scale->label($scale->finalScale()), 'differs' => $scale->finalDiffers(), 'legend' => $scale->legend()],
+            'term' => ['school_year' => '2025-2026', 'term' => '1st Semester'],
+            'enrollment' => ['program' => 'BS Information Technology', 'year_level' => '1st Year', 'section' => 'BSIT 1A', 'units' => 6.0,
+                'subjects' => [['code' => 'ENG101', 'title' => 'Academic Communication', 'units' => 3.0], ['code' => 'IT101', 'title' => 'Introduction to Computing', 'units' => 3.0]], 'confirmed_at' => '2025-06-02 09:00:00'],
+            'last_attended' => ['school_year' => '2025-2026', 'term' => '1st Semester', 'year_level' => '1st Year', 'section' => 'BSIT 1A'],
+            'signature' => ['mode' => 'PREVIEW'], 'signatories' => ['prepared_by' => Settings::get('doc_prepared_by'), 'checked_by' => Settings::get('doc_checked_by')],
+        ];
+    }
+
     /** The letterhead of printouts: school name, address, contact, logo. */
     public static function school(): array
     {

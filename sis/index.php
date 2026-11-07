@@ -70,7 +70,7 @@ const ROUTES = [
     'terms'        => ['terms', ['settings.manage']],
     'docrequirements' => ['docrequirements', ['settings.manage']], // v56: registration document checklist
     'documents'    => ['documents', ['documents.issue', 'settings.manage'], ['documents']],
-    'docview'      => ['docview', ['documents']],
+    'docview'      => ['docview', ['documents', 'settings.manage']],
     'profile'      => ['profile', []],
 ];
 
