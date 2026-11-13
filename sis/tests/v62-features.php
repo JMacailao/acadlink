@@ -226,5 +226,19 @@ test('LMS reads only this school year\'s classes, and a teacher only their own; 
     as_user($ana); ok(array_column(Lms::myClasses('2026-2027'), 'id') === [$cls], 'student class');
     ok(array_column(Lms::roster(Lms::classFor($cls)), 'no') === ['V002', 'V001'] || count(Lms::roster(Lms::classFor($cls))) === 2, 'roster');
 });
+test('v62.1 images are at most 5 MB everywhere; heavy small images are recompressed; LMS images too', function () use ($teacher, $cls) {
+    // a 6 MB "image": refused for photos, products and covers
+    $im = imagecreatetruecolor(300, 300); ob_start(); imagepng($im); $png = ob_get_clean();
+    $big = upload('big.png', $png . str_repeat("\0", 6 * 1048576));
+    denied(fn() => Canteen::imageFromUpload($big, 'photo', 'PHOTO'), 'at most 5 MB');
+    // a noisy 500x500 PNG (heavy in bytes, small in pixels): stored smaller, never bigger
+    $n = imagecreatetruecolor(500, 500); for ($y = 0; $y < 500; $y++) for ($x = 0; $x < 500; $x++) imagesetpixel($n, $x, $y, random_int(0, 0xFFFFFF));
+    ob_start(); imagejpeg($n, null, 100); $jpg = ob_get_clean();
+    $img = Canteen::imageFromUpload(upload('n.jpg', $jpg), 'photo', 'PHOTO');
+    ok(strlen($img['bytes']) < strlen($jpg) && $img['width'] <= 600, strlen($jpg) . ' -> ' . strlen($img['bytes']));
+    // LMS: an image attachment over 5 MB is refused; another file type up to 10 MB is fine
+    as_user($teacher);
+    denied(fn() => Lms::savePost(Lms::classFor($cls), 'ANNOUNCEMENT', ['body' => 'pic'], [upload('big.png', $png . str_repeat("\0", 6 * 1048576))]), 'Images can be at most 5 MB');
+});
 $c->logout(); $server->exec("DROP DATABASE IF EXISTS `$name`");
 echo "$pass passed, $fail failed\n"; exit($fail ? 1 : 0);

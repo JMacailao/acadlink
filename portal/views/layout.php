@@ -126,7 +126,7 @@ function portal_layout_end(bool $bare = false): void
 <?php if (!$bare && !empty($GLOBALS['PORTAL_MENU'])) portal_bottom_nav($GLOBALS['PORTAL_MENU']); ?>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" crossorigin="anonymous"></script>
 <script src="../sis/assets/navigation.js?v=49"></script>
-<script src="../sis/assets/app.js?v=62b"></script>
+<script src="../sis/assets/app.js?v=62.1"></script>
 <script src="../sis/assets/success-sound.js?v=56"></script>
 </body>
 </html><?php

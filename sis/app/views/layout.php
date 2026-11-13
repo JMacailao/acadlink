@@ -327,7 +327,7 @@ function layout_end(bool $bare = false): void
 <script src="<?= sis_web() ?>assets/record-list.js?v=48" defer></script>
 <script src="<?= sis_web() ?>assets/fixed-shell.js?v=31" defer></script>
 <script src="<?= sis_web() ?>assets/accounting-ui.js?v=31" defer></script>
-<script src="<?= sis_web() ?>assets/app.js?v=62b"></script>
+<script src="<?= sis_web() ?>assets/app.js?v=62.1"></script>
 <script src="<?= sis_web() ?>assets/friendly-ui.js?v=48"></script>
 <script src="<?= sis_web() ?>assets/sis-actions.js?v=41"></script>
 <script src="<?= sis_web() ?>assets/theme.js?v=52"></script>

@@ -305,3 +305,15 @@ document.addEventListener('change', e => {
   const scope = (all.dataset.checkScope && document.querySelector(all.dataset.checkScope)) || all.closest('form') || document;
   scope.querySelectorAll('input[type=checkbox][name="' + all.dataset.checkAll + '"]').forEach(c => { c.checked = all.checked; });
 });
+
+// v62.1: images can be at most 5 MB (other LMS files 10 MB). Tell the person right away instead of after uploading.
+document.addEventListener('change', e => {
+  const input = e.target;
+  if (!input || input.type !== 'file' || !input.files) return;
+  const imageMax = 5 * 1048576, fileMax = (parseFloat(input.dataset.maxMb) || 0) * 1048576;
+  const bad = Array.from(input.files).find(f => (/^image\//.test(f.type) && f.size > imageMax) || (fileMax && f.size > fileMax));
+  if (!bad) return;
+  const mb = (bad.size / 1048576).toFixed(1), isImage = /^image\//.test(bad.type);
+  window.alert('"' + bad.name + '" is ' + mb + ' MB. ' + (isImage ? 'Images can be at most 5 MB: choose a smaller photo, or take a screenshot of it.' : 'Files can be at most ' + input.dataset.maxMb + ' MB.'));
+  input.value = '';
+});

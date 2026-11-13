@@ -87,7 +87,7 @@ lms_class_header($c, 'classwork');
     <div class="col-12 d-flex flex-wrap gap-3"><label class="form-check small"><input class="form-check-input" type="checkbox" name="allow_late" value="1"<?= (int) $w['allow_late'] ? ' checked' : '' ?>> Accept late work</label>
       <?php if ($w['kind'] === 'QUIZ'): ?><label class="form-check small"><input class="form-check-input" type="checkbox" name="show_results" value="1"<?= (int) $w['show_results'] ? ' checked' : '' ?>> Show the score right after turning in</label><?php else: ?><label class="form-check small"><input class="form-check-input" type="checkbox" name="allow_resubmit" value="1"<?= (int) $w['allow_resubmit'] ? ' checked' : '' ?>> Allow resubmitting</label><?php endif; ?>
       <label class="form-check small"><input class="form-check-input" type="checkbox" name="status" value="DRAFT"<?= $w['status'] === 'DRAFT' ? ' checked' : '' ?>> Draft (hidden from students)</label></div>
-    <div class="col-12"><?= lms_files_html($w['files']) ?><label class="form-label small" for="eF">Add files</label><input class="form-control" type="file" id="eF" name="files[]" multiple></div>
+    <div class="col-12"><?= lms_files_html($w['files']) ?><label class="form-label small" for="eF">Add files</label><input class="form-control" type="file" data-max-mb="10" id="eF" name="files[]" multiple></div>
   </div>
   <div class="d-flex gap-2 mt-2"><button class="btn btn-primary">Save</button></div></form>
 <form method="post" data-confirm="Delete this classwork?"><?= csrf_field() ?><input type="hidden" name="action" value="delete"><button class="btn btn-sm btn-outline-danger">Delete</button></form>
@@ -142,7 +142,7 @@ lms_class_header($c, 'classwork');
       <form method="post"><?= csrf_field() ?><input type="hidden" name="action" value="unsubmit"><button class="btn btn-outline-secondary w-100 mt-2">Unsubmit</button></form>
     <?php elseif (!$s || $s['status'] === 'DRAFT' || (int) $w['allow_resubmit']): ?>
       <form method="post" enctype="multipart/form-data"><?= csrf_field() ?>
-        <label class="form-label small" for="yF">Add files (up to 10 MB each)</label><input class="form-control form-control-sm mb-2" type="file" id="yF" name="files[]" multiple>
+        <label class="form-label small" for="yF">Add files (up to 10 MB each)</label><input class="form-control form-control-sm mb-2" type="file" data-max-mb="10" id="yF" name="files[]" multiple>
         <label class="form-label small" for="yT">Answer (optional)</label><textarea class="form-control form-control-sm mb-2" id="yT" name="text_answer" rows="4" maxlength="50000"><?= h((string) ($s['text_answer'] ?? '')) ?></textarea>
         <label class="form-label small" for="yL">Link (optional)</label><input class="form-control form-control-sm mb-2" id="yL" name="link_url" maxlength="500" value="<?= h((string) ($s['link_url'] ?? '')) ?>" placeholder="https://">
         <div class="d-grid gap-2"><button class="btn btn-primary" name="action" value="turn_in"><?= $s && $s['status'] === 'RETURNED' ? 'Resubmit' : 'Turn in' ?></button><button class="btn btn-outline-secondary" name="action" value="save">Save without turning in</button></div>
