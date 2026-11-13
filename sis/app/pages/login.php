@@ -15,7 +15,7 @@ if ($isPost) {
     $back = $_SESSION['return_to'] ?? null;
     unset($_SESSION['return_to']);
     // v58: back to the Finance page that asked for the sign-in (finance/index.php checks the route and access again)
-    if (!$u['must_change_password'] && is_array($back) && in_array($back['app'] ?? '', ['FINANCE', 'CANTEEN', 'LIBRARY'], true) && preg_match('/^[a-z]+$/', (string) ($back['r'] ?? ''))) { header('Location: ../' . strtolower((string) $back['app']) . '/index.php?' . http_build_query(['r' => $back['r']] + array_filter((array) ($back['params'] ?? []), 'is_scalar'))); exit; }
+    if (!$u['must_change_password'] && is_array($back) && in_array($back['app'] ?? '', ['FINANCE', 'CANTEEN', 'LIBRARY', 'LMS'], true) && preg_match('/^[a-z]+$/', (string) ($back['r'] ?? ''))) { header('Location: ../' . strtolower((string) $back['app']) . '/index.php?' . http_build_query(['r' => $back['r']] + array_filter((array) ($back['params'] ?? []), 'is_scalar'))); exit; }
     if (!$u['must_change_password'] && is_array($back) && (isset(ROUTES[$back['r'] ?? '']) || in_array($back['r'] ?? '', ['my', 'myenrollment', 'myadmission'], true)) && !in_array($back['r'], ['login', 'logout'], true)) redirect($back['r'], (array) ($back['params'] ?? []));
     redirect($u['must_change_password'] ? 'password' : 'workspaces');
 }

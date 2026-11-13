@@ -1,3 +1,5 @@
+**Updating to v61 (LMS)?** Read `V61_UPDATE.md`. Upload the files, open SIS once and press Ctrl+F5. No SQL import is needed.
+
 **Updating to v60 (Library)?** Read `V60_UPDATE.md`. Upload the files, open SIS once and press Ctrl+F5. No SQL import is needed.
 
 **Updating to v59 (Canteen POS)?** Read `V59_UPDATE.md`. Upload the files, open SIS once and press Ctrl+F5. No SQL import is needed.

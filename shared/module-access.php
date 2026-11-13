@@ -16,7 +16,7 @@ final class ModuleAccess
     /** Order of the cards after sign-in. */
     public const CHOOSER_ORDER = ['GRADING', 'SIS', 'LMS', 'CANTEEN', 'LIBRARY', 'FINANCE', 'PORTAL'];
     /** Systems shown with a "Coming soon" card: they can be given to people, but do not open yet. */
-    public const COMING_SOON = ['LMS']; // v59: Canteen POS is open; v60: Library is open
+    public const COMING_SOON = []; // v59 Canteen POS, v60 Library and v61 LMS are open
     public const LEVELS = ['NONE' => 'No access', 'VIEW' => 'View only', 'EDIT' => 'View and edit'];
 
     /** key => [system, label, view codes, edit codes, extra actions under Edit (code => label)] */
@@ -54,7 +54,7 @@ final class ModuleAccess
             'portal.receipts'    => ['PORTAL', 'My receipts', ['portal.receipts.view'], [], []],
             'portal.enrollment'  => ['PORTAL', 'My enrollment status', ['portal.enrollment.view'], [], []],
             'portal.apply'       => ['PORTAL', 'Apply for admission or enrollment', [], ['portal.admission.apply'], []],
-            'lms.access'         => ['LMS', 'LMS: Access', ['lms.access.view'], [], []],
+            'lms.access'         => ['LMS', 'LMS: classes (teachers teach their classes, students take theirs)', ['lms.access.view'], [], ['lms.manage.all' => 'Coordinator: open and manage every class']],
             'canteen.pos'        => ['CANTEEN', 'Canteen: sell, receipts and own shift', ['canteen.sales.view'], ['canteen.sales.make'], []],
             'canteen.products'   => ['CANTEEN', 'Canteen: products, prices and QR code', ['canteen.products.view'], ['canteen.products.manage'], []],
             'canteen.inventory'  => ['CANTEEN', 'Canteen: inventory and stocktakes', ['canteen.inventory.view'], ['canteen.inventory.manage'], []],
@@ -184,6 +184,7 @@ final class ModuleAccess
         self::installV58($db);
         self::installV59($db);
         self::installV60($db);
+        $db->exec("INSERT IGNORE INTO central_permissions(code,workspace,label) VALUES ('lms.manage.all','LMS','Open and manage every LMS class (coordinator)')"); // v61
     }
 
     /** v60: Library permissions and the Librarian group. */

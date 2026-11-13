@@ -42,6 +42,7 @@ require SIS_ROOT . '/app/lib/xlsx.php';
 require SIS_ROOT . '/app/lib/feeimport.php';
 require dirname(SIS_ROOT) . '/canteen/lib/canteen.php'; // v59: Canteen POS (canteen/)
 require dirname(SIS_ROOT) . '/library/lib/library.php'; // v60: Library (library/)
+require dirname(SIS_ROOT) . '/lms/lib/lms.php'; // v61: Learning Management System (lms/)
 
 /**
  * One database only: the SIS always uses the grading system's MySQL database, read from
@@ -108,7 +109,7 @@ function sis_boot(): void
  */
 function sis_upgrade(): void
 {
-    if (PHP_SAPI !== 'cli' && ($_SESSION['sis_schema'] ?? 0) >= 29) return;
+    if (PHP_SAPI !== 'cli' && ($_SESSION['sis_schema'] ?? 0) >= 30) return;
     $have = array_map('strtolower', Db::col("SELECT table_name FROM information_schema.tables WHERE table_schema = DATABASE() AND table_name LIKE 'sis\\_%'"));
     if (!in_array('sis_registrations', $have, true) || !in_array('sis_fee_labels', $have, true)) return; // not installed yet
     // Tables of newer versions: created from schema.sql (CREATE TABLE IF NOT EXISTS only)
@@ -178,5 +179,6 @@ function sis_upgrade(): void
     LecLab::install();                 // v56.2: lecture / laboratory units
     Canteen::install(Db::pdo());       // v59: Canteen POS
     Library::install(Db::pdo());       // v60: Library
-    if (PHP_SAPI !== 'cli') $_SESSION['sis_schema'] = 29; // v60: Library
+    Lms::install(Db::pdo());           // v61: LMS
+    if (PHP_SAPI !== 'cli') $_SESSION['sis_schema'] = 30; // v61: LMS
 }

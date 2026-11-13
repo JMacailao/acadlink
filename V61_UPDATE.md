@@ -1,0 +1,62 @@
+# AcadLink v61 — Learning Management System
+
+No SQL to import. Copy the files over v60 (keep `api/config.php`), open SIS once and press Ctrl+F5.
+The LMS tables are created automatically.
+
+## What it does
+**Choose a workspace → LMS** opens its own system (`lms/`), on the same sign-in, in the Google Classroom style.
+The classes are the Grading System's class assignments (teacher, subject, section, school year and term), so
+there is nothing to set up twice: each teacher sees the classes they teach and each student sees the classes they
+are enrolled in.
+
+- **My Classes**: a card per class with what is due and what needs checking; today's classes; a school-year picker.
+- **Stream**: announcements with file attachments; the "Upcoming" box lists what is due soon.
+- **Classwork**, grouped by topic. The teacher creates:
+  - **Assignment / activity**: instructions, attached files, points, due date and time, category
+    (Assignment, Quiz, Project, Exam), "accept late work" and "allow resubmission"; can be saved as a draft.
+  - **Quiz / exam**: the same, plus a **time limit** and the **question builder**: multiple choice, checkboxes,
+    true/false, short answer (several accepted answers; capitals and extra spaces are ignored) and essay, each
+    with its own points. The quiz is worth the total of its questions.
+  - **Material**: a handout or reading with files and no grade.
+- **Students hand in work** with **files, text and a link**; can save without handing in, **unsubmit** and hand in
+  again (while allowed). Late work is marked **Late**.
+- **Taking a quiz**: Start → a countdown timer → Turn in. When the time is up the answers are turned in
+  automatically, and the server also refuses answers after the limit. Multiple choice, checkboxes, true/false and
+  short answers are **scored automatically**; essays wait for the teacher. If there are no essays the student sees
+  the score at once (can be turned off per quiz).
+- **Checking work**: To Do → *To grade* lists everything handed in. The teacher opens a student, sees the files,
+  text, link or quiz answers, enters the score (per question for quizzes) and feedback, then **Returns** it.
+  The student sees the score and feedback.
+- **People**: the class roster (teacher and students, from the class record).
+- **Attendance**: take attendance for a meeting (Present / Late / Absent / Excused, "mark all present", a topic),
+  edit past meetings, and a per-student summary. Students see their own attendance.
+- **Grades**: the gradebook — every student × every graded item, with category weights
+  (default Assignment 30 · Quiz 30 · Project 20 · Exam 20, changeable in **Settings**; missing work can count as
+  zero) and the class average. Students see only their own.
+- **Send to Grading System (draft)**: puts each student's LMS average on the Grading System grade sheet **as a
+  draft**, converted to the school's grade scale. The teacher still reviews and submits the official grade in
+  the Grading System as before. Grades already submitted, completed terms, a passed deadline or locked teachers
+  are never overwritten.
+- **To Do** (all classes) and **Schedule**: the teacher's or student's weekly timetable from the class schedules,
+  with any clashes shown.
+
+## Accounts and access
+- Teachers and students use their existing AcadLink accounts. Students open the LMS from their workspace chooser.
+- Users and Groups → LMS: "Use the LMS" plus a new **Coordinator** option that opens and manages every class.
+  The Power User has full access.
+- Files (10 MB each; documents, images, archives, audio and video) are stored in the database, checked by type and
+  content, and downloaded only by people in that class.
+- Posts, classwork, hand-ins, returns, attendance and sending to the Grading System are in the Activity Log.
+
+## Source code
+- New: `lms/lib/lms.php`, `lms/pages/{_ui,home,class,work,todo,schedule,file}.php`,
+  `lms/assets/{lms.js,lms.css}`, `sis/tests/v61-lms.php`.
+- Changed: `lms/index.php`, `shared/module-access.php`, `sis/app/lib/auth.php`, `sis/app/bootstrap.php`,
+  `sis/app/views/layout.php`, `sis/app/pages/{workspaces,login}.php`, `sis/assets/{navigation,standard-toolbar}.js`,
+  `sis/tests/v58-finance.php` (no workspace is "coming soon" any more).
+
+## Tests
+`php sis/tests/v61-lms.php` (11 checks). Checked in a browser end to end: a teacher posts, creates an assignment and
+a four-type quiz; a student hands in and takes the quiz; the teacher returns both, takes attendance and sends the
+average to the Grading System, where the draft appears and was submitted normally. All other suites unchanged
+and passing.

@@ -76,9 +76,9 @@ test('a group\'s Finance access can be changed in Users and Groups (e.g. let Cas
     $c->setGroupModules($power, 'CASHIER', ['sis.cashier' => ['EDIT', []]]); $c->clearCache();
     ok(!isset($c->permissions($cash)['sis.payments.void']), 'void not removed again');
 });
-test('Canteen POS and Library start with the Power User only; only LMS is "coming soon" (v59/v60: Canteen POS and Library are open)', function () use ($sys, $acct, $cash, $reg) {
+test('Canteen POS and Library start with the Power User only; nothing is "coming soon" (v59–v61: Canteen POS, Library and LMS are open)', function () use ($sys, $acct, $cash, $reg) {
     foreach ([$acct, $cash, $reg] as $id) ok(!array_intersect(['CANTEEN', 'LIBRARY'], $sys($id)), 'staff got a planned workspace');
-    ok(ModuleAccess::COMING_SOON === ['LMS'], 'coming-soon list');
+    ok(ModuleAccess::COMING_SOON === [], 'coming-soon list');
 });
 test('links: from the SIS, Finance pages go to ../finance/ and SIS pages stay', function () {
     ok(url('cashier', ['new' => 1]) === 'index.php?r=cashier&new=1', 'v58.1: Cashier stays in the SIS: ' . url('cashier'));
