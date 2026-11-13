@@ -14,6 +14,8 @@ if ($isPost) {
     if (!$u['must_change_password'] && preg_match('/^[a-z-]+\.html$/', $next) && $next !== 'login.html' && $next !== 'dashboard.html' && Auth::central()->can((int) Auth::centralId(), 'grading.workspace.view')) { header('Location: ../pages/' . $next); exit; }
     $back = $_SESSION['return_to'] ?? null;
     unset($_SESSION['return_to']);
+    // v58: back to the Finance page that asked for the sign-in (finance/index.php checks the route and access again)
+    if (!$u['must_change_password'] && is_array($back) && ($back['app'] ?? '') === 'FINANCE' && preg_match('/^[a-z]+$/', (string) ($back['r'] ?? ''))) { header('Location: ../finance/index.php?' . http_build_query(['r' => $back['r']] + array_filter((array) ($back['params'] ?? []), 'is_scalar'))); exit; }
     if (!$u['must_change_password'] && is_array($back) && (isset(ROUTES[$back['r'] ?? '']) || in_array($back['r'] ?? '', ['my', 'myenrollment', 'myadmission'], true)) && !in_array($back['r'], ['login', 'logout'], true)) redirect($back['r'], (array) ($back['params'] ?? []));
     redirect($u['must_change_password'] ? 'password' : 'workspaces');
 }

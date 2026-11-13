@@ -1,3 +1,5 @@
+**Updating to v58 (Finance workspace)?** Read `V58_UPDATE.md`. Upload the files, open SIS once and press Ctrl+F5. No SQL import is needed.
+
 **Updating to v57 (standard toolbar)?** Read `V57_UPDATE.md`. Upload the files and press Ctrl+F5. No SQL import is needed.
 
 **Updating to v56 (Master Development Checklist)?** Read `V56_UPDATE.md`. Upload the files, open SIS once and press Ctrl+F5. No SQL import is needed.

@@ -383,7 +383,7 @@ final class CentralAccounts
     }
     public function syncProjections(int $id): void {
         $a=$this->account($id); $group=$this->group($id);
-        $sisRole=['POWER_USER'=>'ADMIN','ACCOUNTING'=>'ACCOUNTING','REGISTRAR'=>'REGISTRAR','TEACHER'=>'TEACHER','STUDENT'=>'STUDENT'][$group]??'TEACHER';
+        $sisRole=['POWER_USER'=>'ADMIN','ACCOUNTING'=>'ACCOUNTING','CASHIER'=>'CASHIER','REGISTRAR'=>'REGISTRAR','TEACHER'=>'TEACHER','STUDENT'=>'STUDENT'][$group]??'TEACHER';
         $sid=$this->legacyId($id,'SIS');
         if (!$sid) {
             // Avoid silently claiming a legacy username; it must be explicitly reviewed and linked.
@@ -478,7 +478,7 @@ final class CentralAccounts
         if ($code==='POWER_USER') throw new CentralAccountError('Power User keeps full access.');
         $g=$this->one('SELECT * FROM central_groups WHERE code=?',[$code]);
         if (!$g) throw new CentralAccountError('Group not found.');
-        $systems=$code==='STUDENT'?['PORTAL']:['GRADING','SIS'];
+        $systems=ModuleAccess::systemsFor($code); // v58: the same systems the access grid shows
         $this->transaction(function() use($actor,$code,$g,$modules,$systems) {
             $perms=[];
             foreach ($this->q('SELECT permission_code,access_scope FROM central_group_permissions WHERE group_id=? AND is_enabled=1',[$g['id']])->fetchAll(PDO::FETCH_ASSOC) as $r) $perms[$r['permission_code']]=$r['access_scope'];
@@ -511,7 +511,7 @@ final class CentralAccounts
         $g=$this->one('SELECT id FROM central_groups WHERE code=?',[$group]);
         $groupPerms=[];
         if ($g) foreach ($this->q('SELECT permission_code,access_scope FROM central_group_permissions WHERE group_id=? AND is_enabled=1',[$g['id']])->fetchAll(PDO::FETCH_ASSOC) as $r) $groupPerms[$r['permission_code']]=$r['access_scope'];
-        $systems=$a['account_kind']==='STUDENT'?['PORTAL']:['GRADING','SIS'];
+        $systems=ModuleAccess::systemsFor($a['account_kind']==='STUDENT'?'STUDENT':'STAFF');
         $this->transaction(function() use($actor,$id,$modules,$groupPerms,$systems) {
             $changes=[];
             foreach (ModuleAccess::catalog() as $key=>$m) {

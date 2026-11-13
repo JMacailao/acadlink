@@ -55,7 +55,7 @@ function portal_layout_start(string $title, bool $bare = false): void
         <div class="dropdown-divider"></div>
         <h6 class="dropdown-header">Switch system</h6>
         <?php foreach ($systems as $sys): if ($sys === 'PORTAL') continue; ?>
-          <a class="dropdown-item" href="<?= h(['GRADING' => '../pages/dashboard.html', 'SIS' => '../sis/index.php?r=dashboard', 'LMS' => '../lms/index.php'][$sys] ?? '#') ?>"><i class="bi bi-<?= ['GRADING' => 'journal-check', 'SIS' => 'building', 'LMS' => 'laptop'][$sys] ?? 'grid' ?> me-2"></i><?= h(ModuleAccess::SYSTEMS[$sys] ?? $sys) ?></a>
+          <a class="dropdown-item" href="<?= h(['GRADING' => '../pages/dashboard.html', 'SIS' => '../sis/index.php?r=dashboard', 'FINANCE' => '../finance/index.php', 'LMS' => '../lms/index.php', 'CANTEEN' => '../canteen/index.php', 'LIBRARY' => '../library/index.php'][$sys] ?? '#') ?>"><i class="bi bi-<?= ['GRADING' => 'journal-check', 'SIS' => 'building', 'FINANCE' => 'cash-coin', 'LMS' => 'laptop', 'CANTEEN' => 'shop', 'LIBRARY' => 'book'][$sys] ?? 'grid' ?> me-2"></i><?= h(ModuleAccess::SYSTEMS[$sys] ?? $sys) ?></a>
         <?php endforeach; ?>
         <a class="dropdown-item" href="../sis/index.php?r=workspaces"><i class="bi bi-grid-3x3-gap me-2"></i>All systems</a>
         <div class="dropdown-divider"></div>

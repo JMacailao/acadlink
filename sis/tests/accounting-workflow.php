@@ -68,7 +68,7 @@ Auth::actAs((int)$central->legacyId($registrar,'SIS'));ok(denied(fn()=>Accountin
 ok(AccountingWorkflow::mulDiv(99999999999,99999999999,99999999999)===99999999999&&AccountingWorkflow::mulDiv(12345678901,987654321,99999999999)===121932631,'fee allocations use exact large-value integer arithmetic');
 $finance=Reports::run('income_statement',Reports::params(['sy'=>'2026-2027','from'=>date('Y-01-01'),'to'=>date('Y-12-31'),'fund'=>'CAPITAL','department'=>'Science']));ok(str_contains(json_encode($finance),'60.00')&&str_contains(json_encode($finance),'100.00'),'income statement respects fund and department filters');
 $restricted=Accounting::manualEntry(date('Y-m-d'),'Permission check ready for review',[['account_id'=>$expense,'debit'=>'1.00'],['account_id'=>$payable,'credit'=>'1.00']]);AccountingWorkflow::submit($restricted);AccountingWorkflow::review($restricted,'Approved restricted permission test',true);
-require_once SIS_ROOT.'/modules/accounting/pages/toolbar.php';
+require_once FINANCE_ROOT.'/modules/accounting/pages/toolbar.php';
 $uiDraft=Accounting::manualEntry(date('Y-m-d'),'Toolbar draft workflow fixture',[['account_id'=>$expense,'debit'=>'1.00'],['account_id'=>$payable,'credit'=>'1.00']]);
 $attrs=fn($id)=>accounting_entry_attributes(Db::one('SELECT * FROM sis_journal WHERE id=?',[$id]));
 ok(str_contains($attrs($uiDraft),'data-accounting-actions="submit"'),'draft toolbar sends for review without offering direct posting');
@@ -79,10 +79,10 @@ ok(str_contains($attrs($manual),'data-accounting-actions=""'),'Registrar toolbar
 if($out=getenv('ACCOUNTING_RENDER_DIR')){
     $route='accounting';
     require_once SIS_ROOT.'/app/views/layout.php';if(!is_dir($out))mkdir($out,0700,true);
-    $_SERVER['REQUEST_METHOD']='GET';$_SERVER['SCRIPT_NAME']='/sis/index.php';$_SERVER['REQUEST_URI']='/sis/index.php?r=accounting';
+    $_SERVER['REQUEST_METHOD']='GET';$_SERVER['SCRIPT_NAME']='/finance/index.php';$_SERVER['REQUEST_URI']='/finance/index.php?r=accounting';
     foreach(['draft'=>['tab'=>'review','status'=>'DRAFT'],'review'=>['tab'=>'review','status'=>'REVIEW'],'posted'=>['tab'=>'review','status'=>'POSTED'],'detail'=>['tab'=>'review','entry'=>$restricted,'status'=>'REVIEW'],'transactions'=>['tab'=>'transactions'],'ledger'=>['tab'=>'ledger']] as $file=>$params){
         $_GET=['r'=>'accounting','apply'=>'1']+$params;(new ReflectionProperty(RecordList::class,'rendered'))->setValue(null,false);
-        ob_start();try{(static function(){ $isPost=false;include SIS_ROOT.'/app/pages/accounting.php';})();$html=ob_get_clean();}catch(Throwable $e){ob_end_clean();throw $e;}
+        ob_start();try{(static function(){ $isPost=false;include FINANCE_ROOT.'/modules/accounting/pages/accounting.php';})();$html=ob_get_clean();}catch(Throwable $e){ob_end_clean();throw $e;}
         ok(!str_contains($html,'Warning:')&&!str_contains($html,'Fatal error'),'render Accounting '.$file.' without PHP errors');file_put_contents($out.'/'.$file.'.html',$html);
     }
 }
