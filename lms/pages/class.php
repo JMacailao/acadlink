@@ -50,7 +50,7 @@ if ($tab === 'stream'):
       <form method="post" enctype="multipart/form-data" class="mt-3"><?= csrf_field() ?><input type="hidden" name="action" value="post"><input type="hidden" name="kind" value="ANNOUNCEMENT">
         <textarea class="form-control mb-2" name="body" rows="3" maxlength="20000" placeholder="Announcement" aria-label="Announcement" required></textarea>
         <div class="row g-2"><div class="col-md-6"><input class="form-control form-control-sm" name="link_url" maxlength="500" placeholder="Link (optional)" aria-label="Link"></div>
-          <div class="col-md-6"><input class="form-control form-control-sm" type="file" name="files[]" multiple aria-label="Attach files"></div></div>
+          <div class="col-md-6"><input class="form-control form-control-sm" type="file" data-max-mb="10" name="files[]" multiple aria-label="Attach files"></div></div>
         <div class="d-flex justify-content-between align-items-center mt-2"><label class="form-check small"><input class="form-check-input" type="checkbox" name="pinned" value="1"> Pin to the top</label><button class="btn btn-primary">Post</button></div>
       </form></details>
     <?php endif; ?>
@@ -93,7 +93,7 @@ if ($tab === 'stream'):
         <label class="form-check small" data-only="ASSIGNMENT"><input class="form-check-input" type="checkbox" name="allow_resubmit" value="1" checked> Allow resubmitting after it is returned</label>
         <label class="form-check small" data-only="QUIZ"><input class="form-check-input" type="checkbox" name="show_results" value="1" checked> Show the score right after turning in (when there are no essays)</label>
         <label class="form-check small"><input class="form-check-input" type="checkbox" name="status" value="DRAFT"> Save as draft (students don't see it yet)</label></div>
-      <div class="col-12" data-only="ASSIGNMENT"><label class="form-label small" for="wF">Attach files (up to 10 MB each)</label><input class="form-control" type="file" id="wF" name="files[]" multiple></div>
+      <div class="col-12" data-only="ASSIGNMENT"><label class="form-label small" for="wF">Attach files (up to 10 MB each)</label><input class="form-control" type="file" data-max-mb="10" id="wF" name="files[]" multiple></div>
     </div>
     <button class="btn btn-primary mt-2" data-submit-label>Assign</button>
   </form>
@@ -102,7 +102,7 @@ if ($tab === 'stream'):
       <div class="col-md-4"><label class="form-label small" for="mTp">Topic</label><input class="form-control" id="mTp" name="topic" maxlength="80" list="lmsTopics"></div>
       <div class="col-12"><label class="form-label small" for="mB">Description</label><textarea class="form-control" id="mB" name="body" rows="2" maxlength="20000"></textarea></div>
       <div class="col-md-6"><label class="form-label small" for="mL">Link</label><input class="form-control" id="mL" name="link_url" maxlength="500" placeholder="https://"></div>
-      <div class="col-md-6"><label class="form-label small" for="mF">Files</label><input class="form-control" type="file" id="mF" name="files[]" multiple></div></div>
+      <div class="col-md-6"><label class="form-label small" for="mF">Files</label><input class="form-control" type="file" data-max-mb="10" id="mF" name="files[]" multiple></div></div>
     <button class="btn btn-primary mt-2">Post material</button></form>
   <datalist id="lmsTopics"><?php foreach ($topics as $tp): ?><option value="<?= h($tp) ?>"><?php endforeach; ?></datalist>
 </details>

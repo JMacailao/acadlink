@@ -207,6 +207,7 @@ final class Lms
         $bytes = (string) file_get_contents((string) $f['tmp_name']);
         $sniff = function_exists('finfo_open') ? (string) finfo_buffer(finfo_open(FILEINFO_MIME_TYPE), $bytes) : '';
         if (str_starts_with(self::FILE_TYPES[$ext], 'image/') && !@getimagesizefromstring($bytes)) throw new AppError('"' . $name . '" is not a valid image.');
+        if (str_starts_with(self::FILE_TYPES[$ext], 'image/') && $size > Canteen::MAX_IMAGE_BYTES) throw new AppError('"' . $name . '" is ' . number_format($size / 1048576, 1) . ' MB. Images can be at most 5 MB each (other files up to 10 MB).'); // v62.1
         if ($ext === 'pdf' && !str_starts_with($bytes, '%PDF')) throw new AppError('"' . $name . '" is not a valid PDF.');
         if (in_array($sniff, ['text/html', 'application/x-php', 'text/x-php', 'application/x-msdownload', 'application/x-dosexec'], true)) throw new AppError('"' . $name . '" is not allowed.');
         return [mb_substr($name, 0, 200), self::FILE_TYPES[$ext], $bytes];

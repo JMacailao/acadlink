@@ -11,7 +11,7 @@ final class Canteen
     public const METHODS = ['CASH' => 'Cash', 'QR' => 'QR payment'];
     public const MOVE_KINDS = ['SALE' => 'Sale', 'VOID' => 'Void', 'REFUND' => 'Refund', 'RECEIVE' => 'Received', 'PREPARE' => 'Prepared', 'ADJUST' => 'Adjustment', 'STOCKTAKE' => 'Stocktake'];
     public const DENOMINATIONS = [100000, 50000, 20000, 10000, 5000, 2000, 1000, 500, 100, 25];
-    public const MAX_IMAGE_BYTES = 5000000;   // largest upload accepted (5 MB); photos are shrunk before saving
+    public const MAX_IMAGE_BYTES = 5242880;   // largest image upload accepted (5 MB) for every image in AcadLink; images are shrunk before saving
     public const IMAGE_MAX_SIDE = ['PRODUCT' => 800, 'QR' => 1000, 'COVER' => 600, 'PHOTO' => 600]; // COVER: Library book covers (v60.1)
 
     // ------------------------------------------------------------------ install
@@ -165,25 +165,27 @@ final class Canteen
             throw new AppError($big ? "The $label image is too large for the server. Use a smaller image." : "The $label image could not be uploaded. Try again.");
         }
         $size = (int) ($file['size'] ?? 0);
-        if ($size <= 0 || $size > self::MAX_IMAGE_BYTES) throw new AppError("The $label image must be smaller than " . round(self::MAX_IMAGE_BYTES / 1000000) . ' MB.');
+        if ($size <= 0) throw new AppError("The $label image is empty.");
+        if ($size > self::MAX_IMAGE_BYTES) throw new AppError("The $label image is " . number_format($size / 1048576, 1) . ' MB. Images can be at most 5 MB: use a smaller photo, or take a screenshot of it.');
         $bytes = (string) file_get_contents((string) $file['tmp_name']);
         $info = @getimagesizefromstring($bytes);
         $mime = $info['mime'] ?? '';
         if (!in_array($mime, ['image/png', 'image/jpeg', 'image/gif', 'image/webp'], true)) throw new AppError("The $label must be a PNG, JPEG, GIF or WebP image.");
         [$w, $h] = [(int) $info[0], (int) $info[1]];
         $max = self::IMAGE_MAX_SIDE[$kind] ?? 800;
-        if (($w > $max || $h > $max) && function_exists('imagecreatefromstring') && ($src = @imagecreatefromstring($bytes))) {
-            $scale = $max / max($w, $h); $nw = max(1, (int) round($w * $scale)); $nh = max(1, (int) round($h * $scale));
+        // v62.1: also recompress images that are small in pixels but heavy in bytes (over 400 KB)
+        if (($w > $max || $h > $max || strlen($bytes) > 409600) && function_exists('imagecreatefromstring') && ($src = @imagecreatefromstring($bytes))) {
+            $scale = min(1, $max / max($w, $h)); $nw = max(1, (int) round($w * $scale)); $nh = max(1, (int) round($h * $scale));
             $dst = imagecreatetruecolor($nw, $nh);
             imagealphablending($dst, false); imagesavealpha($dst, true);
             imagefill($dst, 0, 0, imagecolorallocatealpha($dst, 255, 255, 255, 127));
             imagecopyresampled($dst, $src, 0, 0, 0, 0, $nw, $nh, $w, $h);
-            ob_start();
+            ob_start(); $newMime = $mime;
             if ($mime === 'image/jpeg') imagejpeg($dst, null, 85);
             elseif ($mime === 'image/webp' && function_exists('imagewebp')) imagewebp($dst, null, 85);
-            else { imagepng($dst, null, 6); $mime = 'image/png'; }
-            $bytes = (string) ob_get_clean();
-            [$w, $h] = [$nw, $nh];
+            else { imagepng($dst, null, 9); $newMime = 'image/png'; }
+            $new = (string) ob_get_clean();
+            if ($scale < 1 || strlen($new) < strlen($bytes)) { [$bytes, $mime, $w, $h] = [$new, $newMime, $nw, $nh]; } // never store a bigger copy
         }
         return ['mime' => $mime, 'bytes' => $bytes, 'width' => $w, 'height' => $h];
     }

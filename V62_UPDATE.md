@@ -94,3 +94,13 @@ unread counts and **Mark all as read**. Clicking one opens what it is about.
   - `v61-lms.php` and `e2e_lifecycle.php` install the v62 tables.
   - `portal-enrollment.php` now runs against the configured MySQL server (`PORTAL_TEST_PORT=3369` still uses a
     separate test server); all 42 checks pass.
+
+## v62.1 — Image size limit
+- Every image upload is limited to **5 MB**: student photos, canteen products and QR code, book covers, and image
+  attachments in the LMS (other LMS files stay up to 10 MB).
+- The browser warns as soon as a too-big image is chosen, before anything is uploaded.
+- Images are still shrunk before saving (photos and covers 600 px, products 800 px). Images that are small in
+  pixels but heavy (over 400 KB) are now recompressed too, and a copy is never stored bigger than the original.
+  A typical student photo takes well under 200 KB in the database.
+- If the hosting's PHP limit (`upload_max_filesize`) is lower than 5 MB, ask the host to raise it to at least
+  6 MB, or uploads between that limit and 5 MB show "too large for the server".
