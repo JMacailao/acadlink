@@ -23,10 +23,15 @@ if ($isPost) {
         if ($toBack) { header('Location: ' . $back); exit; }
         redirect('admission', ['id' => $id] + $E);
     }
+    if ($a === 'photo') { StudentPhoto::forAdmission((int) $id, $_FILES['photo'] ?? []); flash('success', 'Photo saved.'); redirect('admission', ['id' => $id] + $E); }
     $d = Admission::validate($_POST);
-    if ($id) { Admission::update($id, $d); flash('success', 'Saved.'); }
+    $hasPhoto = ($_FILES['photo']['error'] ?? UPLOAD_ERR_NO_FILE) !== UPLOAD_ERR_NO_FILE; // v62
+    if (!$id && empty($_POST['privacy_consent'])) throw new AppError('Tick that the applicant (or their parent/guardian) agreed to the privacy notice.');
+    if ($id) { Admission::update($id, $d); if ($hasPhoto) StudentPhoto::forAdmission((int) $id, $_FILES['photo']); flash('success', 'Saved.'); }
     else {
         $id = Admission::create($d);
+        Privacy::recordConsent('ADMISSION', (string) $id, (string) ($_POST['privacy_by'] ?? 'APPLICANT'));
+        if ($hasPhoto) StudentPhoto::forAdmission((int) $id, $_FILES['photo']);
         if (!empty($_POST['docs_sent'])) EnrollmentDocs::saveChecklist($id, (array) ($_POST['docs'] ?? []));
         $miss = EnrollmentDocs::missing(Db::one('SELECT * FROM sis_admissions WHERE id = ?', [$id]));
         flash('success', 'Applicant recorded.' . ($miss ? ' Missing required documents: ' . implode(', ', $miss) . '.' : ' All required documents are ticked.') . ' Admit them when the requirements are complete.');
@@ -63,7 +68,7 @@ if ($id || isset($_GET['new'])) {
       <button class="admission-tab" type="button" role="tab" id="admission-tab-<?= $key ?>" aria-controls="admission-panel-<?= $key ?>" aria-selected="<?= $index === 0 ? 'true' : 'false' ?>" tabindex="<?= $index === 0 ? '0' : '-1' ?>" data-admission-tab="<?= $key ?>"><?= h($tabNames[$key]) ?></button>
       <?php endforeach; ?>
     </div>
-    <form id="admissionDetailsForm" method="post" action="<?= url('admission', ($id ? ['id' => $id] : ['new' => 1]) + $E) ?>" class="form-section admission-record-form"><?= csrf_field() ?>
+    <form id="admissionDetailsForm" method="post" enctype="multipart/form-data" action="<?= url('admission', ($id ? ['id' => $id] : ['new' => 1]) + $E) ?>" class="form-section admission-record-form"><?= csrf_field() ?>
       <?php if (!$e): ?><input type="hidden" name="docs_sent" value="1"><?php endif; ?>
       <h2 class="h5 admission-record-title"><?= $e ? h($e['admission_no']) . ' · ' . h($e['last_name'] . ', ' . $e['first_name']) : 'New applicant' ?></h2>
       <p class="admission-required-note">Fields marked <span aria-hidden="true">*</span> are required.</p>
@@ -71,6 +76,10 @@ if ($id || isset($_GET['new'])) {
       <section class="admission-panel" id="admission-panel-student" role="tabpanel" aria-labelledby="admission-tab-student" data-admission-panel="student">
         <h3 class="admission-panel-title">Student information</h3>
         <p class="admission-panel-description">Enter the applicant’s identity and contact details.</p>
+        <?php $photoId = $e ? StudentPhoto::admissionPhotoId((int) $e['id']) : null; ?>
+        <div class="st-photo-box mb-3"><?= StudentPhoto::html($photoId, $e ? $e['last_name'] . ', ' . $e['first_name'] : 'New', 'md') ?>
+          <div class="st-photo-actions"><label class="form-label" for="aPhoto">Student photo</label><input class="form-control" type="file" id="aPhoto" name="photo" accept="image/png,image/jpeg,image/webp"<?= $editable ? '' : ' disabled' ?>>
+            <div class="form-text">A clear, recent photo of the face (PNG, JPEG or WebP, up to 5 MB). It becomes the student's photo when admitted.</div></div></div>
         <fieldset <?= $editable ? '' : 'disabled' ?>><div class="row g-3">
           <div class="col-md-4"><label class="form-label" for="aType">Student classification <span class="admission-required" aria-hidden="true">*</span></label><select class="form-select" id="aType" name="applicant_type" required data-doc-type><option value="">— choose —</option><?php foreach (Admission::TYPES as $k => $l): ?><option value="<?= $k ?>"<?= ($e['applicant_type'] ?? ($_POST['applicant_type'] ?? '')) === $k ? ' selected' : '' ?>><?= h($l) ?></option><?php endforeach; ?></select><div class="form-text">Continuing students and returnees keep their current Student ID.</div></div>
           <div class="col-md-4"><label class="form-label" for="aStudentNo">Student ID <span class="text-muted fw-normal">(continuing / returnee)</span></label><input class="form-control font-monospace" id="aStudentNo" name="student_number" maxlength="40" value="<?= h((string) ($e['student_number'] ?? ($_POST['student_number'] ?? ''))) ?>" placeholder="e.g. 20240015"></div>
@@ -115,6 +124,12 @@ if ($id || isset($_GET['new'])) {
       </section>
       <?php endif; ?>
       <datalist id="programs"><?php foreach (GS::programs() as $pg): ?><option><?= h($pg) ?></option><?php endforeach; ?></datalist>
+      <?php if (!$e): ?><section class="admission-privacy mb-3"><?= Privacy::noticeHtml() ?>
+        <label class="form-check mt-2"><input class="form-check-input" type="checkbox" name="privacy_consent" value="1" required> The applicant agreed to this privacy notice
+          <select class="form-select form-select-sm d-inline-block w-auto ms-1" name="privacy_by" aria-label="Who agreed"><option value="APPLICANT">(the applicant)</option><option value="PARENT">(a parent or guardian, for a minor)</option></select></label></section>
+      <?php else: $consent = Db::one("SELECT * FROM sis_privacy_consents WHERE subject_type = 'ADMISSION' AND subject_ref = ? ORDER BY id DESC LIMIT 1", [(string) $e['id']]); ?>
+      <p class="small text-muted mb-2"><i class="bi bi-shield-check me-1" aria-hidden="true"></i><?= $consent ? 'Privacy notice agreed by the ' . ($consent['given_by'] === 'PARENT' ? 'parent or guardian' : 'applicant') . ' on ' . h(date('M j, Y', strtotime($consent['created_at']))) . '.' : 'No privacy consent on record (recorded before v62).' ?></p>
+      <?php endif; ?>
       <div class="admission-form-actions" data-admission-show="<?= $e ? 'student,guardian,placement' : 'student,guardian,placement,documents' ?>">
         <a class="btn btn-outline-secondary" href="<?= url('admission') ?>"<?= $embed ? ' target="_top"' : '' ?>>Cancel</a>
         <div class="admission-form-actions-end">

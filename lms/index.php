@@ -8,11 +8,12 @@
 declare(strict_types=1);
 
 const APP_SYSTEM = 'LMS';
-const LOCAL_ROUTES = ['dashboard', 'classes', 'attendance', 'assignments', 'gradebook', 'materials', 'messages', 'reports', 'settings', 'todo', 'schedule', 'class', 'work', 'file', 'notifications', 'search', 'profile', 'password', 'navstate'];
+const LOCAL_ROUTES = ['alerts', 'dashboard', 'classes', 'attendance', 'assignments', 'gradebook', 'materials', 'messages', 'reports', 'settings', 'todo', 'schedule', 'class', 'work', 'file', 'notifications', 'search', 'profile', 'password', 'navstate'];
 require __DIR__ . '/../sis/app/bootstrap.php';
 sis_boot();
 
 const ROUTES = [
+    'alerts'       => ['alerts', []], // v62: my notifications
     'dashboard'    => [__DIR__ . '/pages/home.php', ['lms.view']],
     'classes'      => [__DIR__ . '/pages/classes.php', ['lms.view']],
     'attendance'   => [__DIR__ . '/pages/attendance.php', ['lms.view']],

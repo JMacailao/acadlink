@@ -7,13 +7,14 @@
 declare(strict_types=1);
 
 const APP_SYSTEM = 'CANTEEN';
-const LOCAL_ROUTES = ['dashboard', 'sales', 'sale', 'receipt', 'shift', 'shifts', 'approvals', 'products', 'inventory', 'reports', 'settings',
+const LOCAL_ROUTES = ['alerts', 'dashboard', 'sales', 'sale', 'receipt', 'shift', 'shifts', 'approvals', 'products', 'inventory', 'reports', 'settings',
     'img', 'qr', 'notifications', 'search', 'profile', 'password', 'navstate'];
 require __DIR__ . '/../sis/app/bootstrap.php';
 sis_boot();
 
 // route => [page file, required permissions (any of); [] = any signed-in user]
 const ROUTES = [
+    'alerts'       => ['alerts', []], // v62: my notifications
     'dashboard'    => [__DIR__ . '/pages/pos.php', ['canteen.view', 'canteen.products', 'canteen.inventory', 'canteen.reports']],
     'sales'        => [__DIR__ . '/pages/sales.php', ['canteen.view']],
     'sale'         => [__DIR__ . '/pages/sale.php', ['canteen.view']],

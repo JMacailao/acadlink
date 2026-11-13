@@ -10,6 +10,19 @@ if ($isPost && ($_POST['action'] ?? '') === 'details') {
     flash('success', 'Records for documents saved.');
     redirect('student', ['id' => $id]);
 }
+if ($isPost && in_array($_POST['action'] ?? '', ['parent_create', 'parent_link', 'parent_unlink'], true)) { // v62: parent / guardian accounts
+    $no = (string) ($s['studentId'] ?? '');
+    $act = (string) $_POST['action'];
+    if ($act === 'parent_create') { ParentAccess::create($no, $_POST); flash('success', 'Parent account created and linked. Give them the username and temporary password; they choose their own password at first sign-in.'); }
+    elseif ($act === 'parent_link') { ParentAccess::link($no, (string) ($_POST['username'] ?? ''), (string) ($_POST['relationship'] ?? '')); flash('success', 'Parent account linked.'); }
+    else { ParentAccess::unlink($no, (int) ($_POST['account'] ?? 0)); flash('success', 'Parent account unlinked from this student.'); }
+    redirect('student', ['id' => $id]);
+}
+if ($isPost && ($_POST['action'] ?? '') === 'photo') { // v62
+    StudentPhoto::staffSet((string) ($s['studentId'] ?? ''), $_FILES['photo'] ?? []);
+    flash('success', 'Photo saved on the student record.');
+    redirect('student', ['id' => $id]);
+}
 if ($isPost) {
     GS::saveStudent($id, $_POST);
     flash('success', 'Student updated (also in the grading system).');
@@ -24,6 +37,32 @@ page_title((string) ($s['studentName'] ?? ''), Auth::can('registration') ? '<a c
 ?>
 <div class="row g-3">
 <div class="col-lg-4">
+  <?php $no = (string) ($s['studentId'] ?? ''); $pend = StudentPhoto::pendingId($no); $cons = $no !== '' ? Privacy::consentOf($no) : null; ?>
+  <section class="form-section" id="studentPhoto"><h2 class="h6">Photo</h2>
+    <div class="st-photo-box"><?= StudentPhoto::html(StudentPhoto::currentId($no), (string) ($s['studentName'] ?? ''), 'md') ?>
+      <div class="st-photo-actions"><?php if ($pend): ?><p class="small mb-2"><i class="bi bi-hourglass-split me-1" aria-hidden="true"></i>The student sent a new photo. <?php if ($canEdit): ?><a href="<?= url('photos') ?>">Review it</a><?php endif; ?></p><?php endif; ?>
+        <?php if ($canEdit && $no !== ''): ?><form method="post" enctype="multipart/form-data"><?= csrf_field() ?><input type="hidden" name="action" value="photo"><input class="form-control form-control-sm mb-2" type="file" name="photo" accept="image/png,image/jpeg,image/webp" required aria-label="New photo"><button class="btn btn-sm btn-outline-primary">Replace photo</button></form><?php endif; ?>
+        <p class="small text-muted mt-2 mb-0"><i class="bi bi-shield-check me-1" aria-hidden="true"></i><?= $cons ? 'Privacy notice agreed ' . h(date('M j, Y', strtotime($cons['created_at']))) . ' by the ' . ($cons['given_by'] === 'PARENT' ? 'parent/guardian' : strtolower($cons['given_by'])) . '.' : 'No privacy consent on record.' ?></p></div></div>
+  </section>
+  <?php if ($no !== ''): $parents = ParentAccess::parentsOf($no); ?>
+  <section class="form-section" id="studentParents"><h2 class="h6">Parents / guardians <span class="text-muted fw-normal small">(Student Portal, read-only)</span></h2>
+    <?php foreach ($parents as $pa): ?><div class="d-flex align-items-center gap-2 py-1 border-bottom"><i class="bi bi-person" aria-hidden="true"></i><span class="me-auto small"><b><?= h($pa['display_name']) ?></b> · <?= h($pa['relationship']) ?><br><span class="text-muted"><?= h((string) $pa['username']) ?> · <?= $pa['status'] === 'ACTIVE' ? ($pa['last_login_at'] ? 'last signed in ' . h(date('M j, Y', strtotime($pa['last_login_at']))) : 'not signed in yet') : 'disabled' ?></span></span>
+      <?php if ($canEdit): ?><form method="post" data-confirm="Unlink <?= h($pa['display_name']) ?> from this student? Their account stays."><?= csrf_field() ?><input type="hidden" name="action" value="parent_unlink"><input type="hidden" name="account" value="<?= (int) $pa['id'] ?>"><button class="btn btn-sm btn-link text-danger p-0" aria-label="Unlink <?= h($pa['display_name']) ?>">Unlink</button></form><?php endif; ?></div><?php endforeach; ?>
+    <?php if (!$parents): ?><p class="small text-muted mb-2">No parent account yet.</p><?php endif; ?>
+    <?php if ($canEdit): ?>
+    <details class="mt-2"><summary class="small fw-semibold">Create a parent account</summary>
+      <form method="post" class="mt-2"><?= csrf_field() ?><input type="hidden" name="action" value="parent_create">
+        <input class="form-control form-control-sm mb-1" name="full_name" maxlength="150" placeholder="Full name, e.g. Maria Reyes" aria-label="Parent full name" required>
+        <div class="d-flex gap-1 mb-1"><input class="form-control form-control-sm" name="username" maxlength="64" placeholder="Username" aria-label="Username" pattern="[a-z0-9._-]{3,64}" required><select class="form-select form-select-sm" name="relationship" aria-label="Relationship"><option>Mother</option><option>Father</option><option>Guardian</option><option>Grandparent</option><option>Sibling</option><option>Other</option></select></div>
+        <input class="form-control form-control-sm mb-1" type="email" name="email" maxlength="191" placeholder="Email (optional, for notifications and password reset)" aria-label="Email">
+        <input class="form-control form-control-sm mb-1" name="temp_password" minlength="8" maxlength="72" placeholder="Temporary password (8+ letters and numbers)" aria-label="Temporary password" required autocomplete="off">
+        <button class="btn btn-sm btn-primary">Create and link</button></form></details>
+    <details class="mt-2"><summary class="small fw-semibold">Link an existing parent account</summary>
+      <form method="post" class="mt-2 d-flex gap-1"><?= csrf_field() ?><input type="hidden" name="action" value="parent_link"><input class="form-control form-control-sm" name="username" placeholder="Parent's username" aria-label="Parent username" required><select class="form-select form-select-sm" name="relationship" aria-label="Relationship"><option>Mother</option><option>Father</option><option>Guardian</option><option>Grandparent</option><option>Sibling</option><option>Other</option></select><button class="btn btn-sm btn-outline-primary">Link</button></form>
+      <p class="small text-muted mt-1 mb-0">Use this for brothers and sisters: one parent account can see several children.</p></details>
+    <?php endif; ?>
+  </section>
+  <?php endif; ?>
   <?php if ($canEdit): ?>
   <form method="post" class="form-section" id="studentEdit"><?= csrf_field() ?><input type="hidden" name="_version" value="<?= h(GS::version('students', $id)) ?>">
     <h2 class="h6">Student record (grading system)</h2>

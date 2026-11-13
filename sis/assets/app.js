@@ -297,3 +297,11 @@ Array.prototype.forEach.call(document.querySelectorAll('input[placeholder]:not([
 })();
 
 },40);})(window.SISLifecycle ? window.SISLifecycle.register : function(){(window.SISModuleQueue=window.SISModuleQueue||[]).push(Array.from(arguments));});
+
+// v62: a "select all" checkbox for a list of checkboxes (data-check-all="name[]")
+document.addEventListener('change', e => {
+  const all = e.target.closest && e.target.closest('[data-check-all]');
+  if (!all) return;
+  const scope = (all.dataset.checkScope && document.querySelector(all.dataset.checkScope)) || all.closest('form') || document;
+  scope.querySelectorAll('input[type=checkbox][name="' + all.dataset.checkAll + '"]').forEach(c => { c.checked = all.checked; });
+});

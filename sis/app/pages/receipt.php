@@ -7,7 +7,8 @@ $p = Db::one('SELECT p.*, r.reg_no, r.student_name, r.student_number, r.school_y
                 FROM sis_payments p JOIN sis_registrations r ON r.id = p.registration_id JOIN sis_users u ON u.id = p.received_by LEFT JOIN sis_or_series se ON se.id = p.series_id
                WHERE p.id = ?', [(int) ($_GET['id'] ?? 0)]);
 if (!$p) throw new AppError('Receipt not found.');
-if (!Auth::can('payments.view') && Auth::studentNumber() !== $p['student_number']) throw new Forbidden('Not your receipt.');
+if (!Auth::can('payments.view') && Auth::studentNumber() !== $p['student_number']
+    && !in_array((string) $p['student_number'], array_column(ParentAccess::children(), 'student_number'), true)) throw new Forbidden('Not your receipt.'); // v62: parents see their children's receipts
 $embed = isset($_GET['embed']);
 $canEditNo = Auth::can('payments.void') && $p['status'] === 'POSTED' && (int) $p['allow_edit'] && !AccountingWorkflow::receiptLocked((int)$p['id']) && !Db::val("SELECT id FROM sis_journal WHERE source='PAYMENT' AND source_id=? AND reversed_by_id IS NOT NULL",[$p['id']]);
 if ($isPost) {

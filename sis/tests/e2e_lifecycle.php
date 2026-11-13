@@ -26,6 +26,7 @@ $runSql(dirname(SIS_ROOT) . '/api/install.sql');
 $runSql(SIS_ROOT . '/database/schema.sql');
 $runSql(SIS_ROOT . '/database/seed.sql');
 $runSql(SIS_ROOT . '/database/seed_accounting.sql');
+foreach (['Notify', 'StudentPhoto', 'Privacy', 'ParentAccess'] as $v62) $v62::install(Db::pdo()); // v62 tables
 require __DIR__ . '/_legacy-payments.php'; // v56: these flows predate the payment-plan rule
 
 function e2e_ok(bool $condition, string $message): void { if (!$condition) throw new RuntimeException($message); }
