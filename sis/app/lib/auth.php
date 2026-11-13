@@ -18,6 +18,7 @@ final class Auth
         'TEACHER' => [],
         'STUDENT'   => ['self'],
         // v59: not a role; lets the CLI administrator (tests, tools) use the Canteen POS
+        'LMS_ADMIN' => ['lms.view'],
         'LIBRARY_ADMIN' => ['library.view', 'library.circulate', 'library.waive', 'library.catalog', 'library.catalog.edit', 'library.acquire', 'library.stocktake', 'library.reports', 'library.settings'],
         'CANTEEN_ADMIN' => ['canteen.view', 'canteen.sell', 'canteen.products', 'canteen.products.edit', 'canteen.inventory', 'canteen.inventory.edit', 'canteen.supervise', 'canteen.reports'],
     ];
@@ -141,6 +142,8 @@ final class Auth
             'canteen.products'=>['canteen.products.view','canteen.products.manage'], 'canteen.products.edit'=>['canteen.products.manage'],
             'canteen.inventory'=>['canteen.inventory.view','canteen.inventory.manage'], 'canteen.inventory.edit'=>['canteen.inventory.manage'],
             'canteen.supervise'=>['canteen.supervise'], 'canteen.reports'=>['canteen.reports.view','canteen.supervise'],
+            // v61: LMS
+            'lms.view'=>['lms.access.view','lms.manage.all'],
             // v60: Library
             'library.view'=>['library.loans.view','library.loans.manage'], 'library.circulate'=>['library.loans.manage'], 'library.waive'=>['library.fines.waive'],
             'library.catalog'=>['library.catalog.view','library.catalog.manage'], 'library.catalog.edit'=>['library.catalog.manage'], 'library.acquire'=>['library.acquisitions.manage'],

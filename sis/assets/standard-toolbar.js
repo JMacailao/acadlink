@@ -6,7 +6,7 @@
  'use strict';
  const T=window.AcadToolbar;
  const main=document.querySelector('.app-shell #main');
- if(!T||!main||document.body.classList.contains('bare')||document.documentElement.dataset.system==='portal'||['canteen','library'].includes(document.documentElement.dataset.app))return; // v59: the Canteen POS has its own controls
+ if(!T||!main||document.body.classList.contains('bare')||document.documentElement.dataset.system==='portal'||['canteen','library','lms'].includes(document.documentElement.dataset.app))return; // v59: the Canteen POS has its own controls
  const route=document.body.dataset.route||'dashboard';
  // The overview has no record selection or editing tools.
  if(route==='dashboard'&&document.body.classList.contains('sis-easy'))return;
