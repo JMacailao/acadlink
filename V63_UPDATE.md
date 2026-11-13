@@ -76,3 +76,17 @@ How the restore protects you:
   - a round account button (top right) with your name, Change password and Sign out.
   - Tablets and computers keep the cards with descriptions and buttons.
   - Source: `sis/app/pages/workspaces.php`, `css/workspace-selector.css`, `sis/assets/workspace-tiles.js`.
+
+## v63.2 — Bottom menu stays put; Library gets it too; no source-map warnings
+- **The bottom menu no longer disappears while another page opens.**
+  - It is now sent first, at the top of each page, so it shows at once even before the rest of the page arrives.
+  - During the page change the browser keeps it in place instead of fading it with the page. This needs Chrome or
+    Edge 126+ or Safari 18.2+; other browsers just load the next page.
+- **Library** now has the bottom menu on phones and tablets too, in purple: Home · Catalog · **Desk** (middle) ·
+  Members · More. It follows the librarian's permissions, and the curve follows the selected item as in the other
+  systems.
+- The browser console no longer shows "Connecting to …bootstrap.min.css.map violates the Content Security Policy".
+  Those were the developer tools asking for Bootstrap's debugging files; the security policy now allows that
+  download (`connect-src`) from the same Bootstrap site. Nothing else is loosened.
+- Source: `sis/app/views/layout.php`, `portal/views/layout.php`, `sis/assets/bottom-nav.css`, `sis/app/front.php`,
+  `portal/index.php`.

@@ -42,10 +42,11 @@ function portal_layout_start(string $title, bool $bare = false): void
 <link rel="stylesheet" href="../sis/assets/app.css?v=56b">
 <link rel="stylesheet" href="../sis/assets/reference-ui.css?v=20261021portal">
 <link rel="stylesheet" href="assets/portal.css?v=53">
-<link rel="stylesheet" href="../sis/assets/bottom-nav.css?v=62.2b">
+<link rel="stylesheet" href="../sis/assets/bottom-nav.css?v=63.2">
 <link rel="stylesheet" href="../sis/assets/people.css?v=63">
 </head>
 <body class="portal<?= $bare ? ' bare' : '' ?>" data-route="<?= h((string) $route) ?>">
+<?php if (!$bare && !empty($GLOBALS['PORTAL_MENU'])) portal_bottom_nav($GLOBALS['PORTAL_MENU']); // v63.2: first, so it shows at once ?>
 <?php if (!$bare && $u): ?>
 <header class="portal-bar d-print-none">
   <div class="portal-bar-inner">
@@ -123,7 +124,6 @@ function portal_layout_end(bool $bare = false): void
     ?>
 </main>
 <?php if (!$bare): ?><footer class="portal-foot d-print-none"><?= h(School::brand()) ?> · Student Portal</footer><?php endif; ?>
-<?php if (!$bare && !empty($GLOBALS['PORTAL_MENU'])) portal_bottom_nav($GLOBALS['PORTAL_MENU']); ?>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" crossorigin="anonymous"></script>
 <script src="../sis/assets/navigation.js?v=49"></script>
 <script src="../sis/assets/app.js?v=62.2"></script>
