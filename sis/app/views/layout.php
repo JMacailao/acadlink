@@ -36,6 +36,7 @@ const NAV = [
     ['libfines', 'Library Fines', 'book', ['payments.view'], 'Fees', 'Overdue, lost and damage fines to pay'],
     ['reports', 'Report Manager', 'printer', ['admission', 'registration', 'payments.view', 'accounting', 'reports'], 'Administration', 'Census, cashier reports'],
     ['users', 'Users and Groups', 'person-gear', ['users.manage'], 'Administration', 'Sign-in accounts'],
+    ['backup', 'Backup & Restore', 'cloud-arrow-down', ['users.manage'], 'Administration', 'A copy of all of AcadLink (power.admin only)'],
     ['emailsetup', 'Email Sending', 'envelope-at', ['settings.manage'], 'Administration', 'Forgot password emails (EmailJS)'],
     ['bulkaccounts', 'Bulk Accounts', 'people-fill', ['users.manage'], 'Administration', 'Create many teacher or student accounts'],
     ['migration', 'Data Migration', 'file-earmark-arrow-up', ['registration','accounting','users.manage'], 'Administration', 'Reviewed historical imports'],
@@ -203,7 +204,7 @@ function layout_start(string $title, bool $bare = false): void
 <link rel="stylesheet" href="<?= sis_web() ?>assets/sis-actions.css?v=20261021plans">
 <link rel="stylesheet" href="<?= sis_web() ?>assets/compact-workspace.css?v=20261025toolbar11">
 <link rel="stylesheet" href="<?= sis_web() ?>assets/theme.css?v=53">
-<link rel="stylesheet" href="<?= sis_web() ?>assets/people.css?v=62b">
+<link rel="stylesheet" href="<?= sis_web() ?>assets/people.css?v=63">
 <link rel="stylesheet" href="<?= sis_web() ?>assets/unified-toolbar.css?v=60">
 <link rel="stylesheet" href="../css/standard-toolbar.css?v=57">
 <link rel="stylesheet" href="<?= sis_web() ?>assets/registration-fees.css?v=4">
@@ -272,6 +273,7 @@ function layout_start(string $title, bool $bare = false): void
           if ($perms && !Auth::can(...$perms)) continue;
           if ($r === 'clearance' && !Clearance::on()) continue; // v55: hidden while online clearance is off
           if ($r === 'importall' && !ImportAll::can()) continue; // v56: needs both Curriculum and Assessment editing
+          if ($r === 'backup' && !Backup::allowed()) continue; // v63: only power.admin
           if (app_system() === 'LMS' && function_exists('lms_nav_allows') && !lms_nav_allows($r)) continue; // v61.1: Reports and Settings are for teachers
           [$rr, $qs] = array_pad(explode('&', $r, 2), 2, '');
           parse_str($qs, $params);

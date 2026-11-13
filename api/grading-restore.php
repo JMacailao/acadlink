@@ -4,7 +4,11 @@ declare(strict_types=1);
 const GRADING_RESTORE_COLLECTIONS=['settings','subjects','curriculum','teachers','sections','students','gradingAssignments','grades','gradeChangeRequests','rosterRequests','gradeCompletions'];
 function restoreActor(): array {
     $c=centralAccounts(); $a=$c->current();
-    if (!$a || $a['must_change_password'] || $c->group((int)$a['id'])!=='POWER_USER' || !$c->can((int)$a['id'],'admin.backup.manage')) fail('permission-denied','Only a Power User can restore grading backups.');
+    if (!$a || $a['must_change_password'] || $c->group((int)$a['id'])!=='POWER_USER' || !$c->can((int)$a['id'],'admin.backup.manage')) fail('permission-denied','Only power.admin can restore grading backups.');
+    // v63: like SIS → Backup & Restore, only power.admin (or, if it no longer exists, the oldest active Power User)
+    $owner=$c->q("SELECT i.account_id FROM central_login_identifiers i JOIN central_accounts x ON x.id=i.account_id AND x.status='ACTIVE' WHERE i.identifier_key='power.admin' AND i.is_primary=1")->fetchColumn()
+        ?: $c->q("SELECT MIN(x.id) FROM central_accounts x JOIN central_user_groups ug ON ug.account_id=x.id AND ug.revoked_at IS NULL JOIN central_groups g ON g.id=ug.group_id AND g.code='POWER_USER' WHERE x.status='ACTIVE'")->fetchColumn();
+    if ((int)$owner!==(int)$a['id']) fail('permission-denied','Only power.admin can restore grading backups.');
     return $a;
 }
 function restoreTables(): void {

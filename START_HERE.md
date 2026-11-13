@@ -1,3 +1,5 @@
+**Updating to v63 (Backup & Restore)?** Read `V63_UPDATE.md`. Upload the files, sign in as power.admin and press Ctrl+F5. No SQL import is needed.
+
 **Updating to v62 (notifications, Data Privacy, parents, student photos)?** Read `V62_UPDATE.md`. Upload the files, sign in to SIS once and press Ctrl+F5. No SQL import is needed.
 
 **Updating to v61.2 (bottom menu on phones and tablets) or v61.1 (LMS design)?** Read `V61_UPDATE.md`. Upload the files and press Ctrl+F5. No SQL import is needed.

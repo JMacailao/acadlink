@@ -38,6 +38,7 @@ require SIS_ROOT . '/app/lib/notify.php'; // v62: personal notifications (in-app
 require SIS_ROOT . '/app/lib/student-photo.php'; // v62: student photos
 require SIS_ROOT . '/app/lib/privacy.php'; // v62: Data Privacy Act helpers
 require SIS_ROOT . '/app/lib/parents.php'; // v62: parent / guardian accounts
+require SIS_ROOT . '/app/lib/backup.php'; // v63: whole-system backup and restore
 require SIS_ROOT . '/app/lib/balance-workspace.php';
 require FINANCE_ROOT . '/modules/accounting/lib/accounting.php';
 require FINANCE_ROOT . '/modules/accounting/lib/workflow.php';
@@ -75,6 +76,8 @@ function sis_config(): array
         // v51, optional: extra secret for encrypting saved keys; EmailJS address (tests use a local stand-in)
         'app_key' => (string) ($g['app_key'] ?? ''),
         'emailjs_endpoint' => $g['emailjs_endpoint'] ?? null,
+        // v63, optional: folder for whole-system backups (best outside the website), e.g. '/home/school/acadlink-backups'
+        'backup_dir' => (string) ($g['backup_dir'] ?? ''),
     ];
     date_default_timezone_set($cfg['timezone']);
     return $cfg;
