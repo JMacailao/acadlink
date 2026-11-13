@@ -91,3 +91,17 @@ and passing.
 - Source: new `lms/pages/{home,attendance,assignments,gradebook,materials,messages,reports,settings}.php` (the old
   home is now `classes.php`); changed `lms/lib/lms.php`, `lms/pages/{_ui,class,work}.php`, `lms/index.php`,
   `lms/assets/{lms.css,lms.js}`, `sis/app/views/layout.php`. Tests: `v61-lms.php` now has 13 checks.
+
+## v61.2 — Bottom menu on phones and tablets
+- **Student Portal, LMS and Canteen POS** get a bottom menu on screens narrower than 992 px (phones and tablets):
+  four buttons and a raised round button in the middle that sits in a curved dip of the bar. Each system uses its
+  own colour: Portal orange, LMS blue, Canteen orange.
+  - Student Portal: **Home · Schedule (or Enrollment/Admission) · Grades (middle) · Fees · More**. More slides up
+    a sheet with the whole menu, My profile and Switch system. The orange tab row under the top bar is hidden on
+    these screens, so the bottom menu replaces it.
+  - LMS: **Home · Classes · Messages (middle, with the unread count) · Tasks · More**. More opens the side menu.
+  - Canteen POS: **Sales · Shift · Cashier (middle) · Products · More**, following the cashier's permissions.
+    The order total bar of the cashier screen sits just above the menu.
+- Computers (992 px and wider) are unchanged. The menu is not printed.
+- Source: new `sis/app/views/bottom-nav.php` and `sis/assets/bottom-nav.css`; changed `sis/app/views/layout.php`,
+  `portal/views/layout.php` and `lms/assets/lms.css`.

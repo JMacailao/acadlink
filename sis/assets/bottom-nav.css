@@ -1,0 +1,44 @@
+/* v61.2 Bottom navigation (Student Portal, LMS, Canteen POS) for phones and tablets. Colours follow each system's theme. */
+.al-bnav { display: none; }
+:root { --bn-accent: #1d6b47; --bn-bg: #fff; --bn-ink: #1f2937; --bn-muted: #4b5563; --bn-line: #e5e7eb; --bn-h: 68px; }
+html[data-app="lms"] { --bn-accent: #2563eb; }
+html[data-app="canteen"] { --bn-accent: #e0650f; }
+html[data-system="portal"] { --bn-accent: #c2410c; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --bn-bg: #161b24; --bn-ink: #e5e9f0; --bn-muted: #aab4c3; --bn-line: #2b3445; } }
+:root[data-theme="dark"] { --bn-bg: #161b24; --bn-ink: #e5e9f0; --bn-muted: #aab4c3; --bn-line: #2b3445; }
+
+@media (max-width: 991.98px) {
+  .al-bnav { display: block; position: fixed; left: 0; right: 0; bottom: 0; z-index: 1035; background: var(--bn-bg); border-top: 3px solid var(--bn-accent);
+    padding-bottom: env(safe-area-inset-bottom); box-shadow: 0 -4px 16px #0f172a14; }
+  .al-bnav-row { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); height: var(--bn-h); max-width: 720px; margin: 0 auto; }
+  .al-bnav-item { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; text-decoration: none !important; color: var(--bn-ink) !important; min-width: 0; padding: 6px 2px; -webkit-tap-highlight-color: transparent; }
+  .al-bnav-icon { position: relative; font-size: 1.45rem; line-height: 1; }
+  .al-bnav-label { font-size: .78rem; font-weight: 500; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--bn-muted); }
+  .al-bnav-item.active, .al-bnav-item.active .al-bnav-label { color: var(--bn-accent) !important; font-weight: 700; }
+  .al-bnav-item:focus-visible { outline: 2px solid var(--bn-accent); outline-offset: -4px; border-radius: 12px; }
+  .al-bnav-badge { position: absolute; top: -6px; right: -12px; min-width: 18px; height: 18px; padding: 0 5px; border-radius: 9px; background: #dc2626; color: #fff; font-size: .68rem; font-weight: 700; display: grid; place-items: center; border: 2px solid var(--bn-bg); }
+  /* the raised middle button in a curved dip of the bar */
+  .al-bnav-center { position: relative; display: flex; justify-content: center; }
+  .al-bnav-dip { position: absolute; top: -3px; left: 50%; width: 150px !important; max-width: none !important; height: 54px !important; transform: translateX(-50%); fill: var(--bn-accent); pointer-events: none; }
+  .al-bnav-main { position: relative; justify-content: flex-end; padding-bottom: 6px; width: 100%; }
+  .al-bnav-main .al-bnav-icon { position: absolute; top: -28px; left: 50%; transform: translateX(-50%); width: 62px; height: 62px; border-radius: 50%; background: var(--bn-bg); color: var(--bn-ink);
+    display: grid; place-items: center; font-size: 1.6rem; box-shadow: 0 4px 12px #0f172a26; }
+  .al-bnav-main.active .al-bnav-icon { color: var(--bn-accent); }
+  .al-bnav-main .al-bnav-badge { top: 4px; right: 4px; }
+  .al-bnav-main .al-bnav-label { color: var(--bn-ink); }
+  /* keep page content and other bottom bars clear of the menu */
+  body:has(.al-bnav) { padding-bottom: calc(var(--bn-h) + 22px + env(safe-area-inset-bottom)) !important; }
+  body:has(.al-bnav) .cpos-mobilebar { bottom: calc(var(--bn-h) + 3px + env(safe-area-inset-bottom)) !important; padding-bottom: 10px !important; }
+  body:has(.al-bnav) .cpos-toast { bottom: calc(var(--bn-h) + 90px) !important; }
+  body:has(.al-bnav) .activity-status { bottom: calc(var(--bn-h) + 16px); }
+  body.portal:has(.al-bnav) .portal-nav { display: none; }
+  body.portal:has(.al-bnav) .portal-foot { display: none; }
+}
+@media (max-width: 360px) { .al-bnav-label { font-size: .7rem; } .al-bnav-dip { width: 130px !important; } }
+@media print { .al-bnav, .al-bsheet { display: none !important; } }
+/* "More" sheet */
+.al-bsheet { border-radius: 18px 18px 0 0; height: auto !important; max-height: 75vh; }
+.al-bsheet-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(96px, 1fr)); gap: 8px; }
+.al-bsheet-grid a { display: flex; flex-direction: column; align-items: center; gap: 6px; padding: 12px 6px; border-radius: 12px; text-decoration: none; color: var(--bn-ink); font-size: .85rem; text-align: center; border: 1px solid var(--bn-line); }
+.al-bsheet-grid a i { font-size: 1.4rem; color: var(--bn-accent); }
+.al-bsheet-grid a.active { background: var(--bn-accent); color: #fff; border-color: var(--bn-accent); } .al-bsheet-grid a.active i { color: #fff; }

@@ -250,3 +250,4 @@ html[data-app="lms"] .lms-stat .lms-stat-label { color: var(--lms-ink) !importan
 .lms-tc-btn { grid-column: 3; grid-row: 1 / span 2; } .lms-period { grid-row: 1 / span 2; }
 .lms-tc + .lms-tc { border-top: 1px solid var(--lms-line); padding-top: 8px; }
 @media (max-width: 991.98px) { html[data-app="lms"] .app-content { padding-left: 16px !important; padding-right: 16px !important; } }
+@media (max-width: 991.98px) { html[data-app="lms"] #sidebar .lms-rail-brand { display: none !important; } }

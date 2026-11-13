@@ -24,6 +24,7 @@ function portal_layout_start(string $title, bool $bare = false): void
     if (Auth::studentNumber() && Clearance::on()) array_splice($menu, 5, 0, [['clearance', 'Clearance', 'patch-check', []]]); // v55
     if (Auth::studentNumber()) $menu[] = ['library', 'Library', 'book', []]; // v60
     $tab = $_GET['tab'] ?? 'grades';
+    $GLOBALS['PORTAL_MENU'] = $bare || !$u ? null : $menu; // v61.2: for the bottom menu on phones and tablets
     ?><!doctype html>
 <html lang="en" data-system="portal">
 <head>
@@ -40,6 +41,7 @@ function portal_layout_start(string $title, bool $bare = false): void
 <link rel="stylesheet" href="../sis/assets/app.css?v=56b">
 <link rel="stylesheet" href="../sis/assets/reference-ui.css?v=20261021portal">
 <link rel="stylesheet" href="assets/portal.css?v=53">
+<link rel="stylesheet" href="../sis/assets/bottom-nav.css?v=61.2b">
 </head>
 <body class="portal<?= $bare ? ' bare' : '' ?>" data-route="<?= h((string) $route) ?>">
 <?php if (!$bare && $u): ?>
@@ -88,11 +90,33 @@ function portal_page_title(string $title, string $actions = '', string $subtitle
     echo '</div>' . ($actions !== '' ? '<div class="d-flex flex-wrap gap-2 align-items-center">' . $actions . '</div>' : '') . '</div>';
 }
 
+/** v61.2: bottom menu for phones and tablets: Home, Schedule (or Enrollment), Grades in the middle, Assessments, More. */
+function portal_bottom_nav(array $menu): void
+{
+    require_once SIS_ROOT . '/app/views/bottom-nav.php';
+    global $route;
+    $tab = $_GET['tab'] ?? 'grades';
+    $items = [];
+    foreach ($menu as [$r, $label, $icon, $params]) $items[$r . ($params['tab'] ?? '')] = ['href' => url($r, $params), 'label' => $label, 'icon' => $icon, 'active' => $route === $r && ($r !== 'history' || ($params['tab'] ?? '') === $tab)];
+    $get = fn(string $k, array $o = []) => isset($items[$k]) ? $o + $items[$k] : null;
+    $second = $get('schedule') ?? $get('myenrollment') ?? $get('myadmission');
+    $left = array_values(array_filter([$get('my'), $second]));
+    $center = $get('historygrades', ['label' => 'Grades']);
+    $right = array_values(array_filter([$get('historyassessments', ['label' => 'Fees']), ['label' => 'More', 'icon' => 'grid', 'sheet' => 'portalMore', 'active' => false]]));
+    if (!$center) return;
+    bottom_nav($left, $center, $right, 'Student Portal menu');
+    $all = array_values($items);
+    $all[] = ['href' => url('profile'), 'label' => 'My profile', 'icon' => 'person-gear', 'active' => $route === 'profile'];
+    $all[] = ['href' => '../sis/index.php?r=workspaces', 'label' => 'Switch system', 'icon' => 'grid-3x3-gap', 'active' => false];
+    bottom_sheet('portalMore', 'Student Portal', $all);
+}
+
 function portal_layout_end(bool $bare = false): void
 {
     ?>
 </main>
 <?php if (!$bare): ?><footer class="portal-foot d-print-none"><?= h(School::brand()) ?> · Student Portal</footer><?php endif; ?>
+<?php if (!$bare && !empty($GLOBALS['PORTAL_MENU'])) portal_bottom_nav($GLOBALS['PORTAL_MENU']); ?>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" crossorigin="anonymous"></script>
 <script src="../sis/assets/navigation.js?v=49"></script>
 <script src="../sis/assets/app.js?v=41"></script>
