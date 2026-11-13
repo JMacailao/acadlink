@@ -16,4 +16,8 @@ return [
   // Only if the website and api/ are on different addresses, list the website's host here,
   // e.g. ["www.yourschool.edu.ph"]. Leave empty when they are on the same site (normal).
   "allowed_hosts" => [],
+
+  // Optional (v63): where SIS → Backup & Restore keeps backup files. Best is a folder OUTSIDE the website,
+  // e.g. "/home/youraccount/acadlink-backups". Empty = the backups/ folder inside AcadLink (web access blocked by .htaccess on Apache).
+  "backup_dir" => "",
 ];

@@ -233,6 +233,12 @@ final class CentralAccounts
                 $n=$this->q("SELECT COUNT(*) FROM central_accounts a JOIN central_user_groups ug ON ug.account_id=a.id AND ug.revoked_at IS NULL JOIN central_groups g ON g.id=ug.group_id AND g.code='POWER_USER' WHERE a.status='ACTIVE' AND a.id<>?",[$id])->fetchColumn();
                 if (!$n) throw new CentralAccountError('Keep at least one active Power User.');
             }
+            // v63: power.admin is the account that backs up and restores: its username stays, and it stays an active Power User (its password can change)
+            if ($old && strtolower((string)$old['username'])==='power.admin') {
+                if ($username!=='power.admin') throw new CentralAccountError('The power.admin username can\'t be changed. You can change its password.');
+                if ($group!=='POWER_USER' || $status!=='ACTIVE') throw new CentralAccountError('power.admin must stay an active Power User: it is the account that backs up and restores AcadLink.');
+            }
+            if (!$old && $username==='power.admin' && $this->q("SELECT 1 FROM central_login_identifiers WHERE identifier_key='power.admin'")->fetchColumn()) throw new CentralAccountError('This username is already used.');
             $teacher=trim((string)($in['teacher_doc_id']??'')); $student=trim((string)($in['student_number']??''));
             if ($group!=='TEACHER' && $teacher!=='') throw new CentralAccountError('Teacher links belong to Teacher accounts.');
             if ($group!=='STUDENT' && $student!=='') throw new CentralAccountError('Student links belong to Student accounts.');

@@ -1,2 +1,7 @@
 # Database password: never commit
 api/config.php
+
+# v63: backups made on the server (they contain all school data)
+backups/*
+!backups/.htaccess
+!backups/index.html
