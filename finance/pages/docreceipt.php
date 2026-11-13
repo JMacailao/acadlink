@@ -29,5 +29,5 @@ $logo = School::logo();
   <div class="row"><span>Payment: <?= h($p['method'] . ($p['reference_no'] ? ' · ' . $p['reference_no'] : '')) ?></span></div>
   <div class="sign"><span><?= h($p['full_name']) ?><br><small><?= h(Settings::get('or_sign') ?: 'Cashier') ?></small></span></div>
 </div>
-<script src="<?= defined('PORTAL_ROOT') ? '../sis/' : '' ?>assets/doc-print.js?v=50"></script>
+<script src="<?= sis_web() ?>assets/doc-print.js?v=50"></script>
 </body></html>

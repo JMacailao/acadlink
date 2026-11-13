@@ -6,6 +6,7 @@
 declare(strict_types=1);
 
 define('SIS_ROOT', dirname(__DIR__));
+define('FINANCE_ROOT', dirname(SIS_ROOT) . '/finance'); // v58: the Finance system's own folder
 date_default_timezone_set('Asia/Manila');
 
 require SIS_ROOT . '/app/lib/core.php';
@@ -34,8 +35,8 @@ require SIS_ROOT . '/app/lib/portal-enrollment.php';
 require SIS_ROOT . '/app/lib/payment-plans.php';
 require SIS_ROOT . '/app/lib/notifications.php';
 require SIS_ROOT . '/app/lib/balance-workspace.php';
-require SIS_ROOT . '/modules/accounting/lib/accounting.php';
-require SIS_ROOT . '/modules/accounting/lib/workflow.php';
+require FINANCE_ROOT . '/modules/accounting/lib/accounting.php';
+require FINANCE_ROOT . '/modules/accounting/lib/workflow.php';
 require SIS_ROOT . '/app/lib/reports.php';
 require SIS_ROOT . '/app/lib/xlsx.php';
 require SIS_ROOT . '/app/lib/feeimport.php';

@@ -31,7 +31,10 @@ const SYSTEM_LINKS = {
   GRADING: ["Grading System", "mortarboard", "dashboard.html"],
   SIS: ["School Information System", "buildings", "../sis/index.php?r=dashboard"],
   PORTAL: ["Student Portal", "person-badge", "../portal/index.php?r=my"],
+  FINANCE: ["Finance", "cash-coin", "../finance/index.php"],
   LMS: ["Learning Management System", "laptop", "../lms/index.php"],
+  CANTEEN: ["Canteen POS", "shop", "../canteen/index.php"],
+  LIBRARY: ["Library", "book", "../library/index.php"],
 };
 function fillSwitchMenu(systems) {
   const menu = document.getElementById("switchSystemMenu");

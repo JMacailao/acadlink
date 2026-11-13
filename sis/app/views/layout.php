@@ -22,22 +22,12 @@ const NAV = [
     ['history&tab=assessments', 'History of Assessments', 'receipt', ['registration', 'accounting', 'payments.view'], 'Records', 'Permanent assessment records'],
     ['documents', 'TOR & Certificates', 'file-earmark-text', ['documents'], 'Records', 'Issue, sign, reprint and void'],
     ['schedules', 'Class Schedules', 'calendar-week', ['schedules'], 'Records', 'Days, times, rooms and teachers'],
-    ['cashier', 'Cashier', 'cash-coin', ['payments.view'], '', 'Payments and receipts'],
     ['assessment&tab=categories', 'Fee categories', 'tags', ['assessment'], 'Assessment', 'Fee groups'],
     ['assessment&tab=labels', 'Fee labels', 'tag', ['assessment'], 'Assessment', 'Fee lines'],
     ['assessment&tab=names', 'Fee Templates', 'card-list', ['assessment'], 'Assessment', 'Fee templates'],
     ['subjectfees', 'Subject Fees', 'journal-plus', ['assessment'], 'Assessment', 'Fees of particular subjects, per unit'],
     ['discounts', 'Scholarships & Discounts', 'award', ['assessment', 'discounts.manage'], 'Assessment', 'Less on the fees'],
     ['assessment&tab=labels&plan=list', 'Payment Setup', 'calendar3', ['assessment'], 'Assessment', 'Installments, due dates and full-payment discount'],
-    ['docfees', 'Document Fees', 'file-earmark-text', ['payments.view'], 'Fees', 'TOR and certificate requests to pay'],
-    ['balance', 'Existing Balances', 'wallet2', ['registration', 'accounting', 'self', 'balances.view'], 'Fees', 'Previous-semester balance and approvals'],
-    ['accounting&tab=overview', 'Accounting overview', 'speedometer2', ['accounting'], 'Finance', 'What needs attention'],
-    ['accounting&tab=review', 'Review and Post', 'clipboard-check', ['accounting'], 'Finance', 'Approve transactions'],
-    ['accounting&tab=transactions', 'Expenses and Refunds', 'receipt', ['accounting'], 'Finance', 'Reviewed financial transactions'],
-    ['accounting&tab=ledger', 'Ledger', 'journal-text', ['accounting'], 'Finance', 'Journal entries'],
-    ['accounting&tab=accounts', 'Chart of Accounts', 'list-columns', ['accounting'], 'Finance', ''],
-    ['accounting&tab=mappings', 'Account Mappings', 'diagram-2', ['accounting'], 'Finance', ''],
-    ['accounting&tab=reconcile', 'Bank Reconciliation', 'bank', ['accounting'], 'Finance', ''],
     ['reports', 'Report Manager', 'printer', ['admission', 'registration', 'payments.view', 'accounting', 'reports'], 'Administration', 'Census, cashier reports'],
     ['users', 'Users and Groups', 'person-gear', ['users.manage'], 'Administration', 'Sign-in accounts'],
     ['emailsetup', 'Email Sending', 'envelope-at', ['settings.manage'], 'Administration', 'Forgot password emails (EmailJS)'],
@@ -50,14 +40,44 @@ const NAV = [
     ['help', 'Help', 'question-circle', [], '', 'How to use the SIS'],
 ];
 
+/** v58: the Finance system's menu (finance/index.php). Same item format as NAV. */
+const FINANCE_NAV = [
+    ['dashboard', 'Overview', 'speedometer2', [], '', 'Revenue by source and what needs attention'],
+    ['notifications', 'Notifications', 'bell', ['admission', 'registration', 'payments.view', 'accounting'], '', 'Special-request approvals'],
+    ['cashier', 'Cashier', 'cash-coin', ['payments.view'], 'Cashier', 'Payments and receipts'],
+    ['docfees', 'Document Fees', 'file-earmark-text', ['payments.view'], 'Cashier', 'TOR and certificate requests to pay'],
+    ['orseries', 'O.R. Series', '123', ['settings.manage'], 'Cashier', 'Official receipt numbering'],
+    ['balance', 'Existing Balances', 'wallet2', ['registration', 'accounting', 'balances.view'], 'Balances', 'Previous-semester balance and approvals'],
+    ['accounting&tab=overview', 'Accounting overview', 'speedometer2', ['accounting'], 'Accounting', 'What needs attention'],
+    ['accounting&tab=review', 'Review and Post', 'clipboard-check', ['accounting'], 'Accounting', 'Approve transactions'],
+    ['accounting&tab=transactions', 'Expenses and Refunds', 'receipt', ['accounting'], 'Accounting', 'Reviewed financial transactions'],
+    ['accounting&tab=ledger', 'Ledger', 'journal-text', ['accounting'], 'Accounting', 'Journal entries'],
+    ['accounting&tab=accounts', 'Chart of Accounts', 'list-columns', ['accounting'], 'Accounting', ''],
+    ['accounting&tab=mappings', 'Account Mappings', 'diagram-2', ['accounting'], 'Accounting', ''],
+    ['accounting&tab=reconcile', 'Bank Reconciliation', 'bank', ['accounting'], 'Accounting', ''],
+    ['reports', 'Report Manager', 'printer', ['payments.view', 'accounting'], 'Reports', 'Cashier and accounting reports'],
+];
+
+/** The menu of the system this page belongs to. */
+function app_nav(): array
+{
+    return app_system() === 'FINANCE' ? FINANCE_NAV : NAV;
+}
+
+/** The name shown under the school's name in the top bar and side rail. */
+function app_title(): string
+{
+    return ['FINANCE' => 'Finance', 'PORTAL' => 'Student Portal'][app_system()] ?? 'School Information System';
+}
+
 /** Icon shown beside each sidebar group heading. */
-const NAV_GROUP_ICONS = ['Enrollment' => 'clipboard-check', 'Records' => 'folder2-open', 'Assessment' => 'calculator', 'Fees' => 'cash-stack', 'Accounting' => 'journal-bookmark', 'Administration' => 'gear-wide-connected', 'Finance' => 'wallet2'];
+const NAV_GROUP_ICONS = ['Enrollment' => 'clipboard-check', 'Records' => 'folder2-open', 'Assessment' => 'calculator', 'Fees' => 'cash-stack', 'Accounting' => 'journal-bookmark', 'Administration' => 'gear-wide-connected', 'Finance' => 'wallet2', 'Cashier' => 'cash-coin', 'Balances' => 'wallet2', 'Reports' => 'printer'];
 
 /** The sidebar group of the current route, used by the breadcrumb ("Home › Enrollment › Admission"). */
 function nav_group_of(string $route): string
 {
     if ($route === 'student') $route = 'students';
-    foreach (NAV as [$r, , , , $g]) if (explode('&', $r, 2)[0] === $route) return $g;
+    foreach (app_nav() as [$r, , , , $g]) if (explode('&', $r, 2)[0] === $route) return $g;
     return '';
 }
 
@@ -90,7 +110,7 @@ function layout_start(string $title, bool $bare = false): void
     $u = Auth::user();
     ?><!doctype html>
 <?php $system = sis_system(); ?>
-<html lang="en" data-role="sis" data-system="<?= $system ?>"><!-- data-role: the grading stylesheet shows the page once set; data-system: the color theme -->
+<html lang="en" data-role="sis" data-system="<?= $system ?>" data-app="<?= strtolower(app_system()) ?>"><!-- data-role: the grading stylesheet shows the page once set; data-system: the color theme -->
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
@@ -103,24 +123,24 @@ function layout_start(string $title, bool $bare = false): void
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" crossorigin="anonymous">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" crossorigin="anonymous">
 <link rel="stylesheet" href="../css/style.css"><!-- the grading system's own theme: both systems look the same -->
-<link rel="stylesheet" href="assets/app.css?v=56b">
-<link rel="stylesheet" href="assets/activity.css?v=31">
-<link rel="stylesheet" href="assets/navigation.css?v=31">
-<link rel="stylesheet" href="assets/reference-ui.css?v=20261021portal">
-<link rel="stylesheet" href="assets/record-list.css?v=20261020b">
-<link rel="stylesheet" href="assets/fixed-shell.css?v=20261020j">
-<link rel="stylesheet" href="assets/accounting-ui.css?v=20261021toolbar">
-<link rel="stylesheet" href="assets/sis-actions.css?v=20261021plans">
-<link rel="stylesheet" href="assets/compact-workspace.css?v=20261025toolbar11">
-<link rel="stylesheet" href="assets/theme.css?v=53">
-<link rel="stylesheet" href="assets/unified-toolbar.css?v=60">
+<link rel="stylesheet" href="<?= sis_web() ?>assets/app.css?v=56b">
+<link rel="stylesheet" href="<?= sis_web() ?>assets/activity.css?v=31">
+<link rel="stylesheet" href="<?= sis_web() ?>assets/navigation.css?v=31">
+<link rel="stylesheet" href="<?= sis_web() ?>assets/reference-ui.css?v=20261021portal">
+<link rel="stylesheet" href="<?= sis_web() ?>assets/record-list.css?v=20261020b">
+<link rel="stylesheet" href="<?= sis_web() ?>assets/fixed-shell.css?v=20261020j">
+<link rel="stylesheet" href="<?= sis_web() ?>assets/accounting-ui.css?v=20261021toolbar">
+<link rel="stylesheet" href="<?= sis_web() ?>assets/sis-actions.css?v=20261021plans">
+<link rel="stylesheet" href="<?= sis_web() ?>assets/compact-workspace.css?v=20261025toolbar11">
+<link rel="stylesheet" href="<?= sis_web() ?>assets/theme.css?v=53">
+<link rel="stylesheet" href="<?= sis_web() ?>assets/unified-toolbar.css?v=60">
 <link rel="stylesheet" href="../css/standard-toolbar.css?v=57">
-<link rel="stylesheet" href="assets/registration-fees.css?v=4">
-<link rel="stylesheet" href="assets/assessment-fee-templates.css?v=1">
-<?php if ($route === 'assessment' && ($_GET['tab'] ?? '') === 'names'): ?><script src="assets/fee-templates.js?v=1" defer></script><?php endif; ?>
-<?php if ($route === 'documents' && ($_GET['tab'] ?? '') === 'settings'): ?><script src="assets/documents-template-preview.js?v=1" defer></script><?php endif; ?>
-<?php if ($route === 'admission'): ?><link rel="stylesheet" href="assets/admission-form.css?v=1"><?php endif; ?>
-<?php if ($system === 'sis' && !$bare && $u): ?><link rel="stylesheet" href="assets/easy-navigation.css?v=6"><link rel="stylesheet" href="assets/dashboard.css?v=2"><?php endif; ?>
+<link rel="stylesheet" href="<?= sis_web() ?>assets/registration-fees.css?v=4">
+<link rel="stylesheet" href="<?= sis_web() ?>assets/assessment-fee-templates.css?v=1">
+<?php if ($route === 'assessment' && ($_GET['tab'] ?? '') === 'names'): ?><script src="<?= sis_web() ?>assets/fee-templates.js?v=1" defer></script><?php endif; ?>
+<?php if ($route === 'documents' && ($_GET['tab'] ?? '') === 'settings'): ?><script src="<?= sis_web() ?>assets/documents-template-preview.js?v=1" defer></script><?php endif; ?>
+<?php if ($route === 'admission'): ?><link rel="stylesheet" href="<?= sis_web() ?>assets/admission-form.css?v=1"><?php endif; ?>
+<?php if ($system === 'sis' && !$bare && $u): ?><link rel="stylesheet" href="<?= sis_web() ?>assets/easy-navigation.css?v=6"><link rel="stylesheet" href="<?= sis_web() ?>assets/dashboard.css?v=2"><?php endif; ?>
 </head>
 <?php $embedFlashes = $bare && isset($_GET['embed']) ? take_flashes() : []; // pop-up pages show their own messages ?>
 <body data-client-scope="<?= h($u ? acadlink_client_scope(Auth::central()) : '') ?>" class="<?= $bare ? 'bare' : ('sis-theme' . ($system === 'sis' && $u ? ' sis-easy' : '')) ?>" data-user-id="<?= h((string) ($u['id'] ?? 'guest')) ?>" data-route="<?= h((string) $route) ?>"<?= array_filter($embedFlashes, fn($f) => $f[0] === 'success') ? ' data-changed="1"' : '' ?>>
@@ -133,7 +153,7 @@ function layout_start(string $title, bool $bare = false): void
 <?php if ($system === 'sis'): ?><a class="sis-skip-link" href="#main">Skip to content</a><?php endif; ?>
 <header class="sis-appbar d-print-none" aria-label="School workspace">
   <button class="sis-appbar-menu d-lg-none" type="button" data-bs-toggle="offcanvas" data-bs-target="#sidebar" aria-controls="sidebar" aria-label="Open menu"><i class="bi bi-list" aria-hidden="true"></i></button>
-  <a href="<?= url('dashboard') ?>" class="sis-appbar-brand"><img src="<?= h($logo ?: '../icons/acadlink-mark.png') ?>" alt=""><span class="sis-brand-text"><span class="sis-brand-name"><?= h(School::brand()) ?></span><span class="sis-brand-sub"><?= $system === 'portal' ? 'Student Portal' : 'School Information System' ?></span></span></a>
+  <a href="<?= url('dashboard') ?>" class="sis-appbar-brand"><img src="<?= h($logo ?: '../icons/acadlink-mark.png') ?>" alt=""><span class="sis-brand-text"><span class="sis-brand-name"><?= h(School::brand()) ?></span><span class="sis-brand-sub"><?= $system === 'portal' ? 'Student Portal' : h(app_title()) ?></span></span></a>
   <?php if ($system === 'sis'): ?><div class="sis-appbar-tools" id="sisAppbarTools" hidden></div><?php endif; ?>
   <?php if (can_search()): ?>
   <form class="sis-appbar-search d-none d-md-flex" method="get" role="search"><input type="hidden" name="r" value="search"><i class="bi bi-search" aria-hidden="true"></i><input class="form-control" id="globalSearch" name="q" value="<?= h($route === 'search' ? (string) ($_GET['q'] ?? '') : '') ?>" placeholder="Find a student, applicant or receipt…" aria-label="Find a student, applicant, registration or receipt" aria-keyshortcuts="Control+K"><kbd class="sis-kbd" aria-hidden="true">Ctrl K</kbd></form>
@@ -162,12 +182,12 @@ function layout_start(string $title, bool $bare = false): void
 <div class="app-shell">
   <aside class="offcanvas-lg offcanvas-start sidebar d-print-none" tabindex="-1" id="sidebar" aria-label="Main navigation">
     <div class="sidebar-inner">
-      <?php if ($system === 'sis'): ?><a class="sis-rail-brand" href="<?= url('dashboard') ?>"><img src="<?= h($logo ?: '../icons/acadlink-mark.png') ?>" alt=""><span><strong><?= h(School::brand()) ?></strong><small>School Information System</small></span></a><?php endif; ?>
-      <div class="sis-sidebar-head d-lg-none"><span><?= h(School::brand()) ?> <?= $system === 'portal' ? 'Portal' : 'SIS' ?></span><button type="button" class="btn-close" data-bs-dismiss="offcanvas" data-bs-target="#sidebar" aria-label="Close menu"></button></div>
+      <?php if ($system === 'sis'): ?><a class="sis-rail-brand" href="<?= url('dashboard') ?>"><img src="<?= h($logo ?: '../icons/acadlink-mark.png') ?>" alt=""><span><strong><?= h(School::brand()) ?></strong><small><?= h(app_title()) ?></small></span></a><?php endif; ?>
+      <div class="sis-sidebar-head d-lg-none"><span><?= h(School::brand()) ?> <?= $system === 'portal' ? 'Portal' : (app_system() === 'FINANCE' ? 'Finance' : 'SIS') ?></span><button type="button" class="btn-close" data-bs-dismiss="offcanvas" data-bs-target="#sidebar" aria-label="Close menu"></button></div>
       <nav class="pb-2"><?php if(in_array(Auth::role(),['TEACHER','STUDENT'],true)): ?><a class="side-link" href="<?= url('history',['tab'=>'grades']) ?>"><i class="bi bi-clock-history"></i><span>History of Grades</span></a><?php if(Auth::role()==='STUDENT'): ?><a class="side-link" href="<?= url('history',['tab'=>'assessments']) ?>"><i class="bi bi-receipt"></i><span>History of Assessments</span></a><?php endif; endif; ?>
       <?php if(Auth::can('self')): ?><a class="side-link" href="<?= url(Auth::studentNumber()?'myenrollment':'myadmission') ?>"><i class="bi bi-person-plus"></i><span><?= Auth::studentNumber()?'Apply for Enrollment':'My admission application' ?></span></a><?php endif; ?>
       <?php $group = ''; $groupN = 0; $here = $route . (isset($_GET['tab']) && is_string($_GET['tab']) ? '&tab=' . $_GET['tab'] : '') . ($route === 'assessment' && isset($_GET['plan']) ? '&plan=list' : '');
-      foreach (NAV as [$r, $label, $icon, $perms, $g, $hint]):
+      foreach (app_nav() as [$r, $label, $icon, $perms, $g, $hint]):
           if ($perms && !Auth::can(...$perms)) continue;
           if ($r === 'clearance' && !Clearance::on()) continue; // v55: hidden while online clearance is off
           if ($r === 'importall' && !ImportAll::can()) continue; // v56: needs both Curriculum and Assessment editing
@@ -218,22 +238,22 @@ function layout_end(bool $bare = false): void
 </div>
 <?php endif; ?>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" crossorigin="anonymous"></script>
-<script src="assets/navigation.js?v=56"></script>
-<script src="assets/activity.js?v=31"></script>
-<script src="assets/record-list.js?v=48" defer></script>
-<script src="assets/fixed-shell.js?v=31" defer></script>
-<script src="assets/accounting-ui.js?v=31" defer></script>
-<script src="assets/app.js?v=42"></script>
-<script src="assets/friendly-ui.js?v=48"></script>
-<script src="assets/sis-actions.js?v=41"></script>
-<script src="assets/theme.js?v=52"></script>
+<script src="<?= sis_web() ?>assets/navigation.js?v=56"></script>
+<script src="<?= sis_web() ?>assets/activity.js?v=31"></script>
+<script src="<?= sis_web() ?>assets/record-list.js?v=48" defer></script>
+<script src="<?= sis_web() ?>assets/fixed-shell.js?v=31" defer></script>
+<script src="<?= sis_web() ?>assets/accounting-ui.js?v=31" defer></script>
+<script src="<?= sis_web() ?>assets/app.js?v=42"></script>
+<script src="<?= sis_web() ?>assets/friendly-ui.js?v=48"></script>
+<script src="<?= sis_web() ?>assets/sis-actions.js?v=41"></script>
+<script src="<?= sis_web() ?>assets/theme.js?v=52"></script>
 <script src="../js/standard-toolbar-core.js?v=57"></script>
-<script src="assets/standard-toolbar.js?v=64"></script>
-<?php if ($route === 'admission'): ?><script src="assets/admission-form.js?v=1" defer></script><?php endif; ?>
-<script src="assets/eligibility.js?v=31"></script>
-<script src="assets/workspaces.js?v=31"></script>
-<script src="assets/success-sound.js?v=56"></script>
-<script src="assets/registration-fees.js?v=1"></script>
+<script src="<?= sis_web() ?>assets/standard-toolbar.js?v=64"></script>
+<?php if ($route === 'admission'): ?><script src="<?= sis_web() ?>assets/admission-form.js?v=1" defer></script><?php endif; ?>
+<script src="<?= sis_web() ?>assets/eligibility.js?v=31"></script>
+<script src="<?= sis_web() ?>assets/workspaces.js?v=31"></script>
+<script src="<?= sis_web() ?>assets/success-sound.js?v=56"></script>
+<script src="<?= sis_web() ?>assets/registration-fees.js?v=1"></script>
 </body>
 </html><?php
 }

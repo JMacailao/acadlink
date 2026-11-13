@@ -539,16 +539,35 @@ function h(mixed $v): string
     return htmlspecialchars((string) ($v ?? ''), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
 }
 
+/** v58: pages that belong to the Finance system (../finance/). Old SIS links to them are forwarded there. */
+const FINANCE_PAGES = ['cashier', 'docfees', 'balance', 'orseries', 'receipt', 'docreceipt', 'accounting'];
+/** Pages that belong to the Student Portal (../portal/). */
+const PORTAL_PAGES = ['my', 'myenrollment', 'myadmission'];
+
 /**
- * Link to a page. In the SIS: SIS pages, and the Student Portal's own pages in ../portal/.
- * In the Student Portal (or the LMS): its own pages, and everything else in ../sis/.
+ * Link to a page. A system with its own folder (Student Portal, Finance, LMS) defines LOCAL_ROUTES: its own
+ * pages stay there. Finance pages go to ../finance/, Student Portal pages to ../portal/, everything else to the SIS.
  */
 function url(string $route, array $params = []): string
 {
     $q = http_build_query(['r' => $route] + $params);
-    if (defined('LOCAL_ROUTES')) return (in_array($route, LOCAL_ROUTES, true) ? 'index.php?' : '../sis/index.php?') . $q;
-    if (in_array($route, ['my', 'myenrollment', 'myadmission'], true)) return '../portal/index.php?' . $q;
-    return 'index.php?' . $q;
+    $local = defined('LOCAL_ROUTES');
+    if ($local && in_array($route, LOCAL_ROUTES, true)) return 'index.php?' . $q;
+    if (in_array($route, FINANCE_PAGES, true)) return '../finance/' . 'index.php?' . $q;
+    if (in_array($route, PORTAL_PAGES, true)) return '../portal/index.php?' . $q;
+    return ($local ? '../sis/' : '') . 'index.php?' . $q;
+}
+
+/** The system this request belongs to: SIS, FINANCE or PORTAL (set by each system's index.php). */
+function app_system(): string
+{
+    return defined('APP_SYSTEM') ? APP_SYSTEM : (defined('PORTAL_ROOT') ? 'PORTAL' : 'SIS');
+}
+
+/** Path from the current system's folder to the SIS folder, for shared stylesheets and scripts. */
+function sis_web(): string
+{
+    return app_system() === 'SIS' ? '' : '../sis/';
 }
 
 function redirect(string $route, array $params = []): never

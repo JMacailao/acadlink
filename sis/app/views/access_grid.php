@@ -39,10 +39,10 @@ function access_grid(array $systems, array $current, ?array $group = null, array
     return $out;
 }
 
-/** The systems a group or account can be given: students the Student Portal, staff the Grading System and SIS. */
+/** The systems a group or account can be given: students the Student Portal, staff the Grading System, SIS, Finance and the newer systems. */
 function access_systems(string $kindOrGroup): array
 {
-    return in_array($kindOrGroup, ['STUDENT'], true) ? ['PORTAL', 'LMS'] : ['GRADING', 'SIS', 'LMS'];
+    return ModuleAccess::systemsFor($kindOrGroup);
 }
 
 /** Reads the posted grid into module => [level, extras]. Blank level = "Same as group". */

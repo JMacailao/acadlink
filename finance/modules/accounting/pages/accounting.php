@@ -233,5 +233,5 @@ page_title('Accounting', $canEdit && $tab === 'ledger' ? '<button type="button" 
 </form>
 <?php elseif (!$cashAccounts): ?><div class="alert alert-info">No cash or bank accounts yet. Add one in Chart of Accounts.</div><?php endif; ?>
 <?php endif; ?>
-<?php echo '<script src="assets/accounting-workflow.js?v=20261021toolbar" defer></script>';
+<?php echo '<script src="../finance/assets/accounting-workflow.js?v=58" defer></script>';
 layout_end();
