@@ -44,6 +44,12 @@ const ROUTES = [
     'admission'    => ['admission', ['admission'], ['admission.view']],
     'registration' => ['registration', ['registration', 'payments.view'], ['registration.view']],
     'eligibility' => ['eligibility', ['registration', 'eligibility.holds'], ['eligibility.view']],
+    // Cashier (v58.1: also opened in Finance, ../finance/)
+    'cashier'      => ['cashier', ['payments.view']],
+    'docfees'      => ['docfees', ['payments.record', 'payments.void'], ['payments.view']],
+    'receipt'      => ['receipt', ['payments.view', 'self']],
+    'docreceipt'   => ['docreceipt', ['payments.view', 'self']],
+    'orseries'     => ['orseries', ['settings.manage']],
     'notifications'=> ['notifications', ['admission', 'registration', 'payments.view', 'accounting']],
     'schedules'    => ['schedules', ['schedules.edit'], ['schedules']],
     'myschedule'   => ['myschedule', []],

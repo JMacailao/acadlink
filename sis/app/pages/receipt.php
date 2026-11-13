@@ -26,7 +26,7 @@ $receipt = function (string $copyLabel) use ($p, $left): void {
     ?>
   <div class="receipt-copy">
     <?php if ($p['status'] === 'VOIDED'): ?><div class="alert alert-danger text-center fw-bold py-1">VOID — <?= h($p['void_reason']) ?></div><?php endif; ?>
-    <?php require SIS_ROOT . '/app/views/print_header.php'; ?>
+    <?php require __DIR__ . '/../views/print_header.php'; ?>
     <table class="table table-sm receipt-table">
       <tr><th>Date</th><td><?= h(date('F j, Y g:i A', strtotime($p['paid_at']))) ?></td></tr>
       <tr><th>Received from</th><td><strong><?= h($p['student_name']) ?></strong> (<?= h($p['student_number']) ?>)</td></tr>

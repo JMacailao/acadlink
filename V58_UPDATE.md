@@ -1,5 +1,18 @@
 # AcadLink v58 — Finance is its own workspace
 
+## v58.1 — Cashier is in both the SIS and Finance
+- **Cashier stays in the SIS** (menu: Cashier, and Document Fees under Fees) **and is also in Finance**, each with its own
+  menu. Registration's **Pay** opens the SIS Cashier again. Links to Cashier, receipts, Document Fees and O.R. Series
+  stay in the system you are in.
+- Only **Existing Balances** and **Accounting** are Finance-only; old SIS links to those still forward to Finance.
+- The Cashier group opens both the SIS (it sees Cashier there) and Finance.
+- Fixed: people in the Cashier group were treated as Teachers in the SIS (wrong role name, SIS home sent them back
+  to the chooser).
+- Source: `cashier.php`, `docfees.php`, `receipt.php`, `docreceipt.php`, `orseries.php` are back in `sis/app/pages/`;
+  `finance/index.php` opens the same files with the Finance menu.
+
+The rest of this note describes v58; where it says those pages moved to Finance, v58.1 above applies.
+
 No SQL to import. Copy the files over v57.1 (keep your `api/config.php` and uploads), open SIS once and press Ctrl+F5.
 The database upgrades itself the first time SIS or Finance opens.
 
