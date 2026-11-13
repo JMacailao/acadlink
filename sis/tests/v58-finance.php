@@ -76,9 +76,9 @@ test('a group\'s Finance access can be changed in Users and Groups (e.g. let Cas
     $c->setGroupModules($power, 'CASHIER', ['sis.cashier' => ['EDIT', []]]); $c->clearCache();
     ok(!isset($c->permissions($cash)['sis.payments.void']), 'void not removed again');
 });
-test('Canteen POS and Library start with the Power User only, as "coming soon"', function () use ($sys, $acct, $cash, $reg) {
+test('Canteen POS and Library start with the Power User only; Library is "coming soon" (v59: Canteen POS is open)', function () use ($sys, $acct, $cash, $reg) {
     foreach ([$acct, $cash, $reg] as $id) ok(!array_intersect(['CANTEEN', 'LIBRARY'], $sys($id)), 'staff got a planned workspace');
-    ok(array_intersect(['LMS', 'CANTEEN', 'LIBRARY'], ModuleAccess::COMING_SOON) === ['LMS', 'CANTEEN', 'LIBRARY'], 'coming-soon list');
+    ok(ModuleAccess::COMING_SOON === ['LMS', 'LIBRARY'], 'coming-soon list');
 });
 test('links: from the SIS, Finance pages go to ../finance/ and SIS pages stay', function () {
     ok(url('cashier', ['new' => 1]) === 'index.php?r=cashier&new=1', 'v58.1: Cashier stays in the SIS: ' . url('cashier'));
@@ -96,7 +96,7 @@ test('Finance holds Balances and Accounting; Cashier pages stay in the SIS folde
     foreach (['balance', 'accounting'] as $f) ok(!is_file(SIS_ROOT . "/app/pages/$f.php"), "sis/app/pages/$f.php still there");
     ok(!is_dir(SIS_ROOT . '/modules/accounting'), 'sis/modules/accounting still there');
 });
-test('collections by source: posted receipts count, voided do not, Canteen and Library wait', function () use ($c, $power) {
+test('collections by source: posted receipts count, voided do not, Library waits', function () use ($c, $power) {
     Auth::actAs((int) $c->legacyId($power, 'SIS'));
     $sec = GS::saveSection(null, '2026-2027', '1st Year', 'FIN 1A'); $sub = GS::saveSubject(null, 'FIN101', 'Finance subject', '3');
     $cat = Assessment::saveCategory(null, ['name' => 'Fin tuition', 'is_active' => 1]); $label = Assessment::saveLabel(null, ['name' => 'Fin fee', 'category_id' => $cat, 'charge_type' => 'FIXED', 'default_amount' => '1000', 'is_active' => 1]);
@@ -110,7 +110,7 @@ test('collections by source: posted receipts count, voided do not, Canteen and L
     $r = FinanceOverview::collections($today, $today); $rows = array_column($r['rows'], null, 'key');
     ok($rows['TUITION']['cents'] === 30000 && $rows['TUITION']['count'] === 1, 'tuition total ' . $rows['TUITION']['cents']);
     ok($rows['DOCUMENTS']['ready'] && $rows['DOCUMENTS']['cents'] === 0, 'documents');
-    ok(!$rows['CANTEEN']['ready'] && !$rows['LIBRARY']['ready'], 'canteen/library should be "not set up yet"');
+    ok($rows['CANTEEN']['ready'] && $rows['CANTEEN']['cents'] === 0 && !$rows['LIBRARY']['ready'], 'v59: canteen counts (no sales yet); library "not set up yet"');
     ok($r['total'] === 30000, 'total');
     ok(FinanceOverview::collections('2000-01-01', '2000-01-31')['total'] === 0, 'date range ignored');
     ok(FinanceOverview::range('bad', '2026-13-40') === [date('Y-m-01'), date('Y-m-d')], 'bad dates not defaulted');

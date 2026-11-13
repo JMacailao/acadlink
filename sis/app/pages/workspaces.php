@@ -2,7 +2,7 @@
 declare(strict_types=1);
 /**
  * After sign-in: a full page with only the workspaces this account may open.
- * v58: Finance is its own workspace; Canteen POS and Library are planned (shown as "Coming soon").
+ * v58: Finance is its own workspace. v59: Canteen POS opens; Library is planned (shown as "Coming soon").
  */
 $a = Auth::central()->current(); $id = (int) $a['id'];
 $systems = ModuleAccess::systems(Auth::central()->permissions($id));
@@ -21,7 +21,7 @@ $cards = [
     'GRADING' => ['', 'Grading System', 'Manage classes, enter grades, and keep every student’s progress on track.', ['Classes', 'Grade Entry', 'Reports'], 'Open', '../pages/dashboard.html', ''],
     'SIS'     => ['green', 'Admission &amp; Registration (SIS)', 'Handle applications, student records, enrollment, and assessments in one place.', ['Admissions', 'Enrollment', 'Assessment'], 'Open', url('dashboard'), ''],
     'LMS'     => ['orange', 'Learning Management System', 'Online classes, lessons, and activities in one place.', ['Lessons', 'Activities', 'Classes'], 'Open', '../lms/index.php', 'In development'],
-    'CANTEEN' => ['coral', 'Canteen POS', 'Streamline canteen sales, manage items, and track daily transactions.', ['Sales', 'Menu Items', 'Transactions'], 'Open', '../canteen/index.php', 'Planned'],
+    'CANTEEN' => ['coral', 'Canteen POS', 'Streamline canteen sales, manage items, and track daily transactions.', ['Sales', 'Menu Items', 'Transactions'], 'Open Canteen POS', '../canteen/index.php', ''],
     'LIBRARY' => ['violet', 'Library', 'Manage library resources, track borrowings, and keep the collection organized.', ['Catalog', 'Borrowing', 'Inventory'], 'Open', '../library/index.php', 'Planned'],
     'FINANCE' => ['teal', 'Finance', 'Manage fees, payments, and financial records with accuracy and transparency.', ['Billing', 'Collections', 'Reports'], 'Open Finance', '../finance/index.php', ''],
     'PORTAL'  => ['purple', 'Student Portal', 'View your grades, check assessments, and revisit your school history.', ['My Grades', 'Assessments', 'History'], 'Open Portal', url('my'), ''],

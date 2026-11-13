@@ -183,6 +183,10 @@ page_title('Accounting', $canEdit && $tab === 'ledger' ? '<button type="button" 
       <div class="mt-2"><?php foreach (Assessment::labels() as $l): ?><div class="mb-2"><label class="form-label small mb-1"><?= h($l['category_name'] . ' · ' . $l['name']) ?></label><?= $sel('label:' . $l['id'], false, $rev) ?></div><?php endforeach; ?></div></details>
   </div>
   <div class="form-section">
+    <h2 class="h6">Canteen POS (one entry per accepted shift)</h2>
+    <?php foreach (['canteen:cash' => ['Canteen cash collected', $cash], 'canteen:qr' => ['Canteen QR payments', $cash], 'canteen:sales' => ['Canteen sales revenue', $rev], 'canteen:overshort' => ['Cash short and over', $less]] as $k => [$label, $only]): ?><div class="mb-2"><label class="form-label small mb-1"><?= h($label) ?></label><?= $sel($k, true, $only) ?></div><?php endforeach; ?>
+  </div>
+  <div class="form-section">
     <h2 class="h6">Scholarships and discounts</h2>
     <?php foreach (Discounts::all() as $d): ?><div class="mb-2"><label class="form-label small mb-1"><?= h($d['name']) ?></label><?= $sel('discount:' . $d['id'], false, $less) ?></div><?php endforeach; ?>
     <?php if (!Discounts::all()): ?><p class="small text-muted mb-0">No scholarship or discount programs yet.</p><?php endif; ?>
