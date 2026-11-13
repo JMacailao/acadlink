@@ -177,7 +177,26 @@ test('settings: only images are accepted for the QR code', function () {
     denied(fn() => Canteen::saveSettings(['name' => 'X'], ['error' => UPLOAD_ERR_OK, 'tmp_name' => $tmp, 'size' => 12], false), 'PNG');
     $png = tempnam(sys_get_temp_dir(), 'qr'); $im = imagecreatetruecolor(4, 4); imagepng($im, $png);
     Canteen::saveSettings(['name' => 'Rivermere Canteen', 'qr_label' => 'Scan me'], ['error' => UPLOAD_ERR_OK, 'tmp_name' => $png, 'size' => filesize($png)], false);
-    ok(str_starts_with(Canteen::setting('qr_image'), 'data:image/png;base64,') && Canteen::setting('name') === 'Rivermere Canteen', 'saved');
+    $qr = Canteen::image('QR', 0);
+    ok($qr && $qr[0] === 'image/png' && str_starts_with($qr[1], "\x89PNG") && Canteen::setting('name') === 'Rivermere Canteen', 'QR saved as PNG bytes');
+    ok(Db::val("SELECT COUNT(*) FROM canteen_settings WHERE svalue LIKE 'data:%'") == 0, 'no base64 text kept');
+    Canteen::saveSettings(['name' => 'Rivermere Canteen'], null, true); ok(Canteen::image('QR', 0) === null, 'QR removed');
+});
+test('product photos are stored as bytes, large ones shrunk, and replaced or removed', function () use ($meal) {
+    $f = tempnam(sys_get_temp_dir(), 'ph'); $im = imagecreatetruecolor(1600, 1200); imagefill($im, 0, 0, imagecolorallocate($im, 200, 120, 40)); imagejpeg($im, $f, 90);
+    Canteen::saveProduct($meal, ['name' => 'Chicken Rice Meal', 'price' => '95', 'cost' => '60', 'barcode' => 'MEAL001', 'track_stock' => 1, 'is_active' => 1], ['error' => UPLOAD_ERR_OK, 'tmp_name' => $f, 'size' => filesize($f)]);
+    $row = Db::one("SELECT mime, width, height, size_bytes, LENGTH(bytes) len, sha1, SHA1(bytes) real_sha FROM canteen_images WHERE owner_type='PRODUCT' AND owner_id=?", [$meal]);
+    ok($row['mime'] === 'image/jpeg' && (int) $row['width'] === 800 && (int) $row['height'] === 600, 'shrunk to 800x600: ' . json_encode($row));
+    ok((int) $row['len'] === (int) $row['size_bytes'] && $row['sha1'] === $row['real_sha'], 'bytes stored intact');
+    $img = Canteen::image('PRODUCT', $meal); ok(str_starts_with($img[1], "\xFF\xD8\xFF") && strlen($img[1]) === (int) $row['len'], 'read back as JPEG bytes');
+    ok(Canteen::product($meal)['image_ver'] === substr($row['sha1'], 0, 10), 'version tag');
+    $g = tempnam(sys_get_temp_dir(), 'ph'); $im = imagecreatetruecolor(60, 40); imagepng($im, $g);
+    Canteen::saveProduct($meal, ['name' => 'Chicken Rice Meal', 'price' => '95', 'cost' => '60', 'barcode' => 'MEAL001', 'track_stock' => 1, 'is_active' => 1], ['error' => UPLOAD_ERR_OK, 'tmp_name' => $g, 'size' => filesize($g)]);
+    ok((int) Db::val("SELECT COUNT(*) FROM canteen_images WHERE owner_type='PRODUCT' AND owner_id=?", [$meal]) === 1 && Canteen::image('PRODUCT', $meal)[1] === file_get_contents($g), 'replaced; small images kept byte for byte');
+    Canteen::saveProduct($meal, ['name' => 'Chicken Rice Meal', 'price' => '95', 'cost' => '60', 'barcode' => 'MEAL001', 'track_stock' => 1, 'is_active' => 1, 'remove_image' => 1]);
+    ok(Canteen::image('PRODUCT', $meal) === null && Canteen::product($meal)['image_ver'] === null, 'removed');
+    $big = tempnam(sys_get_temp_dir(), 'ph'); file_put_contents($big, str_repeat('x', 10));
+    denied(fn() => Canteen::saveProduct($meal, ['name' => 'Chicken Rice Meal', 'price' => '95'], ['error' => UPLOAD_ERR_OK, 'tmp_name' => $big, 'size' => 6000000]), '5 MB');
 });
 $c->logout(); $server->exec("DROP DATABASE IF EXISTS `$name`");
 echo "$pass passed, $fail failed\n"; exit($fail ? 1 : 0);

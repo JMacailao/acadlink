@@ -7,15 +7,15 @@ if ($isPost) {
     flash('success', 'Canteen settings saved.');
     redirect('settings');
 }
-$qr = Canteen::setting('qr_image');
+$qr = Canteen::imageVersion('QR', 0);
 layout_start('Canteen Settings');
 ?>
 <form method="post" enctype="multipart/form-data" class="row g-3"><?= csrf_field() ?>
   <div class="col-lg-6"><section class="form-section h-100">
     <h2 class="h6">QR payment</h2>
     <p class="small text-muted">Upload the canteen's GCash, Maya or bank QR code. The Cashier screen shows it when the customer pays by QR; the cashier confirms when the payment arrives.</p>
-    <?php if ($qr !== ''): ?><img src="<?= h(url('qr', ['v' => substr(md5($qr), 0, 8)])) ?>" alt="Saved payment QR code" class="cpos-qr mb-2"><label class="form-check small mb-2"><input class="form-check-input" type="checkbox" name="remove_qr" value="1"> Remove this QR code</label><?php else: ?><div class="alert alert-warning small">No QR code saved yet.</div><?php endif; ?>
-    <label class="form-label small" for="stQr"><?= $qr !== '' ? 'Replace with' : 'QR code image' ?> (PNG, JPEG or WebP, up to 600 KB)</label>
+    <?php if ($qr !== ''): ?><img src="<?= h(url('qr', ['v' => $qr])) ?>" alt="Saved payment QR code" class="cpos-qr mb-2"><label class="form-check small mb-2"><input class="form-check-input" type="checkbox" name="remove_qr" value="1"> Remove this QR code</label><?php else: ?><div class="alert alert-warning small">No QR code saved yet.</div><?php endif; ?>
+    <label class="form-label small" for="stQr"><?= $qr !== '' ? 'Replace with' : 'QR code image' ?> (PNG, JPEG or WebP, up to 5 MB)</label>
     <input class="form-control form-control-sm mb-2" type="file" id="stQr" name="qr" accept="image/png,image/jpeg,image/webp,image/gif">
     <label class="form-label small" for="stQrLabel">Text under the QR code</label>
     <input class="form-control form-control-sm" id="stQrLabel" name="qr_label" maxlength="80" value="<?= h(Canteen::setting('qr_label', 'Scan to pay with GCash or Maya')) ?>">

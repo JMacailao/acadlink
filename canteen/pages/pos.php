@@ -30,11 +30,12 @@ $totals = $shift ? Canteen::shiftTotals((int) $shift['id']) : null;
 $canSell = Auth::can('canteen.sell');
 $cats = Canteen::categories(true);
 $products = Canteen::products(['active' => 1]);
-$qr = Canteen::setting('qr_image') !== '';
+$qrVer = Canteen::imageVersion('QR', 0);
+$qr = $qrVer !== '';
 $catalog = array_map(fn($p) => [
     'id' => (int) $p['id'], 'name' => $p['name'], 'price' => (int) $p['price_cents'], 'cat' => (int) $p['category_id'],
     'barcode' => (string) $p['barcode'], 'sku' => (string) $p['sku'], 'track' => (bool) $p['track_stock'], 'stock' => (int) $p['stock_qty'],
-    'img' => $p['image'] ? url('img', ['id' => $p['id'], 'v' => substr(md5((string) $p['updated_at']), 0, 8)]) : '', 'icon' => $p['category_icon'] ?: 'tag',
+    'img' => $p['image_ver'] ? url('img', ['id' => $p['id'], 'v' => $p['image_ver']]) : '', 'icon' => $p['category_icon'] ?: 'tag',
 ], $products);
 $peso = fn(int $c) => '₱' . Money::fmt($c);
 layout_start('Canteen Cashier');
@@ -116,7 +117,7 @@ layout_start('Canteen Cashier');
       <p class="cpos-change">Change <strong id="cposChange">₱0.00</strong></p>
     </div>
     <div data-pay="QR" hidden class="text-center">
-      <?php if ($qr): ?><img class="cpos-qr" src="<?= h(url('qr', ['v' => substr(md5(Canteen::setting('qr_image')), 0, 8)])) ?>" alt="Canteen payment QR code"><p class="fw-semibold mb-1"><?= h(Canteen::setting('qr_label', 'Scan to pay')) ?></p>
+      <?php if ($qr): ?><img class="cpos-qr" src="<?= h(url('qr', ['v' => $qrVer])) ?>" alt="Canteen payment QR code"><p class="fw-semibold mb-1"><?= h(Canteen::setting('qr_label', 'Scan to pay')) ?></p>
       <?php else: ?><div class="alert alert-warning text-start">No QR code is saved yet. <?= Auth::can('canteen.products.edit') ? '<a href="' . h(url('settings')) . '">Upload it in Canteen Settings.</a>' : 'Ask the canteen supervisor to upload it.' ?></div><?php endif; ?>
       <label class="form-label small text-start d-block mt-2" for="cposRef">Reference number (optional)</label>
       <input class="form-control" id="cposRef" maxlength="60" autocomplete="off" placeholder="e.g. GCash ref. no.">

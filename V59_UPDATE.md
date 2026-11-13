@@ -32,6 +32,12 @@ The canteen tables, groups and accounts are created the first time SIS, Finance 
 - **Sales Reports**: gross sales, refunds, net sales and gross profit; by day (cash / QR), by product, by cashier;
   print or download the products CSV.
 - **Canteen Settings**: QR code image and its caption, canteen name and receipt footer.
+- **Images are stored in the database as bytes** (table `canteen_images`, `MEDIUMBLOB`): one row per product photo and
+  one for the payment QR code, with its type, width, height, size and SHA-1. Uploads up to 5 MB are accepted
+  (PNG, JPEG, GIF or WebP, checked by content); product photos larger than 800 px and QR codes larger than 1000 px are
+  shrunk before saving, smaller images are kept byte for byte. Pages load them through `index.php?r=img&id=…`
+  and `?r=qr`, so the product list stays light. Images from early v59 builds (base64 text) are converted
+  automatically. They are included in a full MySQL backup.
 - **Finance → Overview → Collections by source** now shows Canteen POS (net sales).
 - **Finance → Accounting → Account Mappings** has a Canteen POS section (cash, QR, sales, short/over).
   New accounts 4600 Canteen Sales and 5600 Cash Short and Over are added and mapped automatically.
@@ -44,7 +50,7 @@ The canteen tables, groups and accounts are created the first time SIS, Finance 
 - Every product, price, stock, shift, void and refund change is in the Activity Log.
 
 ## Source code
-- New: `canteen/index.php`, `canteen/lib/canteen.php`, `canteen/pages/*` (pos, receipt, sales, sale, shift, shifts,
+- New: `canteen/index.php`, `canteen/lib/canteen.php` (tables include `canteen_images`), `canteen/pages/*` (pos, receipt, sales, sale, shift, shifts,
   approvals, products, inventory, reports, settings, image), `canteen/assets/{pos.js,canteen-pages.js,canteen.css}`,
   `sis/tests/v59-canteen.php`.
 - Changed: `shared/module-access.php`, `shared/central-accounts.php`, `sis/app/lib/auth.php`, `sis/app/bootstrap.php`,
@@ -52,5 +58,5 @@ The canteen tables, groups and accounts are created the first time SIS, Finance 
   `sis/assets/standard-toolbar.js`, `finance/lib/overview.php`, `finance/modules/accounting/{lib,pages}/accounting.php`.
 
 ## Tests
-`php sis/tests/v59-canteen.php` (21 checks). Other suites unchanged and passing (`central-accounts.php` now expects
+`php sis/tests/v59-canteen.php` (22 checks). Other suites unchanged and passing (`central-accounts.php` now expects
 eight default groups; `v58-finance.php` updated for Canteen POS being open).

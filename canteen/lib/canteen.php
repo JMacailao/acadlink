@@ -11,7 +11,8 @@ final class Canteen
     public const METHODS = ['CASH' => 'Cash', 'QR' => 'QR payment'];
     public const MOVE_KINDS = ['SALE' => 'Sale', 'VOID' => 'Void', 'REFUND' => 'Refund', 'RECEIVE' => 'Received', 'PREPARE' => 'Prepared', 'ADJUST' => 'Adjustment', 'STOCKTAKE' => 'Stocktake'];
     public const DENOMINATIONS = [100000, 50000, 20000, 10000, 5000, 2000, 1000, 500, 100, 25];
-    public const MAX_IMAGE_BYTES = 600000;
+    public const MAX_IMAGE_BYTES = 5000000;   // largest upload accepted (5 MB); photos are shrunk before saving
+    public const IMAGE_MAX_SIDE = ['PRODUCT' => 800, 'QR' => 1000];
 
     // ------------------------------------------------------------------ install
 
@@ -25,7 +26,7 @@ final class Canteen
             id INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY, name VARCHAR(100) NOT NULL, category_id INT UNSIGNED NULL,
             sku VARCHAR(40) NULL, barcode VARCHAR(64) NULL, price_cents BIGINT NOT NULL, cost_cents BIGINT NOT NULL DEFAULT 0,
             track_stock TINYINT(1) NOT NULL DEFAULT 1, stock_qty INT NOT NULL DEFAULT 0, low_stock_at INT NOT NULL DEFAULT 5,
-            image MEDIUMTEXT NULL, is_active TINYINT(1) NOT NULL DEFAULT 1,
+            is_active TINYINT(1) NOT NULL DEFAULT 1,
             created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP, updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
             UNIQUE KEY u_canteen_barcode (barcode), UNIQUE KEY u_canteen_sku (sku), KEY k_canteen_prod_cat (category_id),
             CONSTRAINT fk_canteen_prod_cat FOREIGN KEY (category_id) REFERENCES canteen_categories (id),
@@ -73,9 +74,18 @@ final class Canteen
             KEY k_canteen_move_product (product_id, created_at), KEY k_canteen_move_kind (kind),
             CONSTRAINT fk_canteen_move_product FOREIGN KEY (product_id) REFERENCES canteen_products (id)
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci");
+        // Images are stored as bytes (MEDIUMBLOB), one row per product photo and one for the payment QR code
+        $db->exec("CREATE TABLE IF NOT EXISTS canteen_images (
+            id INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY, owner_type ENUM('PRODUCT','QR') NOT NULL, owner_id INT UNSIGNED NOT NULL DEFAULT 0,
+            mime VARCHAR(20) NOT NULL, bytes MEDIUMBLOB NOT NULL, width SMALLINT UNSIGNED NOT NULL DEFAULT 0, height SMALLINT UNSIGNED NOT NULL DEFAULT 0,
+            size_bytes INT UNSIGNED NOT NULL, sha1 CHAR(40) NOT NULL, uploaded_by INT UNSIGNED NULL,
+            updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+            UNIQUE KEY u_canteen_image_owner (owner_type, owner_id)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci");
         $db->exec("CREATE TABLE IF NOT EXISTS canteen_settings (
             skey VARCHAR(40) NOT NULL PRIMARY KEY, svalue MEDIUMTEXT NOT NULL
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci");
+        self::migrateImages($db);
         $db->exec("INSERT IGNORE INTO canteen_categories (name, icon, sort_order) VALUES ('Rice Meals','egg-fried',1),('Snacks','basket',2),('Drinks','cup-straw',3),('Others','three-dots',4)");
         // Accounting: canteen sales revenue, cash short/over, and the journal source
         $has = fn(string $t) => (bool) $db->query("SELECT 1 FROM information_schema.tables WHERE table_schema=DATABASE() AND table_name='$t'")->fetchColumn();
@@ -112,25 +122,112 @@ final class Canteen
             'receipt_footer' => mb_substr(trim((string) ($in['receipt_footer'] ?? '')), 0, 200),
             'qr_label' => mb_substr(trim((string) ($in['qr_label'] ?? '')), 0, 80),
         ];
-        if ($qrFile && ($qrFile['error'] ?? UPLOAD_ERR_NO_FILE) !== UPLOAD_ERR_NO_FILE) $vals['qr_image'] = self::imageFromUpload($qrFile, 'QR code');
-        elseif ($removeQr) $vals['qr_image'] = '';
-        Db::tx(function () use ($vals) {
+        $qr = $qrFile && ($qrFile['error'] ?? UPLOAD_ERR_NO_FILE) !== UPLOAD_ERR_NO_FILE ? self::imageFromUpload($qrFile, 'QR code', 'QR') : null;
+        Db::tx(function () use ($vals, $qr, $removeQr) {
             foreach ($vals as $k => $v) Db::q('INSERT INTO canteen_settings (skey, svalue) VALUES (?, ?) ON DUPLICATE KEY UPDATE svalue = VALUES(svalue)', [$k, $v]);
-            Audit::log('canteen_settings_saved', 'canteen_settings', null, array_map(fn($v) => strlen($v) > 120 ? '[image]' : $v, $vals));
+            if ($qr) self::saveImage('QR', 0, $qr); elseif ($removeQr) self::deleteImage('QR', 0);
+            Audit::log('canteen_settings_saved', 'canteen_settings', null, $vals);
         });
     }
 
-    /** An uploaded PNG, JPEG, GIF or WebP as a data: URI (checked by its content, not its name). */
-    public static function imageFromUpload(array $file, string $label): string
+    /** Early v59 builds kept images as base64 text; move them into canteen_images as bytes (once). */
+    private static function migrateImages(PDO $db): void
     {
-        if (($file['error'] ?? UPLOAD_ERR_NO_FILE) !== UPLOAD_ERR_OK || !is_uploaded_file((string) $file['tmp_name']) && PHP_SAPI !== 'cli') throw new AppError("The $label image could not be uploaded. Try again.");
+        $col = $db->query("SELECT 1 FROM information_schema.columns WHERE table_schema=DATABASE() AND table_name='canteen_products' AND column_name='image'")->fetchColumn();
+        if ($col) {
+            foreach ($db->query("SELECT id, image FROM canteen_products WHERE image IS NOT NULL AND image <> ''")->fetchAll(PDO::FETCH_ASSOC) as $r)
+                if ($img = self::fromDataUri((string) $r['image'])) self::writeImage($db, 'PRODUCT', (int) $r['id'], $img);
+            $db->exec('ALTER TABLE canteen_products DROP COLUMN image');
+        }
+        $qr = $db->query("SELECT svalue FROM canteen_settings WHERE skey='qr_image'")->fetchColumn();
+        if ($qr !== false) {
+            if ($img = self::fromDataUri((string) $qr)) self::writeImage($db, 'QR', 0, $img);
+            $db->exec("DELETE FROM canteen_settings WHERE skey='qr_image'");
+        }
+    }
+
+    private static function fromDataUri(string $uri): ?array
+    {
+        if (!preg_match('#^data:(image/(?:png|jpeg|gif|webp));base64,(.+)$#s', $uri, $m)) return null;
+        $bytes = (string) base64_decode($m[2], true);
+        $info = @getimagesizefromstring($bytes);
+        return $info ? ['mime' => $m[1], 'bytes' => $bytes, 'width' => (int) $info[0], 'height' => (int) $info[1]] : null;
+    }
+
+    /**
+     * An uploaded PNG, JPEG, GIF or WebP, checked by its content (not its name). Photos larger than the limit for their
+     * kind are shrunk with GD. Returns [mime, bytes, width, height]; the bytes are what gets stored in the database.
+     */
+    public static function imageFromUpload(array $file, string $label, string $kind = 'PRODUCT'): array
+    {
+        if (($file['error'] ?? UPLOAD_ERR_NO_FILE) !== UPLOAD_ERR_OK || !is_uploaded_file((string) $file['tmp_name']) && PHP_SAPI !== 'cli') {
+            $big = in_array($file['error'] ?? 0, [UPLOAD_ERR_INI_SIZE, UPLOAD_ERR_FORM_SIZE], true);
+            throw new AppError($big ? "The $label image is too large for the server. Use a smaller image." : "The $label image could not be uploaded. Try again.");
+        }
         $size = (int) ($file['size'] ?? 0);
-        if ($size <= 0 || $size > self::MAX_IMAGE_BYTES) throw new AppError("The $label image must be smaller than " . round(self::MAX_IMAGE_BYTES / 1000) . ' KB.');
+        if ($size <= 0 || $size > self::MAX_IMAGE_BYTES) throw new AppError("The $label image must be smaller than " . round(self::MAX_IMAGE_BYTES / 1000000) . ' MB.');
         $bytes = (string) file_get_contents((string) $file['tmp_name']);
         $info = @getimagesizefromstring($bytes);
         $mime = $info['mime'] ?? '';
         if (!in_array($mime, ['image/png', 'image/jpeg', 'image/gif', 'image/webp'], true)) throw new AppError("The $label must be a PNG, JPEG, GIF or WebP image.");
-        return 'data:' . $mime . ';base64,' . base64_encode($bytes);
+        [$w, $h] = [(int) $info[0], (int) $info[1]];
+        $max = self::IMAGE_MAX_SIDE[$kind] ?? 800;
+        if (($w > $max || $h > $max) && function_exists('imagecreatefromstring') && ($src = @imagecreatefromstring($bytes))) {
+            $scale = $max / max($w, $h); $nw = max(1, (int) round($w * $scale)); $nh = max(1, (int) round($h * $scale));
+            $dst = imagecreatetruecolor($nw, $nh);
+            imagealphablending($dst, false); imagesavealpha($dst, true);
+            imagefill($dst, 0, 0, imagecolorallocatealpha($dst, 255, 255, 255, 127));
+            imagecopyresampled($dst, $src, 0, 0, 0, 0, $nw, $nh, $w, $h);
+            ob_start();
+            if ($mime === 'image/jpeg') imagejpeg($dst, null, 85);
+            elseif ($mime === 'image/webp' && function_exists('imagewebp')) imagewebp($dst, null, 85);
+            else { imagepng($dst, null, 6); $mime = 'image/png'; }
+            $bytes = (string) ob_get_clean();
+            [$w, $h] = [$nw, $nh];
+        }
+        return ['mime' => $mime, 'bytes' => $bytes, 'width' => $w, 'height' => $h];
+    }
+
+    /** Store an image's bytes for a product (PRODUCT, id) or the payment QR code (QR, 0); replaces the old one. */
+    public static function saveImage(string $type, int $ownerId, array $img): void
+    {
+        self::writeImage(Db::pdo(), $type, $ownerId, $img);
+        Audit::log('canteen_image_saved', $type === 'QR' ? 'canteen_settings' : 'canteen_product', $type === 'QR' ? null : $ownerId,
+            ['type' => $img['mime'], 'bytes' => strlen($img['bytes']), 'size' => $img['width'] . '×' . $img['height']]);
+    }
+
+    private static function writeImage(PDO $db, string $type, int $ownerId, array $img): void
+    {
+        $st = $db->prepare('INSERT INTO canteen_images (owner_type, owner_id, mime, bytes, width, height, size_bytes, sha1, uploaded_by) VALUES (?,?,?,?,?,?,?,?,?)
+            ON DUPLICATE KEY UPDATE mime=VALUES(mime), bytes=VALUES(bytes), width=VALUES(width), height=VALUES(height), size_bytes=VALUES(size_bytes), sha1=VALUES(sha1), uploaded_by=VALUES(uploaded_by)');
+        $st->bindValue(1, $type); $st->bindValue(2, $ownerId, PDO::PARAM_INT); $st->bindValue(3, $img['mime']);
+        $st->bindValue(4, $img['bytes'], PDO::PARAM_LOB);
+        $st->bindValue(5, min(65535, (int) $img['width']), PDO::PARAM_INT); $st->bindValue(6, min(65535, (int) $img['height']), PDO::PARAM_INT);
+        $st->bindValue(7, strlen($img['bytes']), PDO::PARAM_INT); $st->bindValue(8, sha1($img['bytes']));
+        $uid = PHP_SAPI === 'cli' && !class_exists('Auth', false) ? null : Auth::id();
+        $st->bindValue(9, $uid, $uid === null ? PDO::PARAM_NULL : PDO::PARAM_INT);
+        $st->execute();
+    }
+
+    public static function deleteImage(string $type, int $ownerId): void
+    {
+        if (Db::q('DELETE FROM canteen_images WHERE owner_type = ? AND owner_id = ?', [$type, $ownerId])->rowCount())
+            Audit::log('canteen_image_removed', $type === 'QR' ? 'canteen_settings' : 'canteen_product', $type === 'QR' ? null : $ownerId, []);
+    }
+
+    /** [mime, bytes] of a stored image, or null. */
+    public static function image(string $type, int $ownerId): ?array
+    {
+        $st = Db::pdo()->prepare('SELECT mime, bytes FROM canteen_images WHERE owner_type = ? AND owner_id = ?');
+        $st->execute([$type, $ownerId]);
+        $r = $st->fetch(PDO::FETCH_ASSOC);
+        return $r ? [(string) $r['mime'], is_resource($r['bytes']) ? (string) stream_get_contents($r['bytes']) : (string) $r['bytes']] : null;
+    }
+
+    /** A short version tag of a stored image for cache-busting links ('' when there is none). */
+    public static function imageVersion(string $type, int $ownerId): string
+    {
+        return substr((string) Db::val('SELECT sha1 FROM canteen_images WHERE owner_type = ? AND owner_id = ?', [$type, $ownerId]), 0, 10);
     }
 
     // ------------------------------------------------------------------ categories and products
@@ -163,13 +260,15 @@ final class Canteen
         if (!empty($f['category'])) { $w[] = 'p.category_id = ?'; $p[] = (int) $f['category']; }
         if (($f['q'] ?? '') !== '') { $w[] = '(p.name LIKE ? OR p.barcode = ? OR p.sku = ?)'; array_push($p, '%' . $f['q'] . '%', $f['q'], $f['q']); }
         if (!empty($f['low'])) $w[] = 'p.track_stock = 1 AND p.stock_qty <= p.low_stock_at';
-        return Db::all('SELECT p.*, c.name AS category_name, c.icon AS category_icon FROM canteen_products p LEFT JOIN canteen_categories c ON c.id = p.category_id'
+        return Db::all("SELECT p.*, c.name AS category_name, c.icon AS category_icon, LEFT(i.sha1, 10) AS image_ver FROM canteen_products p LEFT JOIN canteen_categories c ON c.id = p.category_id
+            LEFT JOIN canteen_images i ON i.owner_type = 'PRODUCT' AND i.owner_id = p.id"
             . ($w ? ' WHERE ' . implode(' AND ', $w) : '') . ' ORDER BY c.sort_order, p.name', $p);
     }
 
     public static function product(int $id): ?array
     {
-        return Db::one('SELECT p.*, c.name AS category_name FROM canteen_products p LEFT JOIN canteen_categories c ON c.id = p.category_id WHERE p.id = ?', [$id]);
+        return Db::one("SELECT p.*, c.name AS category_name, LEFT(i.sha1, 10) AS image_ver FROM canteen_products p LEFT JOIN canteen_categories c ON c.id = p.category_id
+            LEFT JOIN canteen_images i ON i.owner_type = 'PRODUCT' AND i.owner_id = p.id WHERE p.id = ?", [$id]);
     }
 
     public static function saveProduct(?int $id, array $in, ?array $imageFile = null): int
@@ -187,9 +286,9 @@ final class Canteen
         if ($cat && !Db::val('SELECT 1 FROM canteen_categories WHERE id = ?', [$cat])) throw new AppError('Choose a category.');
         $row = ['name' => $name, 'category_id' => $cat ?: null, 'sku' => $sku ?: null, 'barcode' => $barcode ?: null, 'price_cents' => $price, 'cost_cents' => $cost,
             'track_stock' => empty($in['track_stock']) ? 0 : 1, 'low_stock_at' => max(0, min(100000, (int) ($in['low_stock_at'] ?? 5))), 'is_active' => empty($in['is_active']) ? 0 : 1];
-        if ($imageFile && ($imageFile['error'] ?? UPLOAD_ERR_NO_FILE) !== UPLOAD_ERR_NO_FILE) $row['image'] = self::imageFromUpload($imageFile, 'product');
-        elseif (!empty($in['remove_image'])) $row['image'] = null;
-        return Db::tx(function () use ($id, $row) {
+        $img = $imageFile && ($imageFile['error'] ?? UPLOAD_ERR_NO_FILE) !== UPLOAD_ERR_NO_FILE ? self::imageFromUpload($imageFile, 'product', 'PRODUCT') : null;
+        $removeImage = !$img && !empty($in['remove_image']);
+        return Db::tx(function () use ($id, $row, $img, $removeImage) {
             if ($row['barcode'] && Db::val('SELECT name FROM canteen_products WHERE barcode = ? AND id <> ?', [$row['barcode'], (int) $id])) throw new AppError('Another product already uses that barcode.');
             if ($row['sku'] && Db::val('SELECT name FROM canteen_products WHERE sku = ? AND id <> ?', [$row['sku'], (int) $id])) throw new AppError('Another product already uses that SKU.');
             if ($id) {
@@ -201,6 +300,7 @@ final class Canteen
                 $id = Db::insert('canteen_products', $row);
                 Audit::log('canteen_product_added', 'canteen_product', $id, ['name' => $row['name'], 'price' => $row['price_cents']]);
             }
+            if ($img) self::saveImage('PRODUCT', (int) $id, $img); elseif ($removeImage) self::deleteImage('PRODUCT', (int) $id);
             return (int) $id;
         });
     }
