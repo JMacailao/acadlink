@@ -1,4 +1,4 @@
-**Updating to v61.1 (LMS design)?** Read `V61_UPDATE.md`. Upload the files, open SIS once and press Ctrl+F5. No SQL import is needed.
+**Updating to v61.2 (bottom menu on phones and tablets)?** Read `V61_UPDATE.md`. Upload the files and press Ctrl+F5. No SQL import is needed.
 
 **Updating to v60 (Library)?** Read `V60_UPDATE.md`. Upload the files, open SIS once and press Ctrl+F5. No SQL import is needed.
 

@@ -1,6 +1,7 @@
 <?php
 /** Page frame: head, permission-filtered sidebar, flash messages. */
 declare(strict_types=1);
+require_once __DIR__ . '/bottom-nav.php'; // v61.2
 require_once dirname(__DIR__,3).'/shared/client-state.php';
 
 /** [route, label, icon, permissions, group, hint] — items of one group are listed together under a collapsible heading */
@@ -101,6 +102,30 @@ const LMS_NAV = [
     ['settings', 'Settings', 'gear', ['lms.view'], '', 'Grading categories of your classes (teachers)'],
 ];
 
+/** v61.2: the phone/tablet bottom menu of the LMS and the Canteen POS ("More" opens the side menu). */
+function app_bottom_nav(): void
+{
+    global $route;
+    $sys = app_system();
+    if (!in_array($sys, ['LMS', 'CANTEEN'], true)) return;
+    $nav = []; foreach (app_nav() as [$r, $label, $icon, $perms]) if (!$perms || Auth::can(...$perms)) $nav[$r] = [$label, $icon];
+    $item = fn(string $r, ?string $label = null, ?string $icon = null, array $also = [], int $badge = 0) => ['href' => url($r), 'label' => $label ?? $nav[$r][0], 'icon' => $icon ?? $nav[$r][1], 'active' => $route === $r || in_array($route, $also, true), 'badge' => $badge];
+    $more = ['label' => 'More', 'icon' => 'grid', 'sheet' => 'sidebar', 'active' => false];
+    if ($sys === 'LMS') {
+        if (!$nav) return;
+        bottom_nav([$item('dashboard', 'Home', 'house-door'), $item('classes', 'Classes', 'people', ['class', 'work'])],
+            $item('messages', 'Messages', 'chat-square-text', [], function_exists('lms_unread') ? lms_unread() : 0),
+            [$item('assignments', 'Tasks', 'journal-text', ['todo']), $more], 'LMS menu');
+        return;
+    }
+    $pick = array_values(array_filter(['sales', 'shift', 'products', 'reports', 'approvals', 'inventory', 'shifts', 'settings'], fn($r) => isset($nav[$r])));
+    $short = ['sales' => 'Sales', 'shift' => 'Shift', 'products' => 'Products', 'reports' => 'Reports', 'approvals' => 'Approvals', 'inventory' => 'Stock', 'shifts' => 'Shifts', 'settings' => 'Settings'];
+    $center = isset($nav['dashboard']) ? $item('dashboard', 'Cashier', 'shop') : ($pick ? $item(array_shift($pick), null, null) : null);
+    if (!$center) return;
+    $side = array_map(fn($r) => $item($r, $short[$r]), array_slice($pick, 0, 3));
+    bottom_nav(array_slice($side, 0, 2), $center, array_merge(array_slice($side, 2, 1), [$more]), 'Canteen menu');
+}
+
 /** The menu of the system this page belongs to. */
 function app_nav(): array
 {
@@ -182,7 +207,8 @@ function layout_start(string $title, bool $bare = false): void
 <link rel="stylesheet" href="<?= sis_web() ?>assets/assessment-fee-templates.css?v=1">
 <?php if (app_system() === 'CANTEEN'): ?><link rel="stylesheet" href="assets/canteen.css?v=59b"><?php endif; ?>
 <?php if (app_system() === 'LIBRARY'): ?><link rel="stylesheet" href="assets/library.css?v=61c"><?php endif; ?>
-<?php if (app_system() === 'LMS'): ?><link rel="stylesheet" href="assets/lms.css?v=61.1d"><?php endif; ?>
+<?php if (app_system() === 'LMS'): ?><link rel="stylesheet" href="assets/lms.css?v=61.2"><?php endif; ?>
+<?php if (in_array(app_system(), ['LMS', 'CANTEEN'], true)): ?><link rel="stylesheet" href="<?= sis_web() ?>assets/bottom-nav.css?v=61.2b"><?php endif; ?>
 <?php if ($route === 'assessment' && ($_GET['tab'] ?? '') === 'names'): ?><script src="<?= sis_web() ?>assets/fee-templates.js?v=1" defer></script><?php endif; ?>
 <?php if ($route === 'documents' && ($_GET['tab'] ?? '') === 'settings'): ?><script src="<?= sis_web() ?>assets/documents-template-preview.js?v=1" defer></script><?php endif; ?>
 <?php if ($route === 'admission'): ?><link rel="stylesheet" href="<?= sis_web() ?>assets/admission-form.css?v=1"><?php endif; ?>
@@ -289,6 +315,7 @@ function layout_end(bool $bare = false): void
   </div></div>
 </div>
 <?php endif; ?>
+<?php if ($LAYOUT_SIDEBAR) app_bottom_nav(); ?>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" crossorigin="anonymous"></script>
 <script src="<?= sis_web() ?>assets/navigation.js?v=61"></script>
 <?php if (app_system() === 'LMS'): ?><script src="assets/lms.js?v=61.1" defer></script><?php endif; ?>
