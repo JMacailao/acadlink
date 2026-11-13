@@ -9,7 +9,7 @@ declare(strict_types=1);
 
 const APP_SYSTEM = 'FINANCE';
 // Finance's own pages, plus the shared pages that should keep the Finance menu (notifications, reports, profile…)
-const LOCAL_ROUTES = ['dashboard', 'cashier', 'docfees', 'balance', 'orseries', 'receipt', 'docreceipt', 'accounting',
+const LOCAL_ROUTES = ['dashboard', 'cashier', 'docfees', 'libfines', 'libreceipt', 'balance', 'orseries', 'receipt', 'docreceipt', 'accounting',
     'notifications', 'reports', 'search', 'profile', 'password', 'navstate'];
 require __DIR__ . '/../sis/app/bootstrap.php';
 sis_boot();
@@ -23,6 +23,8 @@ const ROUTES = [
     'receipt'      => ['receipt', ['payments.view', 'self']],
     'docreceipt'   => ['docreceipt', ['payments.view', 'self']],
     'orseries'     => ['orseries', ['settings.manage']],
+    'libfines'     => [__DIR__ . '/../library/pages/cashier.php', ['payments.record', 'payments.void'], ['payments.view']], // v60
+    'libreceipt'   => [__DIR__ . '/../library/pages/finereceipt.php', ['payments.view']],
     'accounting'   => [__DIR__ . '/modules/accounting/pages/accounting.php', ['accounting']],
     // Shared with the SIS: the same pages, shown with the Finance menu
     'notifications'=> ['notifications', ['admission', 'registration', 'payments.view', 'accounting']],

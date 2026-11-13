@@ -22,6 +22,7 @@ function portal_layout_start(string $title, bool $bare = false): void
     if (Auth::studentNumber()) array_splice($menu, 2, 0, [['schedule', 'Schedule', 'calendar-week', []]]); // v53
     if (Auth::studentNumber()) array_splice($menu, 4, 0, [['documents', 'Documents', 'file-earmark-text', []]]); // v52: request TOR and certificates
     if (Auth::studentNumber() && Clearance::on()) array_splice($menu, 5, 0, [['clearance', 'Clearance', 'patch-check', []]]); // v55
+    if (Auth::studentNumber()) $menu[] = ['library', 'Library', 'book', []]; // v60
     $tab = $_GET['tab'] ?? 'grades';
     ?><!doctype html>
 <html lang="en" data-system="portal">

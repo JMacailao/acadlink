@@ -16,7 +16,7 @@ $c=Auth::central(); $pass=0; $fail=0;
 function ca_ok(bool $v,string $m='Assertion failed'):void { if(!$v) throw new RuntimeException($m); }
 function ca_test(string $name,callable $fn):void { global $pass,$fail; try {$fn();echo "PASS $name\n";$pass++;} catch(Throwable $e){echo "FAIL $name: ".$e->getMessage()."\n";$fail++;} }
 function ca_denied(callable $fn):void { try{$fn();}catch(CentralAccountError|AppError|Forbidden|PDOException $e){return;}throw new RuntimeException('Expected rejection'); }
-ca_test('repeatable central install preserves legacy rows and creates no login',function()use($c){$count=Db::val('SELECT COUNT(*) FROM sis_users');$c->install();$c->install();ca_ok((int)Db::val('SELECT COUNT(*) FROM central_groups')===8); // v58/v59: the five default groups, Cashier, Canteen Cashier and Canteen Supervisor
+ca_test('repeatable central install preserves legacy rows and creates no login',function()use($c){$count=Db::val('SELECT COUNT(*) FROM sis_users');$c->install();$c->install();ca_ok((int)Db::val('SELECT COUNT(*) FROM central_groups')===9); // v58–v60: the five default groups, Cashier, Canteen Cashier, Canteen Supervisor and Librarian
 ca_ok((int)Db::val('SELECT COUNT(*) FROM central_accounts')===0);ca_ok(Db::val('SELECT COUNT(*) FROM sis_users')===$count);});
 $power=$c->save(null,['full_name'=>'Test Power User','username'=>'central.admin','group'=>'POWER_USER','status'=>'ACTIVE','temp_password'=>'Temporary12345'],true);
 $c->q('UPDATE central_accounts SET must_change_password=0 WHERE id=?',[$power]);

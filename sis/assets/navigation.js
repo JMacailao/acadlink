@@ -35,7 +35,7 @@
   function invalidate(announce=false){cache.clear();bytes=0;epoch++;if(announce)channel?.postMessage({type:'invalidate'});}
   channel?.addEventListener('message',()=>invalidate());
   window.addEventListener('pagehide',()=>invalidate());
-  function eligible(url){return document.documentElement.dataset.app!=='canteen'&&url.origin===location.origin&&url.pathname===location.pathname&&allowed.has(url.searchParams.get('r')||'dashboard')&&!url.hash&&!['embed','action','download','export','print','template','preview','json'].some(key=>url.searchParams.has(key));}
+  function eligible(url){return !['canteen','library'].includes(document.documentElement.dataset.app)&&url.origin===location.origin&&url.pathname===location.pathname&&allowed.has(url.searchParams.get('r')||'dashboard')&&!url.hash&&!['embed','action','download','export','print','template','preview','json'].some(key=>url.searchParams.has(key));}
   function key(url){const next=new URL(url);next.hash='';next.searchParams.sort();return scopeKey+'|'+next.href;}
   function ttl(url){
     const r=url.searchParams.get('r')||'dashboard';

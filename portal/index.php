@@ -6,7 +6,7 @@
 declare(strict_types=1);
 
 define('PORTAL_ROOT', __DIR__);
-const LOCAL_ROUTES = ['my', 'myenrollment', 'myadmission', 'history', 'receipt', 'password', 'profile', 'documents', 'docreceipt', 'schedule', 'clearance', 'clearanceslip', 'clearancefile']; // links to other pages go to ../sis/
+const LOCAL_ROUTES = ['my', 'myenrollment', 'myadmission', 'history', 'receipt', 'password', 'profile', 'documents', 'docreceipt', 'schedule', 'clearance', 'clearanceslip', 'clearancefile', 'library']; // links to other pages go to ../sis/
 require __DIR__ . '/../sis/app/bootstrap.php';
 sis_boot();
 
@@ -31,6 +31,7 @@ const PORTAL_ROUTES = [
     'clearance'    => [__DIR__ . '/pages/clearance.php', ['self']],          // v55
     'clearanceslip'=> [SIS_ROOT . '/app/pages/clearanceslip.php', ['self']],
     'clearancefile'=> [SIS_ROOT . '/app/pages/clearancefile.php', ['self']],
+    'library'      => [__DIR__ . '/../library/pages/portal.php', ['self']], // v60
 ];
 $route = is_string($_GET['r'] ?? null) && isset(PORTAL_ROUTES[$_GET['r']]) ? $_GET['r'] : 'my';
 [$file, $perms] = PORTAL_ROUTES[$route];

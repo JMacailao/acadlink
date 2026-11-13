@@ -13,7 +13,7 @@ final class FinanceOverview
         'TUITION'   => ['Tuition and fees', 'mortarboard', "SELECT COALESCE(SUM(amount),0), COUNT(*) FROM sis_payments WHERE status='POSTED' AND paid_at >= ? AND paid_at < ?"],
         'DOCUMENTS' => ['Documents (TOR and certificates)', 'file-earmark-text', "SELECT COALESCE(SUM(amount),0), COUNT(*) FROM sis_document_payments WHERE status='POSTED' AND paid_at >= ? AND paid_at < ?"],
         'CANTEEN'   => ['Canteen POS', 'shop', 'canteen'], // v59: net sales (sales − approved refunds), see Canteen::netSales()
-        'LIBRARY'   => ['Library fines', 'book', null],
+        'LIBRARY'   => ['Library fines', 'book', 'library'], // v60: fines paid at the Cashier, see Library::collected()
     ];
 
     /**
@@ -27,8 +27,8 @@ final class FinanceOverview
         $rows = []; $total = 0;
         foreach (self::SOURCES as $key => [$label, $icon, $sql]) {
             $cents = 0; $count = 0;
-            if ($sql === 'canteen') {
-                [$cents, $count] = Canteen::netSales($from . ' 00:00:00', $end . ' 00:00:00');
+            if ($sql === 'canteen' || $sql === 'library') {
+                [$cents, $count] = $sql === 'canteen' ? Canteen::netSales($from . ' 00:00:00', $end . ' 00:00:00') : Library::collected($from . ' 00:00:00', $end . ' 00:00:00');
                 $total += $cents;
             } elseif ($sql !== null) {
                 [$sum, $count] = self::sum($sql, $from, $end);

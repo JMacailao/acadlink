@@ -16,7 +16,7 @@ final class ModuleAccess
     /** Order of the cards after sign-in. */
     public const CHOOSER_ORDER = ['GRADING', 'SIS', 'LMS', 'CANTEEN', 'LIBRARY', 'FINANCE', 'PORTAL'];
     /** Systems shown with a "Coming soon" card: they can be given to people, but do not open yet. */
-    public const COMING_SOON = ['LMS', 'LIBRARY']; // v59: Canteen POS is open
+    public const COMING_SOON = ['LMS']; // v59: Canteen POS is open; v60: Library is open
     public const LEVELS = ['NONE' => 'No access', 'VIEW' => 'View only', 'EDIT' => 'View and edit'];
 
     /** key => [system, label, view codes, edit codes, extra actions under Edit (code => label)] */
@@ -60,7 +60,11 @@ final class ModuleAccess
             'canteen.inventory'  => ['CANTEEN', 'Canteen: inventory and stocktakes', ['canteen.inventory.view'], ['canteen.inventory.manage'], []],
             'canteen.supervise'  => ['CANTEEN', 'Canteen: approve voids and refunds, accept cash counts', [], ['canteen.supervise'], []],
             'canteen.reports'    => ['CANTEEN', 'Canteen: sales reports', ['canteen.reports.view'], [], []],
-            'library.access'     => ['LIBRARY', 'Library: Access', ['library.access.view'], [], []],
+            'library.circulation' => ['LIBRARY', 'Library: check-out, returns, renewals and holds', ['library.loans.view'], ['library.loans.manage'], ['library.fines.waive' => 'Waive fines']],
+            'library.catalog'    => ['LIBRARY', 'Library: catalog, copies and barcode labels', ['library.catalog.view'], ['library.catalog.manage'], []],
+            'library.acquisitions' => ['LIBRARY', 'Library: acquisitions (orders and receiving)', [], ['library.acquisitions.manage'], []],
+            'library.stocktake'  => ['LIBRARY', 'Library: stocktakes', [], ['library.stocktake.manage'], []],
+            'library.reports'    => ['LIBRARY', 'Library: reports (Edit: loan rules)', ['library.reports.view'], ['library.settings.manage'], []],
         ];
     }
 
@@ -179,6 +183,31 @@ final class ModuleAccess
         $db->exec("INSERT IGNORE INTO central_schema_migrations(migration_key) VALUES ('lms_v1')");
         self::installV58($db);
         self::installV59($db);
+        self::installV60($db);
+    }
+
+    /** v60: Library permissions and the Librarian group. */
+    private static function installV60(PDO $db): void
+    {
+        $db->exec("INSERT IGNORE INTO central_permissions(code,workspace,label) VALUES
+            ('library.loans.view','LIBRARY','See library loans, holds and borrowers'),('library.loans.manage','LIBRARY','Check out, return, renew and place holds'),
+            ('library.fines.waive','LIBRARY','Waive library fines'),('library.catalog.view','LIBRARY','See the library catalog'),('library.catalog.manage','LIBRARY','Manage titles, copies and barcode labels'),
+            ('library.acquisitions.manage','LIBRARY','Order and receive library materials'),('library.stocktake.manage','LIBRARY','Run library stocktakes'),
+            ('library.reports.view','LIBRARY','See library reports'),('library.settings.manage','LIBRARY','Set library loan rules and fines')");
+        if ($db->query("SELECT 1 FROM central_schema_migrations WHERE migration_key='library_v60'")->fetchColumn()) return;
+        $db->beginTransaction();
+        try {
+            $all = "'library.loans.view','library.loans.manage','library.fines.waive','library.catalog.view','library.catalog.manage','library.acquisitions.manage','library.stocktake.manage','library.reports.view','library.settings.manage'";
+            $db->exec("INSERT IGNORE INTO central_groups(code,name,description,is_default,is_active) VALUES
+                ('LIBRARIAN','Librarian','Run the library: catalog, check-out and returns, renewals, holds, fines, acquisitions, stocktakes, reports and loan rules.',1,1)");
+            $db->exec("INSERT IGNORE INTO central_group_permissions(group_id,permission_code,access_scope)
+                       SELECT g.id,c.code,'ALL' FROM central_groups g JOIN central_permissions c ON c.code IN ($all) WHERE g.code IN ('POWER_USER','LIBRARIAN')");
+            $db->exec("INSERT IGNORE INTO central_schema_migrations(migration_key) VALUES ('library_v60')");
+            $db->commit();
+        } catch (Throwable $e) {
+            if ($db->inTransaction()) $db->rollBack();
+            throw $e;
+        }
     }
 
     /** v59: Canteen POS permissions and the Canteen Cashier and Canteen Supervisor groups. */
