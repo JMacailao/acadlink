@@ -73,7 +73,7 @@ final class Auth
             if (!$a) return null;
             $g=$c->group((int)$a['id']);
             $u['central_id']=(int)$a['id'];
-            $u['role']=['POWER_USER'=>'ADMIN','ACCOUNTING'=>'ACCOUNTING','REGISTRAR'=>'REGISTRAR','TEACHER'=>'TEACHER','STUDENT'=>'STUDENT'][$g]??'TEACHER';
+            $u['role']=['POWER_USER'=>'ADMIN','ACCOUNTING'=>'ACCOUNTING','CASHIER'=>'CASHIER','REGISTRAR'=>'REGISTRAR','TEACHER'=>'TEACHER','STUDENT'=>'STUDENT'][$g]??'TEACHER';
             $u['username']=$a['username']; $u['full_name']=$a['display_name'];
             $u['must_change_password']=$a['must_change_password'];
             $u['student_number']=$a['person_verified']?$a['student_number']:null;

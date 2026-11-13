@@ -1,8 +1,8 @@
 <?php
 /**
  * Finance — its own system and entry point (v58), sharing the SIS's sign-in, database, services and look.
- * index.php?r=<route>. Cashier, receipts, document fees, existing balances, O.R. series and Accounting live here;
- * admission, registration and assessment stay in ../sis/. Links to other pages go there (see url()).
+ * index.php?r=<route>. Existing Balances and Accounting live here. Cashier (receipts, document fees, O.R. series) is an
+ * SIS module that Finance also opens with its own menu (v58.1). Admission, registration and assessment stay in ../sis/. Links to other pages go there (see url()).
  * Every route keeps the permissions it had in the SIS, so the same people can do the same things.
  */
 declare(strict_types=1);
@@ -17,12 +17,12 @@ sis_boot();
 // route => [page file, required permissions (any of); [] = any signed-in user, view-only permissions]
 const ROUTES = [
     'dashboard'    => [__DIR__ . '/pages/overview.php', []],   // checks Finance access itself
-    'cashier'      => [__DIR__ . '/pages/cashier.php', ['payments.view']],
-    'docfees'      => [__DIR__ . '/pages/docfees.php', ['payments.record', 'payments.void'], ['payments.view']],
+    'cashier'      => ['cashier', ['payments.view']],
+    'docfees'      => ['docfees', ['payments.record', 'payments.void'], ['payments.view']],
     'balance'      => [__DIR__ . '/pages/balance.php', ['registration', 'accounting', 'self'], ['balances.view']],
-    'receipt'      => [__DIR__ . '/pages/receipt.php', ['payments.view', 'self']],
-    'docreceipt'   => [__DIR__ . '/pages/docreceipt.php', ['payments.view', 'self']],
-    'orseries'     => [__DIR__ . '/pages/orseries.php', ['settings.manage']],
+    'receipt'      => ['receipt', ['payments.view', 'self']],
+    'docreceipt'   => ['docreceipt', ['payments.view', 'self']],
+    'orseries'     => ['orseries', ['settings.manage']],
     'accounting'   => [__DIR__ . '/modules/accounting/pages/accounting.php', ['accounting']],
     // Shared with the SIS: the same pages, shown with the Finance menu
     'notifications'=> ['notifications', ['admission', 'registration', 'payments.view', 'accounting']],

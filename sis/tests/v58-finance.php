@@ -35,13 +35,16 @@ test('the chooser lists workspaces in the agreed order', function () use ($sys, 
     ok($order === ['GRADING', 'SIS', 'LMS', 'CANTEEN', 'LIBRARY', 'FINANCE'], 'Power User order: ' . implode(',', $s));
     ok(array_values($s) === array_values(array_filter(ModuleAccess::CHOOSER_ORDER, fn($x) => in_array($x, $s, true))), 'not in chooser order');
 });
-test('Cashier group: Finance only, payments and receipts, no accounting books', function () use ($c, $sys, $cash) {
+test('Cashier group: Cashier in the SIS and in Finance, no accounting books', function () use ($c, $sys, $cash) {
     $p = $c->permissions($cash);
     ok(in_array('FINANCE', $sys($cash), true), 'cashier cannot open Finance');
-    ok(!in_array('SIS', $sys($cash), true), 'cashier should not get the SIS workspace');
+    ok(in_array('SIS', $sys($cash), true), 'cashier cannot open the SIS (v58.1: Cashier stays in the SIS)');
     foreach (['sis.receipts.view', 'sis.payments.receive', 'sis.balances.view'] as $code) ok(isset($p[$code]), "cashier lacks $code");
     foreach (['sis.accounting.view', 'sis.journals.prepare', 'sis.journals.post', 'sis.payments.void'] as $code) ok(!isset($p[$code]), "cashier has $code");
     ok(Db::val("SELECT role FROM sis_users WHERE id=?", [(int) $c->legacyId($cash, 'SIS')]) === 'CASHIER', 'cashier SIS role is not CASHIER');
+    $c->establish($cash); Auth::actAs(null);
+    ok(Auth::role() === 'CASHIER' && Auth::user()['role_name'] === 'Cashier', 'signed-in cashier is treated as ' . Auth::role());
+    $c->logout();
 });
 test('Accounting keeps the books and opens Finance', function () use ($c, $sys, $acct) {
     ok(in_array('FINANCE', $sys($acct), true), 'accountant cannot open Finance');
@@ -78,16 +81,19 @@ test('Canteen POS and Library start with the Power User only, as "coming soon"',
     ok(array_intersect(['LMS', 'CANTEEN', 'LIBRARY'], ModuleAccess::COMING_SOON) === ['LMS', 'CANTEEN', 'LIBRARY'], 'coming-soon list');
 });
 test('links: from the SIS, Finance pages go to ../finance/ and SIS pages stay', function () {
-    ok(url('cashier', ['new' => 1]) === '../finance/index.php?r=cashier&new=1', url('cashier'));
+    ok(url('cashier', ['new' => 1]) === 'index.php?r=cashier&new=1', 'v58.1: Cashier stays in the SIS: ' . url('cashier'));
+    ok(url('receipt', ['id' => 3]) === 'index.php?r=receipt&id=3', url('receipt'));
+    ok(url('balance') === '../finance/index.php?r=balance', url('balance'));
     ok(url('accounting', ['tab' => 'ledger']) === '../finance/index.php?r=accounting&tab=ledger', url('accounting'));
     ok(url('registration') === 'index.php?r=registration', url('registration'));
     ok(url('my') === '../portal/index.php?r=my', url('my'));
     ok(app_system() === 'SIS' && sis_web() === '', 'SIS context');
 });
-test('the Finance folder holds the money pages and the accounting module', function () {
-    foreach (['index.php', 'pages/cashier.php', 'pages/docfees.php', 'pages/balance.php', 'pages/orseries.php', 'pages/receipt.php', 'pages/docreceipt.php', 'pages/overview.php', 'modules/accounting/pages/accounting.php', 'modules/accounting/lib/accounting.php', 'assets/accounting-workflow.js'] as $f)
+test('Finance holds Balances and Accounting; Cashier pages stay in the SIS folder', function () {
+    foreach (['cashier', 'docfees', 'receipt', 'docreceipt', 'orseries'] as $f) ok(is_file(SIS_ROOT . "/app/pages/$f.php"), "missing sis/app/pages/$f.php");
+    foreach (['index.php', 'pages/balance.php', 'pages/overview.php', 'modules/accounting/pages/accounting.php', 'modules/accounting/lib/accounting.php', 'assets/accounting-workflow.js'] as $f)
         ok(is_file(FINANCE_ROOT . '/' . $f), "missing finance/$f");
-    foreach (['cashier', 'docfees', 'balance', 'orseries', 'receipt', 'docreceipt', 'accounting'] as $f) ok(!is_file(SIS_ROOT . "/app/pages/$f.php"), "sis/app/pages/$f.php still there");
+    foreach (['balance', 'accounting'] as $f) ok(!is_file(SIS_ROOT . "/app/pages/$f.php"), "sis/app/pages/$f.php still there");
     ok(!is_dir(SIS_ROOT . '/modules/accounting'), 'sis/modules/accounting still there');
 });
 test('collections by source: posted receipts count, voided do not, Canteen and Library wait', function () use ($c, $power) {

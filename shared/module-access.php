@@ -11,6 +11,8 @@ final class ModuleAccess
     // v58: Finance is its own system; Canteen POS and Library are planned systems with their own access
     public const SYSTEMS = ['GRADING' => 'Grading System', 'SIS' => 'School Information System', 'FINANCE' => 'Finance', 'PORTAL' => 'Student Portal', 'LMS' => 'Learning Management System', 'CANTEEN' => 'Canteen POS', 'LIBRARY' => 'Library'];
     public const WORKSPACE = ['GRADING' => 'grading.workspace.view', 'SIS' => 'sis.workspace.view', 'FINANCE' => 'finance.workspace.view', 'PORTAL' => 'portal.workspace.view', 'LMS' => 'lms.workspace.view', 'CANTEEN' => 'canteen.workspace.view', 'LIBRARY' => 'library.workspace.view'];
+    /** v58.1: modules that are used in more than one system. Cashier works in the SIS and in Finance. */
+    public const ALSO_OPENS = ['sis.cashier' => ['SIS']];
     /** Order of the cards after sign-in. */
     public const CHOOSER_ORDER = ['GRADING', 'SIS', 'LMS', 'CANTEEN', 'LIBRARY', 'FINANCE', 'PORTAL'];
     /** Systems shown with a "Coming soon" card: they can be given to people, but do not open yet. */
@@ -33,7 +35,7 @@ final class ModuleAccess
             'sis.registration'   => ['SIS', 'Registration', ['sis.registration.view'], ['sis.registration.manage'], ['sis.enrollment.confirm' => 'Confirm enrollment', 'sis.enrollment.reopen' => 'Reopen a confirmed enrollment']],
             'sis.eligibility'    => ['SIS', 'Enrollment eligibility and holds', ['sis.eligibility.view'], ['sis.eligibility.holds.manage'], []],
             'sis.assessment'     => ['SIS', 'Assessment and fees', ['sis.assessment.view'], ['sis.assessment.manage'], ['sis.discounts.manage' => 'Scholarships and discounts']],
-            'sis.cashier'        => ['FINANCE', 'Cashier and receipts', ['sis.receipts.view'], ['sis.payments.receive'], ['sis.payments.void' => 'Void payments']],
+            'sis.cashier'        => ['FINANCE', 'Cashier and receipts (opens in the SIS and in Finance)', ['sis.receipts.view'], ['sis.payments.receive'], ['sis.payments.void' => 'Void payments']],
             'sis.balances'       => ['FINANCE', 'Previous balances', ['sis.balances.view'], ['sis.balances.approve'], []],
             'sis.accounting'     => ['FINANCE', 'Accounting', ['sis.accounting.view'], ['sis.journals.prepare'], ['sis.journals.review' => 'Approve journal entries', 'sis.journals.post' => 'Post journal entries', 'sis.reconciliation.manage' => 'Bank reconciliation', 'sis.periods.close' => 'Close accounting periods']],
             'sis.schedules'      => ['SIS', 'Class schedules and rooms', ['sis.schedules.view'], ['sis.schedules.manage'], []],
@@ -134,7 +136,7 @@ final class ModuleAccess
         }
         foreach (self::WORKSPACE as $system => $code) {
             $open = false;
-            foreach ($catalog as $key => $m) if ($m[0] === $system && self::level($perms, $key)['level'] !== 'NONE') { $open = true; break; }
+            foreach ($catalog as $key => $m) if (($m[0] === $system || in_array($system, self::ALSO_OPENS[$key] ?? [], true)) && self::level($perms, $key)['level'] !== 'NONE') { $open = true; break; }
             if ($open) $perms[$code] ??= self::scope($groupCode, $code); else unset($perms[$code]);
         }
         return $perms;

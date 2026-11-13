@@ -57,7 +57,7 @@ $results = [];
 <?php if (!$results): ?><tr><td colspan="7" class="text-muted">No registration found. The student must be registered first.</td></tr><?php endif; ?></tbody></table></div>
 <?php endif; ?>
     
-<?php if ($regId): $r = Registration::get($regId); require SIS_ROOT . '/app/views/payment-plan-summary.php'; $bal = Registration::balance($r); $planBlock = PaymentPlans::paymentBlock($r);
+<?php if ($regId): $r = Registration::get($regId); require __DIR__ . '/../views/payment-plan-summary.php'; $bal = Registration::balance($r); $planBlock = PaymentPlans::paymentBlock($r);
       $items = Db::all('SELECT category_name, SUM(amount) AS amount FROM sis_registration_items WHERE registration_id = ? GROUP BY category_name ORDER BY MIN(sort_order)', [$regId]);
       $pays = Db::all('SELECT p.*, u.full_name FROM sis_payments p JOIN sis_users u ON u.id = p.received_by WHERE p.registration_id = ? ORDER BY p.paid_at', [$regId]); ?>
 <div class="row g-3 mb-3">
@@ -183,7 +183,7 @@ $docFeesWaiting = (int) Db::val("SELECT COUNT(*) FROM sis_document_requests WHER
         <div class="fp-actions"><?php if ($filtersOn): ?><a class="btn btn-sm btn-outline-secondary" href="<?= url('cashier') ?>">Clear</a><?php endif; ?><button class="btn btn-sm btn-primary"><i class="bi bi-check2 me-1"></i>Apply</button></div>
       </form>
 
-      <div class="print-only"><?php $docTitle = 'Collections · ' . ($from === $to ? date('F j, Y', strtotime($from)) : date('M j', strtotime($from)) . ' – ' . date('M j, Y', strtotime($to))) . ' · ' . $cashierName; $docRight = ''; require SIS_ROOT . '/app/views/print_header.php'; ?></div>
+      <div class="print-only"><?php $docTitle = 'Collections · ' . ($from === $to ? date('F j, Y', strtotime($from)) : date('M j', strtotime($from)) . ' – ' . date('M j, Y', strtotime($to))) . ' · ' . $cashierName; $docRight = ''; require __DIR__ . '/../views/print_header.php'; ?></div>
       <!-- the receipts -->
       <?php if ($shownMore): ?><div class="alert alert-warning py-2 mb-2">Showing the first <?= number_format(CASHIER_LIST_MAX) ?> of <?= number_format($allCount) ?> receipts. The totals include all <?= number_format($allCount) ?>. Narrow the dates, cashier or payment method to see the rest.</div><?php endif; ?>
       <div class="or-grid-wrap">

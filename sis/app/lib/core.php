@@ -539,8 +539,9 @@ function h(mixed $v): string
     return htmlspecialchars((string) ($v ?? ''), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
 }
 
-/** v58: pages that belong to the Finance system (../finance/). Old SIS links to them are forwarded there. */
-const FINANCE_PAGES = ['cashier', 'docfees', 'balance', 'orseries', 'receipt', 'docreceipt', 'accounting'];
+/** v58: pages that belong only to the Finance system (../finance/). Old SIS links to them are forwarded there.
+ *  v58.1: Cashier (payments, receipts, Document Fees, O.R. series) is in both the SIS and Finance; each keeps its own menu. */
+const FINANCE_PAGES = ['balance', 'accounting'];
 /** Pages that belong to the Student Portal (../portal/). */
 const PORTAL_PAGES = ['my', 'myenrollment', 'myadmission'];
 
