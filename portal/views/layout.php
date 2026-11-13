@@ -42,7 +42,7 @@ function portal_layout_start(string $title, bool $bare = false): void
 <link rel="stylesheet" href="../sis/assets/app.css?v=56b">
 <link rel="stylesheet" href="../sis/assets/reference-ui.css?v=20261021portal">
 <link rel="stylesheet" href="assets/portal.css?v=53">
-<link rel="stylesheet" href="../sis/assets/bottom-nav.css?v=62.2">
+<link rel="stylesheet" href="../sis/assets/bottom-nav.css?v=62.2b">
 <link rel="stylesheet" href="../sis/assets/people.css?v=62b">
 </head>
 <body class="portal<?= $bare ? ' bare' : '' ?>" data-route="<?= h((string) $route) ?>">

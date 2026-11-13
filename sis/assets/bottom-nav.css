@@ -1,9 +1,9 @@
 /* v61.2 Bottom navigation (Student Portal, LMS, Canteen POS) for phones and tablets. Colours follow each system's theme. */
 .al-bnav { display: none; }
 :root { --bn-accent: #1d6b47; --bn-bg: #fff; --bn-ink: #1f2937; --bn-muted: #4b5563; --bn-line: #e5e7eb; --bn-h: 68px; }
-html[data-app="lms"] { --bn-accent: #2563eb; }
-html[data-app="canteen"] { --bn-accent: #e0650f; }
 html[data-system="portal"] { --bn-accent: #c2410c; }
+html[data-app="lms"], html[data-system][data-app="lms"] { --bn-accent: #2563eb; } /* students open the LMS in the Portal look: the LMS keeps its blue */
+html[data-app="canteen"], html[data-system][data-app="canteen"] { --bn-accent: #e0650f; }
 @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --bn-bg: #161b24; --bn-ink: #e5e9f0; --bn-muted: #aab4c3; --bn-line: #2b3445; } }
 :root[data-theme="dark"] { --bn-bg: #161b24; --bn-ink: #e5e9f0; --bn-muted: #aab4c3; --bn-line: #2b3445; }
 

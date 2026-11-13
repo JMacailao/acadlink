@@ -112,5 +112,6 @@ and passing.
 - Tapping another item slides the curve to it, the icon rises into the circle, then the page opens. **More** moves
   it too while the menu is open, and it goes back when the menu is closed.
 - On a page that is not in the bottom menu, the curve stays on the middle item.
+- Works the same in the Student Portal, the LMS and the Canteen POS. Students now see the LMS bar in the LMS blue (it showed the Portal orange before).
 - People who turned on "reduce motion" on their phone get no animation.
 - Source: `sis/app/views/bottom-nav.php`, `sis/assets/bottom-nav.css`, `sis/assets/app.js`.
