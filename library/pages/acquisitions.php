@@ -14,6 +14,8 @@ $titles = Db::all('SELECT id, title, authors FROM library_titles ORDER BY title 
 $opts = '<option value="">— title —</option>' . implode('', array_map(fn($t) => '<option value="' . (int) $t['id'] . '">' . h($t['title'] . ($t['authors'] ? ' — ' . $t['authors'] : '')) . '</option>', $titles));
 $id = (int) ($_GET['id'] ?? 0);
 layout_start('Acquisitions');
+lib_page_head('truck', 'Acquisitions', 'Order titles from suppliers; receiving adds the copies with barcodes and prices.');
+lib_tabs(array_filter(['catalog' => 'Titles', 'acquisitions' => 'Acquisitions', 'stocktake' => 'Stocktake', 'labels' => 'Barcode labels'], fn($r) => Auth::can(...ROUTES[$r][1]), ARRAY_FILTER_USE_KEY), 'acquisitions');
 if ($id):
     $a = Db::one('SELECT * FROM library_acquisitions WHERE id = ?', [$id]) ?: throw new AppError('Order not found.');
     $lines = Db::all('SELECT l.*, t.title FROM library_acquisition_lines l JOIN library_titles t ON t.id = l.title_id WHERE l.acquisition_id = ? ORDER BY l.id', [$id]);

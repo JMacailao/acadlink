@@ -10,6 +10,7 @@ $rows = Db::all('SELECT f.*, p.receipt_no FROM library_fines f LEFT JOIN library
 $total = array_sum(array_map(fn($r) => (int) $r['amount_cents'], $rows));
 $peso = fn(int $c) => '₱' . Money::fmt($c);
 layout_start('Fines');
+lib_page_head('coin', 'Fines', 'Overdue, lost and damage fines. They are paid at the Cashier (SIS or Finance → Library Fines).');
 ?>
 <p class="text-muted small">Fines are charged automatically (overdue on return, lost items, damage) and added to the borrower's account. They are paid at the Cashier: SIS or Finance → Library Fines.</p>
 <form method="get" class="d-flex flex-wrap gap-2 mb-2"><input type="hidden" name="r" value="fines">

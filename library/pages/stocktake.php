@@ -16,6 +16,8 @@ if ($isPost) {
 $locations = Db::col("SELECT DISTINCT location FROM library_copies WHERE location IS NOT NULL AND location <> '' ORDER BY location");
 $past = Db::all("SELECT s.*, u.full_name FROM library_stocktakes s LEFT JOIN sis_users u ON u.id = s.started_by WHERE s.status = 'CLOSED' ORDER BY s.id DESC LIMIT 20");
 layout_start('Stocktake');
+lib_page_head('clipboard-check', 'Stocktake', 'Scan every copy on the shelves to find what is missing.');
+lib_tabs(array_filter(['catalog' => 'Titles', 'acquisitions' => 'Acquisitions', 'stocktake' => 'Stocktake', 'labels' => 'Barcode labels'], fn($r) => Auth::can(...ROUTES[$r][1]), ARRAY_FILTER_USE_KEY), 'stocktake');
 if (!$open): ?>
 <form method="post" class="form-section" style="max-width:560px"><?= csrf_field() ?><input type="hidden" name="action" value="start">
   <h2 class="h6">Start a stocktake</h2>
@@ -44,5 +46,5 @@ if (!$open): ?>
 <?php if ($past): ?><h2 class="h6 mt-3">Past stocktakes</h2><div class="table-responsive form-section"><table class="table table-sm mb-0"><tbody>
 <?php foreach ($past as $p): ?><tr><td><?= h($p['name']) ?></td><td><?= h((string) $p['location'] ?: 'Whole library') ?></td><td class="small"><?= h(date('M j, Y', strtotime((string) $p['closed_at']))) ?></td><td class="small"><?= h((string) $p['result']) ?></td></tr><?php endforeach; ?>
 </tbody></table></div><?php endif; ?>
-<script src="assets/library.js?v=60" defer></script>
+<script src="assets/library.js?v=61" defer></script>
 <?php layout_end();

@@ -96,6 +96,12 @@ final class Library
             CONSTRAINT fk_lib_scan_copy FOREIGN KEY (copy_id) REFERENCES library_copies (id)
         )");
         $t("CREATE TABLE IF NOT EXISTS library_settings (skey VARCHAR(40) NOT NULL PRIMARY KEY, svalue VARCHAR(255) NOT NULL)");
+        // v60.1: book covers, stored as bytes (one per title)
+        $t("CREATE TABLE IF NOT EXISTS library_covers (
+            title_id INT UNSIGNED NOT NULL PRIMARY KEY, mime VARCHAR(20) NOT NULL, bytes MEDIUMBLOB NOT NULL, size_bytes INT UNSIGNED NOT NULL, sha1 CHAR(40) NOT NULL,
+            uploaded_by INT UNSIGNED NULL, updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+            CONSTRAINT fk_lib_cover_title FOREIGN KEY (title_id) REFERENCES library_titles (id)
+        )");
         $has = fn(string $tb) => (bool) $db->query("SELECT 1 FROM information_schema.tables WHERE table_schema=DATABASE() AND table_name='$tb'")->fetchColumn();
         if ($has('sis_accounts') && $has('sis_account_map')) {
             $db->exec("INSERT IGNORE INTO sis_accounts (code, name, type, is_cash, description) VALUES ('4700','Library Fines','REVENUE',0,'Overdue, lost and damage fines collected at the Cashier')");
@@ -195,7 +201,7 @@ final class Library
     public static function account(string $type, string $ref): array
     {
         self::housekeep();
-        $loans = Db::all("SELECT l.*, c.barcode, t.title, t.authors, t.id AS title_id, DATEDIFF(CURDATE(), l.due_on) AS days_late FROM library_loans l JOIN library_copies c ON c.id = l.copy_id JOIN library_titles t ON t.id = c.title_id
+        $loans = Db::all("SELECT l.*, c.barcode, t.title, t.authors, t.isbn, t.id AS title_id, (SELECT LEFT(sha1, 10) FROM library_covers cv WHERE cv.title_id = t.id) AS cover_ver, DATEDIFF(CURDATE(), l.due_on) AS days_late FROM library_loans l JOIN library_copies c ON c.id = l.copy_id JOIN library_titles t ON t.id = c.title_id
             WHERE l.borrower_type = ? AND l.borrower_ref = ? AND l.status = 'OPEN' ORDER BY l.due_on", [$type, $ref]);
         $holds = Db::all("SELECT h.*, t.title, c.barcode FROM library_holds h JOIN library_titles t ON t.id = h.title_id LEFT JOIN library_copies c ON c.id = h.copy_id
             WHERE h.borrower_type = ? AND h.borrower_ref = ? AND h.status IN ('WAITING','READY') ORDER BY h.status = 'READY' DESC, h.id", [$type, $ref]);
@@ -248,9 +254,55 @@ final class Library
         throw new AppError('That ISBN is not valid. Check the digits (10 or 13).');
     }
 
+    // ------------------------------------------------------------------ covers (bytes in library_covers)
+
+    /** Save an uploaded cover for a title (PNG/JPEG/GIF/WebP, shrunk to 600 px by the shared image helper). */
+    public static function saveCover(int $titleId, array $file): void
+    {
+        Auth::require('library.catalog.edit');
+        $img = Canteen::imageFromUpload($file, 'cover', 'COVER');
+        $st = Db::pdo()->prepare('INSERT INTO library_covers (title_id, mime, bytes, size_bytes, sha1, uploaded_by) VALUES (?,?,?,?,?,?)
+            ON DUPLICATE KEY UPDATE mime=VALUES(mime), bytes=VALUES(bytes), size_bytes=VALUES(size_bytes), sha1=VALUES(sha1), uploaded_by=VALUES(uploaded_by)');
+        $st->bindValue(1, $titleId, PDO::PARAM_INT); $st->bindValue(2, $img['mime']); $st->bindValue(3, $img['bytes'], PDO::PARAM_LOB);
+        $st->bindValue(4, strlen($img['bytes']), PDO::PARAM_INT); $st->bindValue(5, sha1($img['bytes'])); $st->bindValue(6, Auth::id());
+        $st->execute();
+        Audit::log('library_cover_saved', 'library_title', $titleId, ['bytes' => strlen($img['bytes'])]);
+    }
+
+    public static function deleteCover(int $titleId): void
+    {
+        Auth::require('library.catalog.edit');
+        if (Db::q('DELETE FROM library_covers WHERE title_id = ?', [$titleId])->rowCount()) Audit::log('library_cover_removed', 'library_title', $titleId, []);
+    }
+
+    /** [mime, bytes] of a title's cover, or null. */
+    public static function cover(int $titleId): ?array
+    {
+        $st = Db::pdo()->prepare('SELECT mime, bytes FROM library_covers WHERE title_id = ?');
+        $st->execute([$titleId]);
+        $r = $st->fetch(PDO::FETCH_ASSOC);
+        return $r ? [(string) $r['mime'], is_resource($r['bytes']) ? (string) stream_get_contents($r['bytes']) : (string) $r['bytes']] : null;
+    }
+
+    /** HTML for a book cover thumbnail: the uploaded cover, or a coloured tile with the title's initials. */
+    public static function coverHtml(int $titleId, string $title, ?string $ver, string $size = 'sm'): string
+    {
+        if ($ver) return '<img class="lib-cover lib-cover-' . h($size) . '" src="' . h(url('cover', ['id' => $titleId, 'v' => $ver])) . '" alt="" loading="lazy">';
+        $words = array_values(array_filter(preg_split('/\s+/', preg_replace('/[^\p{L}\p{N}\s]/u', '', $title)) ?: []));
+        $ini = mb_strtoupper(mb_substr($words[0] ?? '?', 0, 1) . mb_substr($words[1] ?? '', 0, 1));
+        $hue = hexdec(substr(md5($title), 0, 2)) * 360 / 255;
+        return '<span class="lib-cover lib-cover-' . h($size) . ' lib-cover-blank" style="--h:' . (int) $hue . '" aria-hidden="true">' . h($ini) . '</span>';
+    }
+
+    /** A valid ISBN from free text, or null (never throws). */
+    public static function isbnOrNull(string $raw): ?string
+    {
+        try { return preg_match('/^[\d\sXx-]{10,17}$/', trim($raw)) ? self::isbn($raw) : null; } catch (AppError) { return null; }
+    }
+
     public static function title(int $id): ?array
     {
-        $t = Db::one('SELECT * FROM library_titles WHERE id = ?', [$id]);
+        $t = Db::one('SELECT t.*, LEFT(cv.sha1, 10) AS cover_ver FROM library_titles t LEFT JOIN library_covers cv ON cv.title_id = t.id WHERE t.id = ?', [$id]);
         if ($t) {
             $t['copies'] = Db::all("SELECT c.*, l.borrower_name, l.due_on FROM library_copies c LEFT JOIN library_loans l ON l.copy_id = c.id AND l.status = 'OPEN' WHERE c.title_id = ? ORDER BY c.id", [$id]);
             $t['holds'] = Db::all("SELECT * FROM library_holds WHERE title_id = ? AND status IN ('WAITING','READY') ORDER BY id", [$id]);
@@ -273,7 +325,7 @@ final class Library
             $w[] = '(' . implode(' OR ', $or) . ')';
         }
         if ($material !== '') { $w[] = 't.material = ?'; $p[] = $material; }
-        $rows = Db::all("SELECT t.*, COUNT(c.id) AS copies, SUM(c.status = 'AVAILABLE' AND c.reference_only = 0) AS available, SUM(c.status = 'AVAILABLE' AND c.reference_only = 1) AS reference_copies,
+        $rows = Db::all("SELECT t.*, (SELECT LEFT(sha1, 10) FROM library_covers cv WHERE cv.title_id = t.id) AS cover_ver, COUNT(c.id) AS copies, SUM(c.status = 'AVAILABLE' AND c.reference_only = 0) AS available, SUM(c.status = 'AVAILABLE' AND c.reference_only = 1) AS reference_copies,
                 (SELECT COUNT(*) FROM library_holds h WHERE h.title_id = t.id AND h.status = 'WAITING') AS waiting
             FROM library_titles t LEFT JOIN library_copies c ON c.title_id = t.id AND c.status NOT IN ('WITHDRAWN','LOST')"
             . ($w ? ' WHERE ' . implode(' AND ', $w) : '') . ' GROUP BY t.id ORDER BY t.title LIMIT ' . max(1, min(500, $limit)), $p);
@@ -339,6 +391,13 @@ final class Library
         return Db::tx(function () use ($b, $barcode, $dueOn) {
             self::housekeep();
             $c = Db::one('SELECT c.*, t.title FROM library_copies c JOIN library_titles t ON t.id = c.title_id WHERE c.barcode = ? FOR UPDATE', [strtoupper(trim($barcode))]);
+            if (!$c && ($isbn = self::isbnOrNull($barcode))) {
+                // v60.1: an ISBN picks a copy: the one on the hold shelf for this borrower, else any free copy
+                $c = Db::one("SELECT c.*, t.title FROM library_copies c JOIN library_titles t ON t.id = c.title_id JOIN library_holds h ON h.copy_id = c.id AND h.status = 'READY'
+                        WHERE t.isbn = ? AND c.status = 'ON_HOLD_SHELF' AND h.borrower_type = ? AND h.borrower_ref = ? LIMIT 1 FOR UPDATE", [$isbn, $b['type'], $b['ref']])
+                    ?: Db::one("SELECT c.*, t.title FROM library_copies c JOIN library_titles t ON t.id = c.title_id WHERE t.isbn = ? AND c.status = 'AVAILABLE' AND c.reference_only = 0 ORDER BY c.id LIMIT 1 FOR UPDATE", [$isbn]);
+                if (!$c) throw new AppError(Db::val('SELECT 1 FROM library_titles WHERE isbn = ?', [$isbn]) ? 'No copy of ISBN ' . $isbn . ' is on the shelf right now.' : 'No title has ISBN ' . $isbn . '.');
+            }
             if (!$c) throw new AppError('No copy has barcode ' . trim($barcode) . '.');
             if ((int) $c['reference_only']) throw new AppError('"' . $c['title'] . '" is for library use only.');
             $hold = null;
@@ -762,6 +821,60 @@ final class Library
         });
     }
 
+    /** Renew the open loan of a scanned copy (Circulation → Renew). Returns [due date, title, borrower]. */
+    public static function renewByBarcode(string $barcode): array
+    {
+        $l = Db::one("SELECT l.id, l.borrower_name, t.title FROM library_loans l JOIN library_copies c ON c.id = l.copy_id JOIN library_titles t ON t.id = c.title_id WHERE c.barcode = ? AND l.status = 'OPEN'", [strtoupper(trim($barcode))]);
+        if (!$l) throw new AppError('No open loan for barcode ' . trim($barcode) . '.');
+        return [self::renew((int) $l['id']), $l['title'], $l['borrower_name']];
+    }
+
+    // ------------------------------------------------------------------ overview and members
+
+    /** Figures and lists for Library → Overview. */
+    public static function overview(): array
+    {
+        self::housekeep();
+        $cover = "(SELECT LEFT(sha1, 10) FROM library_covers cv WHERE cv.title_id = t.id)";
+        return [
+            'copies' => (int) Db::val("SELECT COUNT(*) FROM library_copies WHERE status NOT IN ('WITHDRAWN','LOST')"),
+            'titles' => (int) Db::val('SELECT COUNT(*) FROM library_titles'),
+            'today' => (int) Db::val('SELECT COUNT(*) FROM library_loans WHERE loaned_at >= CURDATE()'),
+            'returned_today' => (int) Db::val('SELECT COUNT(*) FROM library_loans WHERE returned_at >= CURDATE()'),
+            'overdue' => (int) Db::val("SELECT COUNT(*) FROM library_loans WHERE status = 'OPEN' AND due_on < CURDATE()"),
+            'members' => (int) Db::val('SELECT COUNT(DISTINCT borrower_type, borrower_ref) FROM library_loans WHERE loaned_at >= DATE_SUB(CURDATE(), INTERVAL 1 YEAR)'),
+            'ready' => (int) Db::val("SELECT COUNT(*) FROM library_holds WHERE status = 'READY'"),
+            'activity' => Db::all("SELECT * FROM (
+                    SELECT l.loaned_at AS at, 'Borrowed' AS kind, l.borrower_type, l.borrower_ref, l.borrower_name, t.id AS title_id, t.title, $cover AS cover_ver FROM library_loans l JOIN library_copies c ON c.id = l.copy_id JOIN library_titles t ON t.id = c.title_id WHERE l.loaned_at >= CURDATE()
+                    UNION ALL
+                    SELECT l.returned_at, 'Returned', l.borrower_type, l.borrower_ref, l.borrower_name, t.id, t.title, $cover FROM library_loans l JOIN library_copies c ON c.id = l.copy_id JOIN library_titles t ON t.id = c.title_id WHERE l.returned_at >= CURDATE()
+                ) x ORDER BY at DESC, kind LIMIT 12"),
+            'popular' => Db::all("SELECT t.id, t.title, t.authors, $cover AS cover_ver, COUNT(*) n FROM library_loans l JOIN library_copies c ON c.id = l.copy_id JOIN library_titles t ON t.id = c.title_id
+                WHERE l.loaned_at >= DATE_SUB(CURDATE(), INTERVAL 1 YEAR) GROUP BY t.id, t.title, t.authors ORDER BY n DESC, t.title LIMIT 5"),
+            'due' => Db::all("SELECT l.*, t.id AS title_id, t.title, $cover AS cover_ver FROM library_loans l JOIN library_copies c ON c.id = l.copy_id JOIN library_titles t ON t.id = c.title_id
+                WHERE l.status = 'OPEN' AND l.due_on BETWEEN CURDATE() AND DATE_ADD(CURDATE(), INTERVAL 3 DAY) ORDER BY l.due_on, l.borrower_name LIMIT 8"),
+        ];
+    }
+
+    /** Members: students and teachers matching $q, or (without a search) everyone with loans, holds or unpaid fines. */
+    public static function members(string $q = ''): array
+    {
+        $list = trim($q) !== '' ? self::findBorrowers($q, 60) : array_map(fn($r) => self::borrower($r['borrower_type'], $r['borrower_ref']) ?? ['type' => $r['borrower_type'], 'ref' => $r['borrower_ref'], 'no' => $r['borrower_no'], 'name' => $r['borrower_name'], 'detail' => ''],
+            Db::all("SELECT DISTINCT borrower_type, borrower_ref, borrower_no, borrower_name FROM (
+                SELECT borrower_type, borrower_ref, borrower_no, borrower_name FROM library_loans WHERE status = 'OPEN'
+                UNION SELECT borrower_type, borrower_ref, borrower_no, borrower_name FROM library_holds WHERE status IN ('WAITING','READY')
+                UNION SELECT borrower_type, borrower_ref, borrower_no, borrower_name FROM library_fines WHERE status = 'UNPAID') x ORDER BY borrower_name LIMIT 300"));
+        foreach ($list as &$m) {
+            $m['loans'] = (int) Db::val("SELECT COUNT(*) FROM library_loans WHERE borrower_type = ? AND borrower_ref = ? AND status = 'OPEN'", [$m['type'], $m['ref']]);
+            $m['overdue'] = (int) Db::val("SELECT COUNT(*) FROM library_loans WHERE borrower_type = ? AND borrower_ref = ? AND status = 'OPEN' AND due_on < CURDATE()", [$m['type'], $m['ref']]);
+            $m['holds'] = (int) Db::val("SELECT COUNT(*) FROM library_holds WHERE borrower_type = ? AND borrower_ref = ? AND status IN ('WAITING','READY')", [$m['type'], $m['ref']]);
+            $m['fines'] = (int) Db::val("SELECT COALESCE(SUM(amount_cents),0) FROM library_fines WHERE borrower_type = ? AND borrower_ref = ? AND status = 'UNPAID'", [$m['type'], $m['ref']]);
+            $m['total'] = (int) Db::val('SELECT COUNT(*) FROM library_loans WHERE borrower_type = ? AND borrower_ref = ?', [$m['type'], $m['ref']]);
+        }
+        unset($m);
+        return $list;
+    }
+
     // ------------------------------------------------------------------ reports
 
     public static function report(string $from, string $to): array
@@ -808,4 +921,19 @@ final class Library
         }
         return '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ' . $x . ' ' . $height . '" preserveAspectRatio="none" role="img" aria-label="Barcode ' . h($text) . '" class="lib-barcode"><g fill="#000">' . $bars . '</g></svg>';
     }
+}
+
+/** v60.1 Library page header: icon tile, big title, subtitle and optional actions (the design's page heading). */
+function lib_page_head(string $icon, string $title, string $subtitle = '', string $actions = ''): void
+{
+    echo '<header class="lib-head"><span class="lib-head-icon" aria-hidden="true"><i class="bi bi-' . h($icon) . '"></i></span><div class="lib-head-text"><h1>' . h($title) . '</h1>'
+        . ($subtitle !== '' ? '<p>' . h($subtitle) . '</p>' : '') . '</div>' . ($actions !== '' ? '<div class="lib-head-actions">' . $actions . '</div>' : '') . '</header>';
+}
+
+/** Sub-pages of a section (route => label), shown as pills under the header. */
+function lib_tabs(array $tabs, string $current): void
+{
+    echo '<nav class="lib-tabs" aria-label="Section">';
+    foreach ($tabs as $r => $label) echo '<a href="' . h(url($r)) . '"' . ($r === $current ? ' class="active" aria-current="page"' : '') . '>' . h($label) . '</a>';
+    echo '</nav>';
 }

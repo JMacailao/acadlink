@@ -7,6 +7,7 @@ if ($from > $to) [$from, $to] = [$to, $from];
 $r = Library::report($from, $to);
 $peso = fn(int $c) => '₱' . Money::fmt($c);
 layout_start('Library Reports');
+lib_page_head('bar-chart', 'Reports', 'Circulation, fines and the collection for a period.');
 ?>
 <form method="get" class="form-section row g-2 align-items-end d-print-none"><input type="hidden" name="r" value="reports">
   <div class="col-6 col-md-3"><label class="form-label small" for="rF">From</label><input class="form-control form-control-sm" type="date" id="rF" name="from" value="<?= h($from) ?>"></div>
@@ -28,5 +29,5 @@ layout_start('Library Reports');
     <div class="form-section"><h2 class="h6">Collection (<?= number_format($r['titles']) ?> titles)</h2><table class="table table-sm mb-0"><tbody><?php foreach ($r['collection'] as $c): ?><tr><td><?= h(Library::COPY_STATUS[$c['status']]) ?></td><td class="text-end"><?= (int) $c['n'] ?> copies</td></tr><?php endforeach; ?></tbody></table></div>
   </div>
 </div>
-<script src="assets/library.js?v=60" defer></script>
+<script src="assets/library.js?v=61" defer></script>
 <?php layout_end();

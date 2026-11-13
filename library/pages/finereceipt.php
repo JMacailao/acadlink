@@ -20,5 +20,5 @@ layout_start('O.R. ' . $p['receipt_no']);
     <tr><th>Cashier</th><td><?= h((string) $p['cashier']) ?></td></tr>
   </tbody></table>
 </section>
-<script src="../library/assets/library.js?v=60" defer></script>
+<script src="../library/assets/library.js?v=61" defer></script>
 <?php layout_end();

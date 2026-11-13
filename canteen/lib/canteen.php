@@ -12,7 +12,7 @@ final class Canteen
     public const MOVE_KINDS = ['SALE' => 'Sale', 'VOID' => 'Void', 'REFUND' => 'Refund', 'RECEIVE' => 'Received', 'PREPARE' => 'Prepared', 'ADJUST' => 'Adjustment', 'STOCKTAKE' => 'Stocktake'];
     public const DENOMINATIONS = [100000, 50000, 20000, 10000, 5000, 2000, 1000, 500, 100, 25];
     public const MAX_IMAGE_BYTES = 5000000;   // largest upload accepted (5 MB); photos are shrunk before saving
-    public const IMAGE_MAX_SIDE = ['PRODUCT' => 800, 'QR' => 1000];
+    public const IMAGE_MAX_SIDE = ['PRODUCT' => 800, 'QR' => 1000, 'COVER' => 600]; // COVER: Library book covers (v60.1)
 
     // ------------------------------------------------------------------ install
 

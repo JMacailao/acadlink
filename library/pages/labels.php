@@ -8,6 +8,8 @@ if ($codes) $copies = Db::all('SELECT c.barcode, c.location, t.title, t.call_no 
 elseif ($title) $copies = Db::all('SELECT c.barcode, c.location, t.title, t.call_no FROM library_copies c JOIN library_titles t ON t.id = c.title_id WHERE t.id = ? ORDER BY c.barcode', [$title]);
 else $copies = Db::all('SELECT c.barcode, c.location, t.title, t.call_no FROM library_copies c JOIN library_titles t ON t.id = c.title_id WHERE c.created_at >= ? ORDER BY c.barcode LIMIT 300', [($since ?? date('Y-m-d')) . ' 00:00:00']);
 layout_start('Barcode Labels');
+lib_page_head('upc', 'Barcode labels', 'Print Code 39 labels for copies.');
+lib_tabs(array_filter(['catalog' => 'Titles', 'acquisitions' => 'Acquisitions', 'stocktake' => 'Stocktake', 'labels' => 'Barcode labels'], fn($r) => Auth::can(...ROUTES[$r][1]), ARRAY_FILTER_USE_KEY), 'labels');
 ?>
 <form method="get" class="form-section d-print-none row g-2 align-items-end"><input type="hidden" name="r" value="labels">
   <div class="col-md-3"><label class="form-label small" for="lS">Copies added since</label><input class="form-control form-control-sm" type="date" id="lS" name="since" value="<?= h($since ?? date('Y-m-d')) ?>"></div>
@@ -18,5 +20,5 @@ layout_start('Barcode Labels');
 <?php foreach ($copies as $c): ?><div class="lib-label"><div class="lib-label-title"><?= h(mb_strimwidth($c['title'], 0, 42, '…')) ?></div><?= Library::barcodeSvg($c['barcode']) ?><div class="lib-label-code"><?= h($c['barcode']) ?><?= $c['call_no'] ? ' · ' . h($c['call_no']) : '' ?></div></div><?php endforeach; ?>
 </div>
 <?php if (!$copies): ?><p class="text-muted">No copies to label. Pick a date or type barcodes.</p><?php endif; ?>
-<script src="assets/library.js?v=60" defer></script>
+<script src="assets/library.js?v=61" defer></script>
 <?php layout_end();

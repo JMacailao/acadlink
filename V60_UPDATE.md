@@ -52,3 +52,18 @@ students and teachers already on record.
 ## Tests
 `php sis/tests/v60-library.php` (20 checks). Other suites unchanged and passing (`central-accounts.php` expects nine
 default groups; `v58-finance.php` updated for Library being open).
+
+## v60.1 — Library design
+- New look for the whole Library: deep plum sidebar with the **AcadLink Library** brand, lavender highlights,
+  rounded cards and big page headings with an icon tile.
+- Menu: **Overview · Catalog · Circulation · Members · Reservations · Fines · Reports · Settings**. Acquisitions,
+  Stocktake and Barcode labels are tabs inside Catalog; All loans & overdue is inside Circulation.
+- **Overview** (new home): Books in catalog, Borrowed today, Overdue, Active members; Today's circulation;
+  Popular titles; Due soon.
+- **Circulation desk**: Find member and Current member cards, **Check-out / Check-in / Renew** tabs, and Active loans
+  with covers and status (Overdue (n days), Due today, On loan) and a Renew button. Check-out accepts a copy barcode
+  **or an ISBN** (a free copy of that title is picked, or the one on the hold shelf for that member).
+  Renew works by scanning the book.
+- **Members**: everyone with loans, reservations or unpaid fines, and search for any student or teacher.
+- **Book covers**: upload a cover when adding or editing a title (stored as bytes in `library_covers`, shrunk to
+  600 px). Titles without a cover show a coloured tile with their initials.
