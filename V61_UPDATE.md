@@ -105,3 +105,13 @@ and passing.
 - Computers (992 px and wider) are unchanged. The menu is not printed.
 - Source: new `sis/app/views/bottom-nav.php` and `sis/assets/bottom-nav.css`; changed `sis/app/views/layout.php`,
   `portal/views/layout.php` and `lms/assets/lms.css`.
+
+## v62.2 — Bottom menu: the curve follows the selected item
+- On phones and tablets, the orange curved dip and the raised white circle now sit under the **selected** item
+  (for example Products when you are on Products) instead of always in the middle.
+- Tapping another item slides the curve to it, the icon rises into the circle, then the page opens. **More** moves
+  it too while the menu is open, and it goes back when the menu is closed.
+- On a page that is not in the bottom menu, the curve stays on the middle item.
+- Works the same in the Student Portal, the LMS and the Canteen POS. Students now see the LMS bar in the LMS blue (it showed the Portal orange before).
+- People who turned on "reduce motion" on their phone get no animation.
+- Source: `sis/app/views/bottom-nav.php`, `sis/assets/bottom-nav.css`, `sis/assets/app.js`.
