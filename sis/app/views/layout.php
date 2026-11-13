@@ -193,7 +193,7 @@ function layout_start(string $title, bool $bare = false): void
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@400;500;600;700&amp;family=Source+Serif+4:opsz,wght@8..60,600;8..60,700&amp;display=swap">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" crossorigin="anonymous">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" crossorigin="anonymous">
-<link rel="stylesheet" href="../css/style.css"><!-- the grading system's own theme: both systems look the same -->
+<link rel="stylesheet" href="../css/style.css?v=63.1b"><!-- the grading system's own theme: both systems look the same -->
 <link rel="stylesheet" href="<?= sis_web() ?>assets/app.css?v=56b">
 <link rel="stylesheet" href="<?= sis_web() ?>assets/activity.css?v=31">
 <link rel="stylesheet" href="<?= sis_web() ?>assets/navigation.css?v=31">

@@ -58,3 +58,14 @@ How the restore protects you:
 - Changed: `shared/central-accounts.php` (power.admin username and access locked), `sis/app/pages/users.php`,
   `api/grading-restore.php`, `sis/index.php`, `sis/app/views/layout.php`, `sis/app/bootstrap.php`,
   `sis/assets/people.css`, `api/config.sample.php`, `.gitignore`.
+
+## v63.1 — Sign-in page on phones
+- On phones (narrower than 768 px), the sign-in page has its own design:
+  - a dark green top with the school logo and name, a help (?) button, "Your school. Connected." and "One account.
+    Every workspace."
+  - then a white sheet with **Welcome back**, labelled Username and Password boxes (show/hide password), Remember
+    me, Forgot password?, and a full-width **Sign in** button.
+  - "Need access? Contact your school" and the ? button open short sign-in help.
+- The Student Portal sign-in and Forgot password use the same look.
+- Tablets and computers keep the current design.
+- Source: `sis/app/pages/login.php`, `css/style.css`.
