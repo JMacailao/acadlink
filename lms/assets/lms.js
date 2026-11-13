@@ -1,6 +1,7 @@
 /* LMS (v61): create menu, quiz builder, quiz timer, attendance helpers, small form conveniences. */
 (function () {
   'use strict';
+  document.querySelectorAll('[data-page-print]').forEach(b => b.addEventListener('click', () => window.print()));
   document.querySelectorAll('[data-autosubmit]').forEach(el => el.addEventListener('change', () => el.form && el.form.submit()));
   document.querySelectorAll('[data-reload-param]').forEach(el => el.addEventListener('change', () => {
     const u = new URL(location.href); u.searchParams.set(el.dataset.reloadParam, el.value); location.assign(u);

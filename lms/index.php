@@ -8,12 +8,20 @@
 declare(strict_types=1);
 
 const APP_SYSTEM = 'LMS';
-const LOCAL_ROUTES = ['dashboard', 'todo', 'schedule', 'class', 'work', 'file', 'notifications', 'search', 'profile', 'password', 'navstate'];
+const LOCAL_ROUTES = ['dashboard', 'classes', 'attendance', 'assignments', 'gradebook', 'materials', 'messages', 'reports', 'settings', 'todo', 'schedule', 'class', 'work', 'file', 'notifications', 'search', 'profile', 'password', 'navstate'];
 require __DIR__ . '/../sis/app/bootstrap.php';
 sis_boot();
 
 const ROUTES = [
     'dashboard'    => [__DIR__ . '/pages/home.php', ['lms.view']],
+    'classes'      => [__DIR__ . '/pages/classes.php', ['lms.view']],
+    'attendance'   => [__DIR__ . '/pages/attendance.php', ['lms.view']],
+    'assignments'  => [__DIR__ . '/pages/assignments.php', ['lms.view']],
+    'gradebook'    => [__DIR__ . '/pages/gradebook.php', ['lms.view']],
+    'materials'    => [__DIR__ . '/pages/materials.php', ['lms.view']],
+    'messages'     => [__DIR__ . '/pages/messages.php', ['lms.view']],
+    'reports'      => [__DIR__ . '/pages/reports.php', ['lms.view']],
+    'settings'     => [__DIR__ . '/pages/settings.php', ['lms.view']],
     'todo'         => [__DIR__ . '/pages/todo.php', ['lms.view']],
     'schedule'     => [__DIR__ . '/pages/schedule.php', ['lms.view']],
     'class'        => [__DIR__ . '/pages/class.php', ['lms.view']],

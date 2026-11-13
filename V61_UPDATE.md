@@ -60,3 +60,34 @@ are enrolled in.
 a four-type quiz; a student hands in and takes the quiz; the teacher returns both, takes attendance and sends the
 average to the Grading System, where the draft appears and was submitted normally. All other suites unchanged
 and passing.
+
+## v61.1 — LMS design
+- New look from the mockup: deep green sidebar with the **AcadLink LMS** brand, blue highlights, a white top bar
+  and white cards.
+- Menu: **Dashboard · My Classes · Schedule · Attendance · Assignments · Gradebook · Materials · Messages · Reports ·
+  Settings**. Reports and Settings show for teachers (and coordinators) only.
+- **Dashboard** (new home), with a greeting, "Teacher Workspace" and today's date:
+  - Four counters: **Today's Classes** (of the periods in the week), **Attendance (Today)** (present of those
+    marked), **Assignments Awaiting Review** (hand-ins to check), **Course Materials** (files shared).
+  - **My Weekly Timetable**: periods P1, P2… by time, Mon–Fri (plus Saturday if used), today's column highlighted,
+    previous/next week buttons. It comes from the SIS class schedule.
+  - **Today's Classes** with a **Take Attendance** button for each meeting. It opens the class's attendance for
+    today and that meeting, and changes to "Attendance taken" once saved.
+  - **Attendance Summary** (Present / Absent / Late), **Assignments Awaiting Review** and **Course Materials**.
+  - Students see the same page for themselves: their classes today, their attendance, work due and materials.
+- **Attendance**: the classes of any day with Take/Edit attendance, that day's totals, and each class's rate.
+  Students see their own record per class.
+- **Assignments**: every assignment, quiz and exam of all classes. Filters: class, "Awaiting review"; for students
+  "To do" and "Turned in".
+- **Gradebook**: each class's average, graded and passing students, opening the class gradebook. Students see their
+  class-work grade per class.
+- **Materials**: every file shared in the classes (stream, materials, classwork), searchable, by class.
+- **Messages** (new): private conversations between a teacher and one student of a class. Unread counts show on
+  the menu; "Seen" when read; only the two of them can read it. Each message is in the Activity Log. The table
+  `lms_messages` is created automatically.
+- **Reports**: per class: students, classwork, hand-in rate, late and missing work, average, passing (by the school's
+  grade scale), meetings and attendance rate. Printable.
+- **Settings**: the grading categories of each class, and copying one class's categories to others.
+- Source: new `lms/pages/{home,attendance,assignments,gradebook,materials,messages,reports,settings}.php` (the old
+  home is now `classes.php`); changed `lms/lib/lms.php`, `lms/pages/{_ui,class,work}.php`, `lms/index.php`,
+  `lms/assets/{lms.css,lms.js}`, `sis/app/views/layout.php`. Tests: `v61-lms.php` now has 13 checks.

@@ -172,5 +172,4 @@ lms_class_header($c, 'classwork');
   <?php endforeach; ?></section>
 <?php endif; ?>
 <?php endif; ?>
-<script src="assets/lms.js?v=61" defer></script>
 <?php layout_end();

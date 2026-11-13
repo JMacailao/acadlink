@@ -201,5 +201,4 @@ if ($tab === 'stream'):
   <button class="btn btn-primary">Save settings</button>
 </form>
 <?php endif; ?>
-<script src="assets/lms.js?v=61" defer></script>
 <?php layout_end();

@@ -43,3 +43,90 @@ function lms_files_html(array $files, bool $removable = false, string $classId =
 function lms_state_pill(array $state): string { return '<span class="lms-pill is-' . h($state[1]) . '">' . h($state[0]) . '</span>'; }
 
 function lms_text(?string $t): string { return $t === null || $t === '' ? '' : '<div class="lms-text">' . nl2br(h($t)) . '</div>'; }
+
+// ------------------------------------------------------------------ v61.1 design pieces
+
+/** Reports and Settings are teacher pages; everything else is for everyone in the LMS. */
+function lms_nav_allows(string $route): bool
+{
+    if (!in_array($route, ['reports', 'settings'], true)) return true;
+    $me = Lms::me();
+    return (bool) ($me['teacher'] || $me['admin']);
+}
+
+/** Unread messages for the menu badge (counted once per page). */
+function lms_unread(): int
+{
+    static $n = null;
+    if ($n === null) { try { $n = Auth::can('lms.view') ? Lms::unreadMessages(Lms::myClasses()) : 0; } catch (Throwable) { $n = 0; } }
+    return $n;
+}
+
+/** Whether the signed-in person teaches (or coordinates) any of these classes. */
+function lms_teaches(array $classes): bool { return (bool) array_filter($classes, fn($c) => $c['role'] !== 'STUDENT'); }
+
+/** Page heading: small kicker, big title, a line under it, and optional actions on the right. */
+function lms_head(string $title, string $sub = '', string $kicker = '', string $actions = ''): void
+{
+    echo '<header class="lms-head"><div>' . ($kicker !== '' ? '<span class="lms-kicker">' . h($kicker) . '</span>' : '') . '<h1 class="lms-h1">' . h($title) . '</h1>'
+        . ($sub !== '' ? '<p class="lms-muted mb-0">' . h($sub) . '</p>' : '') . '</div>' . ($actions !== '' ? '<div class="lms-head-actions">' . $actions . '</div>' : '') . '</header>';
+}
+
+/** A number card: icon, label, big value, small line under it; a link when $href is given. */
+function lms_stat(string $icon, string $label, string $value, string $sub, string $href = '', string $labelSmall = ''): string
+{
+    $in = '<span class="lms-stat-icon"><i class="bi bi-' . h($icon) . '" aria-hidden="true"></i></span><span class="lms-stat-text"><span class="lms-stat-label">' . h($label)
+        . ($labelSmall !== '' ? ' <small>(' . h($labelSmall) . ')</small>' : '') . '</span><b>' . h($value) . '</b><small>' . h($sub) . '</small></span>';
+    return $href !== '' ? '<a class="lms-stat" href="' . h($href) . '">' . $in . '</a>' : '<div class="lms-stat">' . $in . '</div>';
+}
+
+/** A panel heading with an icon and an optional "View all ›" link. */
+function lms_panel_head(string $icon, string $title, string $link = '', string $linkText = 'View all', string $small = ''): string
+{
+    return '<div class="lms-ph"><h2><i class="bi bi-' . h($icon) . '" aria-hidden="true"></i>' . h($title) . ($small !== '' ? ' <small>(' . h($small) . ')</small>' : '') . '</h2>'
+        . ($link !== '' ? '<a href="' . h($link) . '">' . h($linkText) . '<i class="bi bi-chevron-right" aria-hidden="true"></i></a>' : '') . '</div>';
+}
+
+/** File type badge (PDF, DOCX, PPTX, …) coloured like the file kind. */
+function lms_file_badge(string $name, string $mime): string
+{
+    $ext = strtoupper(pathinfo($name, PATHINFO_EXTENSION) ?: 'FILE');
+    $kind = str_contains($mime, 'pdf') ? 'pdf' : (str_contains($mime, 'word') ? 'doc' : (str_contains($mime, 'presentation') || str_contains($mime, 'powerpoint') ? 'ppt'
+        : (str_contains($mime, 'sheet') || str_contains($mime, 'excel') || str_contains($mime, 'csv') ? 'xls' : (str_starts_with($mime, 'image/') ? 'img' : 'any'))));
+    return '<span class="lms-fbadge is-' . $kind . '" aria-hidden="true">' . h(mb_substr($ext, 0, 4)) . '</span>';
+}
+
+function lms_size(int $bytes): string
+{
+    return $bytes >= 1048576 ? number_format($bytes / 1048576, 1) . ' MB' : max(1, (int) round($bytes / 1024)) . ' KB';
+}
+
+/** "English 10 (10-A)": the class as the timetable writes it. */
+function lms_class_label(array $c): string { return ($c['subjectName'] !== '' ? $c['subjectName'] : $c['subjectCode']) . ' (' . $c['sectionName'] . ')'; }
+
+/** The school-year picker used on cross-class pages; returns the chosen year. */
+function lms_year(): string
+{
+    $years = GS::schoolYears();
+    return in_array($_GET['sy'] ?? '', $years, true) ? (string) $_GET['sy'] : (string) ($years[0] ?? '');
+}
+
+function lms_year_picker(string $route, string $sy, array $keep = []): string
+{
+    $years = GS::schoolYears();
+    if (count($years) < 2) return '';
+    $h = '<form method="get" class="lms-year"><input type="hidden" name="r" value="' . h($route) . '">';
+    foreach ($keep as $k => $v) $h .= '<input type="hidden" name="' . h($k) . '" value="' . h((string) $v) . '">';
+    $h .= '<select class="form-select form-select-sm" name="sy" aria-label="School year" data-autosubmit>';
+    foreach ($years as $y) $h .= '<option' . ($y === $sy ? ' selected' : '') . '>' . h($y) . '</option>';
+    return $h . '</select></form>';
+}
+
+/** Class filter chips for cross-class pages ("All classes", then each class). */
+function lms_class_chips(string $route, array $classes, string $current, array $keep = []): string
+{
+    if (count($classes) < 2) return '';
+    $h = '<nav class="lms-subtabs" aria-label="Class"><a href="' . h(url($route, $keep)) . '"' . ($current === '' ? ' class="active" aria-current="true"' : '') . '>All classes</a>';
+    foreach ($classes as $c) $h .= '<a href="' . h(url($route, $keep + ['class' => $c['id']])) . '"' . ($current === $c['id'] ? ' class="active" aria-current="true"' : '') . '>' . h($c['subjectCode'] . ' · ' . $c['sectionName']) . '</a>';
+    return $h . '</nav>';
+}
