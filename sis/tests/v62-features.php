@@ -167,6 +167,14 @@ test('a student\'s new photo waits for the registrar; decline needs a reason; ap
     as_user($registrar); StudentPhoto::decide($p2, true); denied(fn() => StudentPhoto::decide($p2, true), 'no longer waiting');
     ok(StudentPhoto::currentId('V001') === $p2 && StudentPhoto::lastDeclined('V001') === null, 'approved photo is current');
     $p3 = StudentPhoto::staffSet('V001', png()); ok(StudentPhoto::currentId('V001') === $p3, 'staff replaces');
+    // several at once: Select all → Approve selected / Decline selected
+    as_user($ben); $b1 = StudentPhoto::submitOwn(png());
+    global $carl; as_user($carl); $c1 = StudentPhoto::submitOwn(png());
+    as_user($registrar);
+    denied(fn() => StudentPhoto::decideMany([], true), 'Tick');
+    denied(fn() => StudentPhoto::decideMany([$b1, $c1], false, ' '), 'why');
+    ok(StudentPhoto::decideMany([$b1, $c1, $b1], true) === 2 && StudentPhoto::currentId('V002') === $b1 && StudentPhoto::currentId('V003') === $c1 && StudentPhoto::pending() === [], 'bulk approve');
+    ok(StudentPhoto::decideMany([$b1], true) === 0, 'already decided are skipped');
 });
 test('download my data: the student\'s own records in one file, logged; staff cannot use it', function () use ($ana, $registrar) {
     as_user($ana); $d = Privacy::myData();

@@ -104,6 +104,20 @@ final class StudentPhoto
             $approve ? 'Your photo is now on your student record.' : 'Reason: ' . $reason . '. You can send another photo from My profile.', '../portal/index.php?r=profile');
     }
 
+    /** Approve or decline several photos at once (each is decided and the student told, as one by one). Returns how many were decided. */
+    public static function decideMany(array $photoIds, bool $approve, string $reason = ''): int
+    {
+        Auth::require('students.edit');
+        $ids = array_values(array_unique(array_filter(array_map('intval', $photoIds))));
+        if (!$ids) throw new AppError('Tick the photos first, or use Select all.');
+        if (!$approve && trim($reason) === '') throw new AppError('Say why the photos are declined, so the students can send better ones.');
+        $n = 0;
+        foreach ($ids as $id) {
+            try { self::decide($id, $approve, $reason); $n++; } catch (AppError) { /* already decided by someone else */ }
+        }
+        return $n;
+    }
+
     /** Photos waiting for approval (without their bytes). */
     public static function pending(): array
     {

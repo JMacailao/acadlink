@@ -64,7 +64,8 @@ unread counts and **Mark all as read**. Clicking one opens what it is about.
 - **Student record** (SIS): shows the photo; the Registrar can replace it directly.
 - **Student Portal → My profile → My photo**: a student sends a new photo. It waits for the Registrar in
   **SIS → Records → Photo Approvals**, which compares the current and new photo. Approve it, or decline it with a
-  reason the student sees.
+  reason the student sees. To handle many at once, tick photos (or **Select all**), then **Approve selected**, or
+  **Decline selected** with one reason for all of them. Each student is told, as when deciding one by one.
 - Photos are stored in the database as bytes, shrunk to at most 600 px. Only staff who can see students or
   admissions, the student, and their linked parents can open a photo.
 
@@ -79,7 +80,7 @@ unread counts and **Mark all as read**. Clicking one opens what it is about.
   - `sis/app/pages/{alerts,photo,photos,privacy}.php`
   - `portal/pages/children.php`
   - `sis/assets/people.css`
-  - `sis/tests/v62-features.php` (12 checks)
+  - `sis/tests/v62-features.php` (12 checks, including approving and declining several photos at once)
 - Changed:
   - `lms/lib/lms.php`, `lms/pages/settings.php`, `lms/index.php`, `lms/assets/lms.css`
   - `canteen/index.php`, `canteen/lib/canteen.php`, `library/index.php`

@@ -302,6 +302,6 @@ Array.prototype.forEach.call(document.querySelectorAll('input[placeholder]:not([
 document.addEventListener('change', e => {
   const all = e.target.closest && e.target.closest('[data-check-all]');
   if (!all) return;
-  const form = all.closest('form') || document;
-  form.querySelectorAll('input[type=checkbox][name="' + all.dataset.checkAll + '"]').forEach(c => { c.checked = all.checked; });
+  const scope = (all.dataset.checkScope && document.querySelector(all.dataset.checkScope)) || all.closest('form') || document;
+  scope.querySelectorAll('input[type=checkbox][name="' + all.dataset.checkAll + '"]').forEach(c => { c.checked = all.checked; });
 });

@@ -12,3 +12,4 @@
 .parent-stats { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 10px; margin: 12px 0; }
 .parent-stats div { border: 1px solid #e5e7eb; border-radius: 12px; padding: 10px 12px; background: #fff; } .parent-stats b { display: block; font-size: 1.4rem; } .parent-stats small { color: #6b7280; }
 @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .privacy-notice, :root:not([data-theme="light"]) .parent-stats div { background: #1d2422; border-color: #33403b; } }
+.st-photo-bulk { position: sticky; top: 8px; z-index: 5; } .st-photo-pick { font-size: .85rem; margin-bottom: 4px; }

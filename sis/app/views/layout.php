@@ -203,7 +203,7 @@ function layout_start(string $title, bool $bare = false): void
 <link rel="stylesheet" href="<?= sis_web() ?>assets/sis-actions.css?v=20261021plans">
 <link rel="stylesheet" href="<?= sis_web() ?>assets/compact-workspace.css?v=20261025toolbar11">
 <link rel="stylesheet" href="<?= sis_web() ?>assets/theme.css?v=53">
-<link rel="stylesheet" href="<?= sis_web() ?>assets/people.css?v=62">
+<link rel="stylesheet" href="<?= sis_web() ?>assets/people.css?v=62b">
 <link rel="stylesheet" href="<?= sis_web() ?>assets/unified-toolbar.css?v=60">
 <link rel="stylesheet" href="../css/standard-toolbar.css?v=57">
 <link rel="stylesheet" href="<?= sis_web() ?>assets/registration-fees.css?v=4">
@@ -327,7 +327,7 @@ function layout_end(bool $bare = false): void
 <script src="<?= sis_web() ?>assets/record-list.js?v=48" defer></script>
 <script src="<?= sis_web() ?>assets/fixed-shell.js?v=31" defer></script>
 <script src="<?= sis_web() ?>assets/accounting-ui.js?v=31" defer></script>
-<script src="<?= sis_web() ?>assets/app.js?v=62"></script>
+<script src="<?= sis_web() ?>assets/app.js?v=62b"></script>
 <script src="<?= sis_web() ?>assets/friendly-ui.js?v=48"></script>
 <script src="<?= sis_web() ?>assets/sis-actions.js?v=41"></script>
 <script src="<?= sis_web() ?>assets/theme.js?v=52"></script>
