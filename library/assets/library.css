@@ -1,0 +1,38 @@
+/* v60 Library: violet accents on the shared AcadLink shell, scan boxes, overdue notices and barcode labels. */
+html[data-app="library"] { --lib: #6d3fd6; --lib-dark: #522aa8; --lib-soft: #f2ecff; }
+html[data-app="library"] #sidebar .side-link.active { background: var(--lib) !important; color: #fff !important; }
+html[data-app="library"] #sidebar .side-link.active i { color: #fff !important; }
+html[data-system="sis"][data-app="library"] .btn-primary { background: var(--lib); border-color: var(--lib); color: #fff; }
+html[data-system="sis"][data-app="library"] .btn-primary:hover, html[data-system="sis"][data-app="library"] .btn-primary:focus-visible { background: var(--lib-dark); border-color: var(--lib-dark); }
+html[data-app="library"] .btn-outline-primary { --bs-btn-color: var(--lib-dark); --bs-btn-border-color: var(--lib); --bs-btn-hover-bg: var(--lib); --bs-btn-hover-border-color: var(--lib); --bs-btn-hover-color: #fff; }
+html[data-app="library"] .form-control:focus, html[data-app="library"] .form-select:focus { border-color: var(--lib); box-shadow: 0 0 0 .2rem #6d3fd633; }
+html[data-app="library"] .nav-pills .nav-link.active { background: var(--lib); }
+.lib-appbar-title { display: flex; align-items: center; gap: 10px; font-weight: 700; font-size: 1.15rem; margin-right: auto; }
+.lib-appbar-title i { color: var(--lib); font-size: 1.3rem; }
+.lib-scan { border-left: 4px solid var(--lib); }
+.lib-borrower { border-top: 4px solid var(--lib); }
+.lib-return { background: var(--lib-soft); }
+@media (prefers-color-scheme: dark) { html[data-app="library"]:not([data-theme="light"]) { --lib-soft: #2a1f45; } }
+html[data-app="library"][data-theme="dark"] { --lib-soft: #2a1f45; }
+/* Overdue notices: one per page when printed */
+.lib-notice { background: #fff; color: #111; border: 1px solid #ccd; border-radius: 8px; padding: 18px 22px; margin-bottom: 16px; max-width: 720px; }
+.lib-notice header { display: flex; justify-content: space-between; border-bottom: 1px solid #ccc; padding-bottom: 6px; margin-bottom: 10px; }
+.lib-notice h2 { font-size: 1.2rem; margin: 0 0 8px; }
+.lib-notice table { width: 100%; border-collapse: collapse; margin: 8px 0; font-size: .9rem; }
+.lib-notice th, .lib-notice td { border: 1px solid #ccc; padding: 4px 6px; text-align: left; }
+.lib-notice footer { margin-top: 24px; }
+/* Barcode labels: 3 per row on A4/Letter label sheets */
+.lib-labels { display: grid; grid-template-columns: repeat(auto-fill, minmax(62mm, 1fr)); gap: 4mm; }
+.lib-label { background: #fff; color: #000; border: 1px dashed #bbb; border-radius: 4px; padding: 3mm; text-align: center; break-inside: avoid; }
+.lib-label-title { font-size: 9pt; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.lib-label .lib-barcode { width: 100%; height: 14mm; display: block; margin: 1mm 0; }
+.lib-label-code { font: 9pt ui-monospace, Consolas, monospace; letter-spacing: .5px; }
+@media print {
+  .lib-notice { border: 0; page-break-after: always; margin: 0; max-width: none; }
+  .lib-labels { grid-template-columns: repeat(3, 1fr); gap: 2mm; }
+  .lib-label { border-color: #eee; }
+}
+/* Outline buttons and focus in library violet (the SIS theme colours them green) */
+html[data-system="sis"][data-app="library"] .btn-outline-primary { color: var(--lib-dark); border-color: var(--lib); background: transparent; }
+html[data-system="sis"][data-app="library"] .btn-outline-primary:hover { color: #fff; background: var(--lib); border-color: var(--lib); }
+html[data-system="sis"][data-app="library"] .form-control:focus, html[data-system="sis"][data-app="library"] .form-select:focus { border-color: var(--lib); box-shadow: 0 0 0 .2rem #6d3fd633; outline: 0; }

@@ -22,7 +22,7 @@ $cards = [
     'SIS'     => ['green', 'Admission &amp; Registration (SIS)', 'Handle applications, student records, enrollment, and assessments in one place.', ['Admissions', 'Enrollment', 'Assessment'], 'Open', url('dashboard'), ''],
     'LMS'     => ['orange', 'Learning Management System', 'Online classes, lessons, and activities in one place.', ['Lessons', 'Activities', 'Classes'], 'Open', '../lms/index.php', 'In development'],
     'CANTEEN' => ['coral', 'Canteen POS', 'Streamline canteen sales, manage items, and track daily transactions.', ['Sales', 'Menu Items', 'Transactions'], 'Open Canteen POS', '../canteen/index.php', ''],
-    'LIBRARY' => ['violet', 'Library', 'Manage library resources, track borrowings, and keep the collection organized.', ['Catalog', 'Borrowing', 'Inventory'], 'Open', '../library/index.php', 'Planned'],
+    'LIBRARY' => ['violet', 'Library', 'Manage library resources, track borrowings, and keep the collection organized.', ['Catalog', 'Borrowing', 'Inventory'], 'Open Library', '../library/index.php', ''],
     'FINANCE' => ['teal', 'Finance', 'Manage fees, payments, and financial records with accuracy and transparency.', ['Billing', 'Collections', 'Reports'], 'Open Finance', '../finance/index.php', ''],
     'PORTAL'  => ['purple', 'Student Portal', 'View your grades, check assessments, and revisit your school history.', ['My Grades', 'Assessments', 'History'], 'Open Portal', url('my'), ''],
 ];

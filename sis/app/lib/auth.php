@@ -18,6 +18,7 @@ final class Auth
         'TEACHER' => [],
         'STUDENT'   => ['self'],
         // v59: not a role; lets the CLI administrator (tests, tools) use the Canteen POS
+        'LIBRARY_ADMIN' => ['library.view', 'library.circulate', 'library.waive', 'library.catalog', 'library.catalog.edit', 'library.acquire', 'library.stocktake', 'library.reports', 'library.settings'],
         'CANTEEN_ADMIN' => ['canteen.view', 'canteen.sell', 'canteen.products', 'canteen.products.edit', 'canteen.inventory', 'canteen.inventory.edit', 'canteen.supervise', 'canteen.reports'],
     ];
     public const ROLES = ['ADMIN' => 'Power User / Super Admin', 'TEACHER' => 'Teacher', 'REGISTRAR' => 'Registrar', 'ADMISSION' => 'Admission staff', 'CASHIER' => 'Cashier', 'ACCOUNTING' => 'Accounting staff', 'STUDENT' => 'Student'];
@@ -75,14 +76,14 @@ final class Auth
             if (!$a) return null;
             $g=$c->group((int)$a['id']);
             $u['central_id']=(int)$a['id'];
-            $u['role']=['POWER_USER'=>'ADMIN','ACCOUNTING'=>'ACCOUNTING','CASHIER'=>'CASHIER','CANTEEN_CASHIER'=>'CASHIER','CANTEEN_SUPERVISOR'=>'CASHIER','REGISTRAR'=>'REGISTRAR','TEACHER'=>'TEACHER','STUDENT'=>'STUDENT'][$g]??'TEACHER';
+            $u['role']=['POWER_USER'=>'ADMIN','ACCOUNTING'=>'ACCOUNTING','CASHIER'=>'CASHIER','CANTEEN_CASHIER'=>'CASHIER','CANTEEN_SUPERVISOR'=>'CASHIER','LIBRARIAN'=>'CASHIER','REGISTRAR'=>'REGISTRAR','TEACHER'=>'TEACHER','STUDENT'=>'STUDENT'][$g]??'TEACHER';
             $u['username']=$a['username']; $u['full_name']=$a['display_name'];
             $u['must_change_password']=$a['must_change_password'];
             $u['student_number']=$a['person_verified']?$a['student_number']:null;
             unset($u['password_hash']);
         } elseif (!$u['is_active']) return null;
         $u['role_code']=$u['role']; $u['role_name']=self::ROLES[$u['role']]??$u['role'];
-        if (isset($g) && in_array($g, ['CANTEEN_CASHIER','CANTEEN_SUPERVISOR'], true)) $u['role_name'] = $g === 'CANTEEN_SUPERVISOR' ? 'Canteen Supervisor' : 'Canteen Cashier';
+        if (isset($g) && isset(['CANTEEN_CASHIER'=>1,'CANTEEN_SUPERVISOR'=>1,'LIBRARIAN'=>1][$g])) $u['role_name'] = ['CANTEEN_CASHIER'=>'Canteen Cashier','CANTEEN_SUPERVISOR'=>'Canteen Supervisor','LIBRARIAN'=>'Librarian'][$g];
         return $u;
     }
 
@@ -140,6 +141,10 @@ final class Auth
             'canteen.products'=>['canteen.products.view','canteen.products.manage'], 'canteen.products.edit'=>['canteen.products.manage'],
             'canteen.inventory'=>['canteen.inventory.view','canteen.inventory.manage'], 'canteen.inventory.edit'=>['canteen.inventory.manage'],
             'canteen.supervise'=>['canteen.supervise'], 'canteen.reports'=>['canteen.reports.view','canteen.supervise'],
+            // v60: Library
+            'library.view'=>['library.loans.view','library.loans.manage'], 'library.circulate'=>['library.loans.manage'], 'library.waive'=>['library.fines.waive'],
+            'library.catalog'=>['library.catalog.view','library.catalog.manage'], 'library.catalog.edit'=>['library.catalog.manage'], 'library.acquire'=>['library.acquisitions.manage'],
+            'library.stocktake'=>['library.stocktake.manage'], 'library.reports'=>['library.reports.view','library.settings.manage'], 'library.settings'=>['library.settings.manage'],
         ];
         $out=[];
         foreach($map as $p=>$keys) foreach($keys as $key) if(isset($central[$key])) { $out[$p]=true; break; }
