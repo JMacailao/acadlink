@@ -173,5 +173,34 @@ test('students cannot grade, send grades or see draft classwork', function () us
     ok(!in_array('Hidden', array_column(Lms::classwork($c), 'title'), true), 'draft hidden');
     $todo = Lms::todo(Lms::myClasses()); ok(!in_array('Hidden', array_column($todo, 'title'), true), 'not in to do');
 });
+test('v61.1 messages: teacher and student talk privately; others cannot read or write; unread counts clear when read', function () use ($teacher, $ana, $ben, $carl, $other, $cls, $s1, $s2, $s3) {
+    as_user($teacher); $c = Lms::classFor($cls);
+    denied(fn() => Lms::sendMessage($c, $s3, 'hi'), 'not in this class');
+    denied(fn() => Lms::sendMessage($c, $s1, '   '), 'Write a message');
+    Lms::sendMessage($c, $s1, 'Please resubmit.');
+    as_user($ana); $c = Lms::classFor($cls);
+    ok(Lms::unreadMessages(Lms::myClasses()) === 1, 'ana unread');
+    denied(fn() => Lms::thread($c, $s2), 'own messages'); denied(fn() => Lms::sendMessage($c, $s2, 'x'), 'own messages');
+    ok(count(Lms::thread($c, $s1)) === 1 && Lms::unreadMessages(Lms::myClasses()) === 0, 'read clears');
+    Lms::sendMessage($c, $s1, 'Will do!');
+    as_user($ben); ok(Lms::threads(Lms::myClasses()) === [], 'ben sees nothing');
+    as_user($other); denied(fn() => Lms::classFor($cls));
+    as_user($teacher); $t = Lms::threads(Lms::myClasses());
+    ok(count($t) === 1 && $t[0]['unread'] === 1 && $t[0]['with'] === 'Reyes, Ana' && $t[0]['body'] === 'Will do!' && !$t[0]['mine'], json_encode($t));
+    ok((int) Db::val("SELECT COUNT(*) FROM sis_audit_logs WHERE action = 'lms_message_sent'") >= 2, 'audited');
+});
+test('v61.1 dashboard: timetable periods, meetings today, attendance today, materials and class report', function () use ($teacher, $ana, $cls, $sec, $sub, $t1) {
+    Db::q("INSERT INTO sis_class_schedules (school_year, term, section_doc_id, subject_doc_id, teacher_doc_id, days, start_time, end_time, kind) VALUES
+        ('2026-2027','1st Semester',?,?,?,'M,W,F','08:00:00','09:00:00','LEC'), ('2026-2027','1st Semester',?,?,?,'T,Th','10:00:00','11:30:00','LEC')", [$sec, $sub, $t1, $sec, $sub, $t1]);
+    as_user($teacher); $classes = Lms::myClasses(); $m = Lms::allMeetings($classes); $tt = Lms::timetable($m);
+    ok(count($tt['slots']) === 2 && $tt['days'] === ['M', 'T', 'W', 'Th', 'F'] && count($tt['cells'][0]['M']) === 1 && empty($tt['cells'][0]['T']), json_encode($tt['days']));
+    $fri = strtotime('2026-11-13'); $on = Lms::meetingsOn($m, $fri);
+    ok(count($on) === 1 && $on[0]['period'] === 1 && $on[0]['label'] === '8:00 AM–9:00 AM', json_encode($on));
+    ok(count(Lms::meetingsOn($m, strtotime('2026-11-12'))) === 1 && Lms::meetingsOn($m, strtotime('2026-11-12'))[0]['period'] === 2, 'thursday P2');
+    $att = Lms::attendanceOn([$cls], date('Y-m-d')); ok($att['total'] >= 0, 'attendance on');
+    ok(Lms::materialCount($classes) >= 1, 'materials counted');
+    $r = Lms::classReport(Lms::classFor($cls)); ok($r['students'] === 2 && $r['works'] >= 1 && $r['average'] !== null, json_encode($r));
+    as_user($ana); $mine = Lms::materials(Lms::myClasses()); ok($mine && !array_filter($mine, fn($f) => $f['source'] === 'Hidden'), 'student materials');
+});
 $c->logout(); $server->exec("DROP DATABASE IF EXISTS `$name`");
 echo "$pass passed, $fail failed\n"; exit($fail ? 1 : 0);

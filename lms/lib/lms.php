@@ -75,6 +75,13 @@ final class Lms
             marked_by INT UNSIGNED NULL, marked_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
             PRIMARY KEY (session_id, student_doc_id), CONSTRAINT fk_lms_att_session FOREIGN KEY (session_id) REFERENCES lms_attendance_sessions (id)
         )");
+        // v61.1: private messages between a class's teacher and one student (one conversation per class and student)
+        $t("CREATE TABLE IF NOT EXISTS lms_messages (
+            id INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY, class_id VARCHAR(191) NOT NULL, student_doc_id VARCHAR(191) NOT NULL,
+            from_teacher TINYINT(1) NOT NULL, sender_id INT UNSIGNED NULL, sender_name VARCHAR(150) NOT NULL, body TEXT NOT NULL,
+            created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP, read_at DATETIME NULL,
+            KEY k_lms_msg_thread (class_id, student_doc_id, id), KEY k_lms_msg_student (student_doc_id, read_at)
+        )");
     }
 
     // ------------------------------------------------------------------ who is signed in
@@ -763,5 +770,182 @@ final class Lms
         }
         foreach ($rows as &$r) $r['class_code'] = $names[$r['class_id']] ?? '';
         return $rows;
+    }
+
+    // ------------------------------------------------------------------ v61.1 dashboard and cross-class pages
+
+    /** Schedule day code (M, T, W, Th, F, S, Su) of a date. */
+    public static function dayCode(int $ts): string
+    {
+        return ['Mon' => 'M', 'Tue' => 'T', 'Wed' => 'W', 'Thu' => 'Th', 'Fri' => 'F', 'Sat' => 'S', 'Sun' => 'Su'][date('D', $ts)];
+    }
+
+    /** Every meeting of the given classes (from the SIS class schedule), each with its class. */
+    public static function allMeetings(array $classes): array
+    {
+        $out = [];
+        foreach ($classes as $c) foreach (self::meetings($c) as $m) $out[] = $m + ['class' => $c, 'label' => Schedules::timeRange($m) . (($m['kind'] ?? '') === 'LAB' ? ' Lab' : '')];
+        usort($out, fn($a, $b) => [$a['start_time'], $a['end_time']] <=> [$b['start_time'], $b['end_time']]);
+        return $out;
+    }
+
+    /** The weekly timetable: periods (distinct time slots, P1…), the school days used (Mon–Fri plus any weekend day), and cells. */
+    public static function timetable(array $meetings): array
+    {
+        $slots = []; $days = ['M' => 1, 'T' => 1, 'W' => 1, 'Th' => 1, 'F' => 1];
+        foreach ($meetings as $m) {
+            $slots[$m['start_time'] . '|' . $m['end_time']] = [$m['start_time'], $m['end_time']];
+            foreach (Schedules::parseDays(explode(',', (string) $m['days'])) as $d) $days[$d] = 1;
+        }
+        ksort($slots); $slots = array_values($slots);
+        $days = array_values(array_intersect(array_keys(Schedules::DAYS), array_keys($days)));
+        $cells = [];
+        foreach ($meetings as $m) {
+            $p = array_search([$m['start_time'], $m['end_time']], $slots, true);
+            foreach (Schedules::parseDays(explode(',', (string) $m['days'])) as $d) $cells[$p][$d][] = $m;
+        }
+        return ['slots' => $slots, 'days' => $days, 'cells' => $cells];
+    }
+
+    /** Meetings on a date, each with its period number (P1 = earliest slot of the week). */
+    public static function meetingsOn(array $meetings, int $ts): array
+    {
+        $tt = self::timetable($meetings); $d = self::dayCode($ts); $out = [];
+        foreach ($meetings as $m) if (in_array($d, Schedules::parseDays(explode(',', (string) $m['days'])), true))
+            $out[] = $m + ['period' => 1 + (int) array_search([$m['start_time'], $m['end_time']], $tt['slots'], true)];
+        return $out;
+    }
+
+    /** Attendance marked on a date in the given classes: present, late, absent, excused, total. */
+    public static function attendanceOn(array $classIds, string $date): array
+    {
+        $r = ['present' => 0, 'late' => 0, 'absent' => 0, 'excused' => 0, 'total' => 0];
+        if (!$classIds) return $r;
+        $in = implode(',', array_fill(0, count($classIds), '?'));
+        $x = Db::one("SELECT SUM(a.status = 'PRESENT') p, SUM(a.status = 'LATE') l, SUM(a.status = 'ABSENT') a, SUM(a.status = 'EXCUSED') e, COUNT(*) n
+            FROM lms_attendance a JOIN lms_attendance_sessions s ON s.id = a.session_id WHERE s.meeting_date = ? AND s.class_id IN ($in)", array_merge([$date], array_values($classIds)));
+        return ['present' => (int) $x['p'], 'late' => (int) $x['l'], 'absent' => (int) $x['a'], 'excused' => (int) $x['e'], 'total' => (int) $x['n']];
+    }
+
+    /** A student's own attendance over the given classes. */
+    public static function myAttendanceTotals(array $classIds): array
+    {
+        $r = ['present' => 0, 'late' => 0, 'absent' => 0, 'excused' => 0, 'total' => 0];
+        $sid = self::me()['student'];
+        if (!$classIds || !$sid) return $r;
+        $in = implode(',', array_fill(0, count($classIds), '?'));
+        $x = Db::one("SELECT SUM(a.status = 'PRESENT') p, SUM(a.status = 'LATE') l, SUM(a.status = 'ABSENT') a, SUM(a.status = 'EXCUSED') e, COUNT(*) n
+            FROM lms_attendance a JOIN lms_attendance_sessions s ON s.id = a.session_id WHERE a.student_doc_id = ? AND s.class_id IN ($in)", array_merge([$sid], array_values($classIds)));
+        return ['present' => (int) $x['p'], 'late' => (int) $x['l'], 'absent' => (int) $x['a'], 'excused' => (int) $x['e'], 'total' => (int) $x['n']];
+    }
+
+    /** All classwork of the given classes (teachers: with turned-in and to-grade counts; students: published only, with their own submission). */
+    public static function allWork(array $classes): array
+    {
+        $out = [];
+        foreach ($classes as $c) foreach (self::classwork($c) as $w) $out[] = $w + ['class' => $c];
+        usort($out, fn($a, $b) => [$a['due_at'] === null, $a['due_at'] ?? '', -(int) $a['id']] <=> [$b['due_at'] === null, $b['due_at'] ?? '', -(int) $b['id']]);
+        return $out;
+    }
+
+    /** Files teachers shared in the given classes (stream posts, materials and classwork), newest first. Students see published classwork only. */
+    public static function materials(array $classes, int $limit = 500): array
+    {
+        $ids = array_column($classes, 'id');
+        if (!$ids) return [];
+        $by = array_column($classes, null, 'id'); $in = implode(',', array_fill(0, count($ids), '?'));
+        $studentOnly = !array_filter($classes, fn($c) => $c['role'] !== 'STUDENT');
+        $rows = Db::all("SELECT f.id, f.name, f.mime, f.size_bytes, f.created_at, p.class_id, COALESCE(p.title, IF(p.kind = 'MATERIAL', 'Material', 'Announcement')) AS source, p.kind AS source_kind, NULL AS work_id
+              FROM lms_files f JOIN lms_posts p ON f.owner_type = 'POST' AND p.id = f.owner_id WHERE p.deleted_at IS NULL AND p.class_id IN ($in)
+            UNION ALL
+            SELECT f.id, f.name, f.mime, f.size_bytes, f.created_at, w.class_id, w.title, w.kind, w.id
+              FROM lms_files f JOIN lms_work w ON f.owner_type = 'WORK' AND w.id = f.owner_id WHERE w.deleted_at IS NULL AND w.class_id IN ($in)" . ($studentOnly ? " AND w.status = 'PUBLISHED'" : '') . "
+            ORDER BY created_at DESC, id DESC LIMIT " . max(1, $limit), array_merge($ids, $ids));
+        foreach ($rows as &$r) $r['class'] = $by[$r['class_id']];
+        return $rows;
+    }
+
+    /** Files shared in the classes, counted. */
+    public static function materialCount(array $classes): int { return count(self::materials($classes)); }
+
+    // ------------------------------------------------------------------ v61.1 messages
+
+    /** Conversations of the signed-in person: teachers, one per student who has messages; students, one per class. Newest first. */
+    public static function threads(array $classes): array
+    {
+        $ids = array_column($classes, 'id');
+        if (!$ids) return [];
+        $by = array_column($classes, null, 'id'); $in = implode(',', array_fill(0, count($ids), '?'));
+        $me = self::me(); $out = [];
+        $teachIds = array_column(array_filter($classes, fn($c) => $c['role'] !== 'STUDENT'), 'id');
+        if ($teachIds) {
+            $tin = implode(',', array_fill(0, count($teachIds), '?'));
+            foreach (Db::all("SELECT m.class_id, m.student_doc_id, MAX(m.id) last_id, SUM(m.from_teacher = 0 AND m.read_at IS NULL) unread FROM lms_messages m
+                WHERE m.class_id IN ($tin) GROUP BY m.class_id, m.student_doc_id", $teachIds) as $r) $out[] = $r;
+        }
+        if ($me['student']) {
+            foreach (Db::all("SELECT m.class_id, m.student_doc_id, MAX(m.id) last_id, SUM(m.from_teacher = 1 AND m.read_at IS NULL) unread FROM lms_messages m
+                WHERE m.student_doc_id = ? AND m.class_id IN ($in) GROUP BY m.class_id, m.student_doc_id", array_merge([$me['student']], $ids)) as $r)
+                if (($by[$r['class_id']]['role'] ?? '') === 'STUDENT') $out[] = $r;
+        }
+        foreach ($out as &$t) {
+            $last = Db::one('SELECT body, created_at, from_teacher FROM lms_messages WHERE id = ?', [$t['last_id']]);
+            $c = $by[$t['class_id']]; $t['unread'] = (int) $t['unread'];
+            $t += ['class' => $c, 'body' => $last['body'], 'at' => $last['created_at'], 'mine' => (bool) $last['from_teacher'] === ($c['role'] !== 'STUDENT'),
+                'with' => $c['role'] === 'STUDENT' ? $c['teacherName'] : (string) (GS::get('students', $t['student_doc_id'])['studentName'] ?? 'Student')];
+        }
+        unset($t);
+        usort($out, fn($a, $b) => (int) $b['last_id'] <=> (int) $a['last_id']);
+        return $out;
+    }
+
+    public static function unreadMessages(array $classes): int { return array_sum(array_column(self::threads($classes), 'unread')); }
+
+    /** Checks the signed-in person may read the conversation of a class and student; returns whether they are the teacher's side. */
+    private static function threadSide(array $c, string $studentDocId): bool
+    {
+        if ($c['role'] === 'STUDENT') {
+            if ($studentDocId !== self::me()['student']) throw new Forbidden('You can only read your own messages.');
+            return false;
+        }
+        if (!in_array($studentDocId, $c['studentIds'], true)) throw new AppError('That student is not in this class.');
+        return true;
+    }
+
+    /** The messages of one conversation, oldest first; marks the other side's messages as read. */
+    public static function thread(array $c, string $studentDocId): array
+    {
+        $teacher = self::threadSide($c, $studentDocId);
+        Db::q('UPDATE lms_messages SET read_at = NOW() WHERE class_id = ? AND student_doc_id = ? AND from_teacher = ? AND read_at IS NULL', [$c['id'], $studentDocId, $teacher ? 0 : 1]);
+        return Db::all('SELECT * FROM lms_messages WHERE class_id = ? AND student_doc_id = ? ORDER BY id', [$c['id'], $studentDocId]);
+    }
+
+    public static function sendMessage(array $c, string $studentDocId, string $body): int
+    {
+        $teacher = self::threadSide($c, $studentDocId);
+        $body = trim($body);
+        if ($body === '') throw new AppError('Write a message first.');
+        if (mb_strlen($body) > 5000) throw new AppError('Messages can be up to 5,000 characters.');
+        $id = Db::insert('lms_messages', ['class_id' => $c['id'], 'student_doc_id' => $studentDocId, 'from_teacher' => $teacher ? 1 : 0, 'sender_id' => Auth::id(),
+            'sender_name' => self::me()['name'] ?: ($teacher ? $c['teacherName'] : 'Student'), 'body' => $body]);
+        Audit::log('lms_message_sent', 'lms_class', $c['id'], ['message' => $id, 'student' => $studentDocId, 'from_teacher' => $teacher]);
+        return $id;
+    }
+
+    /** Per class: students, published work, hand-in rate, class average and attendance rate (for Reports and the Gradebook list). */
+    public static function classReport(array $c): array
+    {
+        $book = self::gradebook($c);
+        $pct = array_filter(array_column($book['rows'], 'percent'), fn($v) => $v !== null);
+        $gs = GradeScale::current();
+        $passing = count(array_filter($book['rows'], fn($r) => $r['grade'] !== null && stripos($gs->remarksFor((float) $r['grade']), 'pass') === 0));
+        $n = count($book['rows']); $works = count($book['works']);
+        $handed = $works && $n ? (int) Db::val("SELECT COUNT(*) FROM lms_submissions s JOIN lms_work w ON w.id = s.work_id WHERE w.class_id = ? AND w.deleted_at IS NULL AND w.status = 'PUBLISHED' AND s.status IN ('SUBMITTED','RETURNED')", [$c['id']]) : 0;
+        $late = (int) Db::val("SELECT COUNT(*) FROM lms_submissions s JOIN lms_work w ON w.id = s.work_id WHERE w.class_id = ? AND w.deleted_at IS NULL AND s.is_late = 1 AND s.status <> 'DRAFT'", [$c['id']]);
+        $missing = 0; foreach ($book['rows'] as $r) foreach ($r['cells'] as $x) $missing += $x['missing'] ? 1 : 0;
+        $att = Db::one("SELECT SUM(a.status IN ('PRESENT','LATE','EXCUSED')) ok, COUNT(*) n, COUNT(DISTINCT s.id) meetings FROM lms_attendance_sessions s LEFT JOIN lms_attendance a ON a.session_id = s.id WHERE s.class_id = ?", [$c['id']]);
+        return ['students' => $n, 'works' => $works, 'handed' => $handed, 'expected' => $works * $n, 'late' => $late, 'missing' => $missing,
+            'average' => $pct ? round(array_sum($pct) / count($pct), 2) : null, 'passing' => $passing, 'graded' => count($pct),
+            'meetings' => (int) $att['meetings'], 'attendance' => (int) $att['n'] ? round((int) $att['ok'] * 100 / (int) $att['n'], 1) : null];
     }
 }

@@ -89,9 +89,16 @@ const LIBRARY_NAV = [
 
 /** v61: the LMS menu (lms/index.php). */
 const LMS_NAV = [
-    ['dashboard', 'My Classes', 'grid', ['lms.view'], '', 'Your classes and what to do next'],
-    ['todo', 'To Do', 'check2-square', ['lms.view'], '', 'Work due and work to grade'],
-    ['schedule', 'Schedule', 'calendar-week', ['lms.view'], '', 'Your week of classes'],
+    ['dashboard', 'Dashboard', 'house-door', ['lms.view'], '', 'Today at a glance'],
+    ['classes', 'My Classes', 'people', ['lms.view'], '', 'Your classes'],
+    ['schedule', 'Schedule', 'calendar3', ['lms.view'], '', 'Your week of classes'],
+    ['attendance', 'Attendance', 'calendar2-check', ['lms.view'], '', 'Take and review attendance'],
+    ['assignments', 'Assignments', 'journal-text', ['lms.view'], '', 'Assignments, quizzes and exams'],
+    ['gradebook', 'Gradebook', 'bar-chart-line', ['lms.view'], '', 'Class grades'],
+    ['materials', 'Materials', 'folder2', ['lms.view'], '', 'Files shared in your classes'],
+    ['messages', 'Messages', 'chat-square-text', ['lms.view'], '', 'Private messages between teachers and students'],
+    ['reports', 'Reports', 'pie-chart', ['lms.view'], '', 'Class summaries (teachers)'],
+    ['settings', 'Settings', 'gear', ['lms.view'], '', 'Grading categories of your classes (teachers)'],
 ];
 
 /** The menu of the system this page belongs to. */
@@ -175,7 +182,7 @@ function layout_start(string $title, bool $bare = false): void
 <link rel="stylesheet" href="<?= sis_web() ?>assets/assessment-fee-templates.css?v=1">
 <?php if (app_system() === 'CANTEEN'): ?><link rel="stylesheet" href="assets/canteen.css?v=59b"><?php endif; ?>
 <?php if (app_system() === 'LIBRARY'): ?><link rel="stylesheet" href="assets/library.css?v=61c"><?php endif; ?>
-<?php if (app_system() === 'LMS'): ?><link rel="stylesheet" href="assets/lms.css?v=61"><?php endif; ?>
+<?php if (app_system() === 'LMS'): ?><link rel="stylesheet" href="assets/lms.css?v=61.1d"><?php endif; ?>
 <?php if ($route === 'assessment' && ($_GET['tab'] ?? '') === 'names'): ?><script src="<?= sis_web() ?>assets/fee-templates.js?v=1" defer></script><?php endif; ?>
 <?php if ($route === 'documents' && ($_GET['tab'] ?? '') === 'settings'): ?><script src="<?= sis_web() ?>assets/documents-template-preview.js?v=1" defer></script><?php endif; ?>
 <?php if ($route === 'admission'): ?><link rel="stylesheet" href="<?= sis_web() ?>assets/admission-form.css?v=1"><?php endif; ?>
@@ -194,7 +201,7 @@ function layout_start(string $title, bool $bare = false): void
   <button class="sis-appbar-menu d-lg-none" type="button" data-bs-toggle="offcanvas" data-bs-target="#sidebar" aria-controls="sidebar" aria-label="Open menu"><i class="bi bi-list" aria-hidden="true"></i></button>
   <a href="<?= url('dashboard') ?>" class="sis-appbar-brand"><img src="<?= h($logo ?: '../icons/acadlink-mark.png') ?>" alt=""><span class="sis-brand-text"><span class="sis-brand-name"><?= h(School::brand()) ?></span><span class="sis-brand-sub"><?= $system === 'portal' ? 'Student Portal' : h(app_title()) ?></span></span></a>
   <?php if (app_system() === 'CANTEEN'): ?><div class="cpos-appbar-title d-none d-md-flex"><i class="bi bi-shop" aria-hidden="true"></i>Canteen POS</div><?php endif; ?>
-  <?php if (app_system() === 'LMS'): ?><div class="lms-appbar-title d-none d-md-flex"><i class="bi bi-mortarboard" aria-hidden="true"></i>Learning Management System</div><?php endif; ?>
+  <?php if (app_system() === 'LMS'): ?><div class="lms-appbar-title d-none d-md-flex"><?= h(School::brand()) ?> LMS</div><?php endif; ?>
   <?php if (app_system() === 'LIBRARY'): ?><div class="lib-appbar-title d-none d-md-flex"><i class="bi bi-book-half" aria-hidden="true"></i>Library</div><?php endif; ?>
   <?php if ($system === 'sis'): ?><div class="sis-appbar-tools" id="sisAppbarTools" hidden></div><?php endif; ?>
   <?php if (can_search()): ?>
@@ -224,7 +231,8 @@ function layout_start(string $title, bool $bare = false): void
 <div class="app-shell">
   <aside class="offcanvas-lg offcanvas-start sidebar d-print-none" tabindex="-1" id="sidebar" aria-label="Main navigation">
     <div class="sidebar-inner">
-      <?php if (app_system() === 'LIBRARY'): ?><a class="sis-rail-brand lib-rail-brand" href="<?= url('dashboard') ?>"><i class="bi bi-book-half" aria-hidden="true"></i><span><strong>AcadLink</strong><strong>Library</strong></span></a>
+      <?php if (app_system() === 'LMS'): ?><a class="sis-rail-brand lms-rail-brand" href="<?= url('dashboard') ?>"><span class="lms-rail-mark" aria-hidden="true"><i class="bi bi-book-half"></i></span><span><strong><?= h(School::brand()) ?></strong><small>LMS</small></span></a>
+      <?php elseif (app_system() === 'LIBRARY'): ?><a class="sis-rail-brand lib-rail-brand" href="<?= url('dashboard') ?>"><i class="bi bi-book-half" aria-hidden="true"></i><span><strong>AcadLink</strong><strong>Library</strong></span></a>
       <?php elseif ($system === 'sis'): ?><a class="sis-rail-brand" href="<?= url('dashboard') ?>"><img src="<?= h($logo ?: '../icons/acadlink-mark.png') ?>" alt=""><span><strong><?= h(School::brand()) ?></strong><small><?= h(app_title()) ?></small></span></a><?php endif; ?>
       <div class="sis-sidebar-head d-lg-none"><span><?= h(School::brand()) ?> <?= $system === 'portal' ? 'Portal' : (['FINANCE' => 'Finance', 'CANTEEN' => 'Canteen', 'LIBRARY' => 'Library', 'LMS' => 'LMS'][app_system()] ?? 'SIS') ?></span><button type="button" class="btn-close" data-bs-dismiss="offcanvas" data-bs-target="#sidebar" aria-label="Close menu"></button></div>
       <nav class="pb-2"><?php if(app_system()==='SIS' && in_array(Auth::role(),['TEACHER','STUDENT'],true)): ?><a class="side-link" href="<?= url('history',['tab'=>'grades']) ?>"><i class="bi bi-clock-history"></i><span>History of Grades</span></a><?php if(Auth::role()==='STUDENT'): ?><a class="side-link" href="<?= url('history',['tab'=>'assessments']) ?>"><i class="bi bi-receipt"></i><span>History of Assessments</span></a><?php endif; endif; ?>
@@ -234,15 +242,16 @@ function layout_start(string $title, bool $bare = false): void
           if ($perms && !Auth::can(...$perms)) continue;
           if ($r === 'clearance' && !Clearance::on()) continue; // v55: hidden while online clearance is off
           if ($r === 'importall' && !ImportAll::can()) continue; // v56: needs both Curriculum and Assessment editing
+          if (app_system() === 'LMS' && function_exists('lms_nav_allows') && !lms_nav_allows($r)) continue; // v61.1: Reports and Settings are for teachers
           [$rr, $qs] = array_pad(explode('&', $r, 2), 2, '');
           parse_str($qs, $params);
-          $active = ($route === 'student' && $rr === 'students') || $here === $r || ($route === $rr && !$qs && !isset($_GET['tab'])) || ($route === 'assessment' && $rr === 'assessment' && !isset($_GET['tab']) && $r === 'assessment&tab=categories') || ($route === 'accounting' && !isset($_GET['tab']) && $r === 'accounting&tab=overview') || (app_system() === 'LIBRARY' && (['acquisitions' => 'catalog', 'stocktake' => 'catalog', 'labels' => 'catalog', 'loans' => 'circulation'][$route] ?? '') === $rr);
+          $active = ($route === 'student' && $rr === 'students') || $here === $r || ($route === $rr && !$qs && !isset($_GET['tab'])) || ($route === 'assessment' && $rr === 'assessment' && !isset($_GET['tab']) && $r === 'assessment&tab=categories') || ($route === 'accounting' && !isset($_GET['tab']) && $r === 'accounting&tab=overview') || (app_system() === 'LIBRARY' && (['acquisitions' => 'catalog', 'stocktake' => 'catalog', 'labels' => 'catalog', 'loans' => 'circulation'][$route] ?? '') === $rr) || (app_system() === 'LMS' && (['class' => 'classes', 'work' => 'classes', 'todo' => 'assignments'][$route] ?? '') === $rr);
           if ($g !== $group) {
               if ($group !== '') echo '</div></div>';
               $group = $g;
               if ($g !== '') { $groupN++; echo '<div class="nav-group" data-nav-group="' . h($g) . '"><button type="button" class="nav-group-toggle" aria-expanded="true" aria-controls="navGroup' . $groupN . '"><i class="bi bi-' . (NAV_GROUP_ICONS[$g] ?? 'folder') . '" aria-hidden="true"></i><span>' . h($g) . '</span><i class="bi bi-chevron-up nav-group-chevron" aria-hidden="true"></i></button><div class="nav-group-items" id="navGroup' . $groupN . '">'; }
           } ?>
-        <a class="side-link<?= $active ? ' active' : '' ?>" href="<?= url($rr, $params) ?>"<?= $active ? ' aria-current="page"' : '' ?><?= $hint !== '' ? ' title="' . h($hint) . '"' : '' ?>><i class="bi bi-<?= $icon ?>" aria-hidden="true"></i><span><?= h($label) ?></span><?php if ($rr === 'notifications' && $unread): ?><span class="sis-nav-badge" aria-label="<?= $unread ?> unread"><?= $unread > 99 ? '99+' : $unread ?></span><?php endif; ?></a>
+        <a class="side-link<?= $active ? ' active' : '' ?>" href="<?= url($rr, $params) ?>"<?= $active ? ' aria-current="page"' : '' ?><?= $hint !== '' ? ' title="' . h($hint) . '"' : '' ?>><i class="bi bi-<?= $icon ?>" aria-hidden="true"></i><span><?= h($label) ?></span><?php if (app_system() === 'LMS' && $rr === 'messages' && function_exists('lms_unread') && ($lu = lms_unread())): ?><span class="sis-nav-badge" aria-label="<?= $lu ?> unread"><?= $lu > 99 ? '99+' : $lu ?></span><?php endif; ?><?php if ($rr === 'notifications' && $unread): ?><span class="sis-nav-badge" aria-label="<?= $unread ?> unread"><?= $unread > 99 ? '99+' : $unread ?></span><?php endif; ?></a>
       <?php endforeach; if ($group !== '') echo '</div></div>'; ?>
       </nav>
       <?php if ($system === 'sis'): ?><a class="sis-rail-profile" href="<?= url('profile') ?>"><span class="sis-user-avatar" aria-hidden="true"><?= h($initials) ?></span><span><strong><?= h($u['full_name']) ?></strong><small><?= h($u['role_name']) ?></small></span><i class="bi bi-chevron-right" aria-hidden="true"></i></a><?php endif; ?>
@@ -282,6 +291,7 @@ function layout_end(bool $bare = false): void
 <?php endif; ?>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" crossorigin="anonymous"></script>
 <script src="<?= sis_web() ?>assets/navigation.js?v=61"></script>
+<?php if (app_system() === 'LMS'): ?><script src="assets/lms.js?v=61.1" defer></script><?php endif; ?>
 <script src="<?= sis_web() ?>assets/activity.js?v=31"></script>
 <script src="<?= sis_web() ?>assets/record-list.js?v=48" defer></script>
 <script src="<?= sis_web() ?>assets/fixed-shell.js?v=31" defer></script>

@@ -1,50 +1,106 @@
 <?php
-/** LMS home: the classes the signed-in person teaches or takes, as cards, with what to do next and today's classes. */
+/**
+ * v61.1 LMS dashboard. Teachers: today's classes, today's attendance, work waiting to be checked and the files they shared,
+ * the weekly timetable, and quick "Take attendance" buttons. Students: the same view of their own day and work.
+ */
 declare(strict_types=1);
-$years = GS::schoolYears();
-$sy = in_array($_GET['sy'] ?? '', $years, true) ? $_GET['sy'] : ($years[0] ?? '');
+$sy = lms_year();
 $classes = Lms::myClasses($sy);
-$todo = Lms::todo($classes);
 $me = Lms::me();
-$counts = [];
-foreach ($classes as $c) {
-    $counts[$c['id']] = in_array($c['role'], ['TEACHER', 'ADMIN'], true)
-        ? ['to_grade' => (int) Db::val("SELECT COUNT(*) FROM lms_submissions s JOIN lms_work w ON w.id = s.work_id WHERE w.class_id = ? AND w.deleted_at IS NULL AND s.status = 'SUBMITTED'", [$c['id']]), 'students' => count($c['studentIds'])]
-        : ['due' => (int) Db::val("SELECT COUNT(*) FROM lms_work w LEFT JOIN lms_submissions s ON s.work_id = w.id AND s.student_doc_id = ? WHERE w.class_id = ? AND w.deleted_at IS NULL AND w.status = 'PUBLISHED' AND (s.status IS NULL OR s.status = 'DRAFT') AND (w.due_at IS NULL OR w.due_at >= NOW())", [$me['student'], $c['id']])];
+$teach = lms_teaches($classes);
+$ids = array_column($classes, 'id');
+$meetings = Lms::allMeetings($classes);
+$tt = Lms::timetable($meetings);
+$now = time();
+$todays = Lms::meetingsOn($meetings, $now);
+$periods = count($tt['slots']);
+
+// Week shown in the timetable: this week, or ?week=-1 / +1 …
+$week = max(-52, min(52, (int) ($_GET['week'] ?? 0)));
+$monday = strtotime('monday this week', $now) + $week * 7 * 86400;
+$dayTs = []; foreach ($tt['days'] as $d) $dayTs[$d] = $monday + array_search($d, array_keys(Schedules::DAYS), true) * 86400;
+$range = date('M j', $monday) . ' – ' . date('M j, Y', end($dayTs) ?: $monday + 4 * 86400);
+
+if ($teach) {
+    $teachClasses = array_values(array_filter($classes, fn($c) => $c['role'] !== 'STUDENT'));
+    $att = Lms::attendanceOn(array_column($teachClasses, 'id'), date('Y-m-d', $now));
+    $review = Lms::todo($teachClasses);
+    $toReview = array_sum(array_map(fn($w) => (int) $w['to_grade'], $review));
+    $files = Lms::materials($teachClasses);
+} else {
+    $att = Lms::myAttendanceTotals($ids);
+    $review = Lms::todo($classes);
+    $toReview = count($review);
+    $files = Lms::materials($classes);
 }
-$today = date('D') === 'Thu' ? 'Th' : (date('D') === 'Sun' ? 'Su' : substr(date('D'), 0, 1));
-$todays = [];
-foreach ($classes as $c) foreach (Lms::meetings($c) as $m) if (in_array($today, Schedules::parseDays(explode(',', (string) $m['days'])), true)) $todays[] = $m + ['class' => $c];
-usort($todays, fn($a, $b) => strcmp($a['start_time'], $b['start_time']));
-layout_start('My Classes');
+$attPct = $att['total'] ? (int) round(($att['present'] + ($teach ? 0 : $att['late'] + $att['excused'])) * 100 / $att['total']) : null;
+$done = []; // meetings today that already have attendance
+if ($teach && $todays) foreach (Db::all('SELECT class_id, label FROM lms_attendance_sessions WHERE meeting_date = ?', [date('Y-m-d', $now)]) as $r) $done[$r['class_id'] . '|' . $r['label']] = true;
+$hour = (int) date('G', $now);
+$first = trim((string) ($teach ? $me['name'] : ($me['student_name'] ?: $me['name'])));
+$greetName = $teach ? (Auth::user()['full_name'] ?? $first) : (explode(' ', preg_replace('/^[^,]+,\s*/', '', $first))[0] ?: $first);
+layout_start('Dashboard');
 ?>
-<div class="lms-home-head">
-  <div><h1 class="lms-h1">Good <?= (int) date('G') < 12 ? 'morning' : ((int) date('G') < 18 ? 'afternoon' : 'evening') ?>, <?= h(explode(' ', trim($me['name']))[0] ?: 'there') ?></h1>
-    <p class="lms-muted"><?= $me['teacher'] ? 'Your classes this school year.' : ($me['student'] ? 'Your classes, work to do and announcements.' : 'Every class of the school year (coordinator view).') ?></p></div>
-  <?php if (count($years) > 1): ?><form method="get"><input type="hidden" name="r" value="dashboard"><select class="form-select" name="sy" aria-label="School year" data-autosubmit><?php foreach ($years as $y): ?><option<?= $y === $sy ? ' selected' : '' ?>><?= h($y) ?></option><?php endforeach; ?></select></form><?php endif; ?>
+<header class="lms-head lms-welcome"><div>
+  <span class="lms-kicker"><?= $teach ? 'Teacher Workspace' : ($me['student'] ? 'Student Workspace' : 'Coordinator Workspace') ?></span>
+  <h1 class="lms-h1">Good <?= $hour < 12 ? 'morning' : ($hour < 18 ? 'afternoon' : 'evening') ?>, <?= h($greetName) ?>!</h1>
+  <p class="lms-muted mb-0">Here's your <?= $teach ? 'teaching' : 'class' ?> overview for today, <?= h(date('D, M j, Y', $now)) ?>.</p></div>
+  <div class="lms-head-actions"><?= lms_year_picker('dashboard', $sy) ?></div>
+</header>
+
+<div class="lms-stats">
+  <?= lms_stat('calendar3', "Today's Classes", (string) count($todays), $teach ? 'of ' . $periods . ' period' . ($periods === 1 ? '' : 's') : (count($todays) === 1 ? 'class today' : 'classes today'), url('schedule')) ?>
+  <?= $teach
+      ? lms_stat('people', 'Attendance', $attPct === null ? '—' : $attPct . '%', $att['total'] ? $att['present'] . ' of ' . $att['total'] . ' present' : 'not taken yet today', url('attendance'), 'Today')
+      : lms_stat('people', 'My Attendance', $attPct === null ? '—' : $attPct . '%', $att['total'] ? ($att['present'] + $att['late'] + $att['excused']) . ' of ' . $att['total'] . ' meetings attended' : 'no meetings recorded yet', url('attendance')) ?>
+  <?= $teach
+      ? lms_stat('journal-text', 'Assignments Awaiting Review', (string) $toReview, $toReview === 1 ? 'submission' : 'submissions', url('assignments', ['show' => 'review']))
+      : lms_stat('journal-text', 'Assignments To Do', (string) $toReview, $toReview === 1 ? 'piece of work' : 'pieces of work', url('assignments')) ?>
+  <?= lms_stat('folder2', 'Course Materials', (string) count($files), count($files) === 1 ? 'file' : 'total files', url('materials')) ?>
 </div>
-<div class="lms-home">
-  <div>
-    <div class="lms-cards">
-    <?php foreach ($classes as $c): $n = $counts[$c['id']]; ?>
-      <a class="lms-card" href="<?= url('class', ['id' => $c['id']]) ?>" style="--h:<?= lms_hue($c['subjectCode'] . $c['sectionName']) ?>">
-        <div class="lms-card-top"><b><?= h($c['subjectName']) ?></b><span><?= h($c['subjectCode']) ?> · <?= h($c['sectionName']) ?></span><small><?= h($c['teacherName']) ?></small><i class="bi bi-mortarboard" aria-hidden="true"></i></div>
-        <div class="lms-card-body"><span><?= h($c['term']) ?></span>
-          <?php if (isset($n['to_grade'])): ?><span class="<?= $n['to_grade'] ? 'lms-hot' : '' ?>"><i class="bi bi-inbox" aria-hidden="true"></i><?= $n['to_grade'] ?> to grade · <?= $n['students'] ?> students</span>
-          <?php else: ?><span class="<?= $n['due'] ? 'lms-hot' : '' ?>"><i class="bi bi-journal-check" aria-hidden="true"></i><?= $n['due'] ? $n['due'] . ' to do' : 'All caught up' ?></span><?php endif; ?></div>
-      </a>
-    <?php endforeach; ?>
-    </div>
-    <?php if (!$classes): ?><div class="lms-panel lms-empty"><i class="bi bi-easel2" aria-hidden="true"></i><p><?= $me['teacher'] ? 'No classes are assigned to you for ' . h($sy) . ' yet. The registrar assigns classes in the Grading System (Teachers and class assignments).' : ($me['student'] ? 'You are not in any class for ' . h($sy) . ' yet. Your classes appear once you are on a class list in the Grading System.' : 'Your account is not linked to a teacher or student record. Ask the Power User to link it, or give it the LMS coordinator access.') ?></p></div><?php endif; ?>
-  </div>
-  <aside>
-    <section class="lms-panel"><h2><i class="bi bi-check2-square" aria-hidden="true"></i><?= $me['student'] && !$me['teacher'] ? 'To do' : 'To grade' ?></h2>
-      <?php foreach ($todo as $t): ?><a class="lms-todo" href="<?= url('work', ['id' => $t['class_id'], 'w' => $t['id']]) ?>"><b><?= h($t['title']) ?></b><span><?= h($t['class_code']) ?><?= isset($t['to_grade']) ? ' · ' . (int) $t['to_grade'] . ' turned in' : ($t['due_at'] ? ' · due ' . h(lms_when($t['due_at'])) : '') ?></span>
-        <?php if (!isset($t['to_grade']) && $t['due_at'] && strtotime($t['due_at']) < time()): ?><em class="lms-pill is-missing">Missing</em><?php endif; ?></a><?php endforeach; ?>
-      <?php if (!$todo): ?><p class="lms-muted mb-0">Nothing right now.</p><?php else: ?><a class="small" href="<?= url('todo') ?>">See all</a><?php endif; ?></section>
-    <section class="lms-panel"><h2><i class="bi bi-calendar-day" aria-hidden="true"></i>Today</h2>
-      <?php foreach ($todays as $m): ?><div class="lms-today"><b><?= h(Schedules::timeRange($m)) ?></b><span><?= h($m['class']['subjectCode']) ?> · <?= h($m['class']['sectionName']) ?><?= $m['room_code'] ? ' · Room ' . h($m['room_code']) : '' ?></span></div><?php endforeach; ?>
+
+<?php if (!$classes): ?><div class="lms-panel lms-empty"><i class="bi bi-easel2" aria-hidden="true"></i><p class="mb-0"><?= $me['teacher'] ? 'No classes are assigned to you for ' . h($sy) . ' yet. The registrar assigns classes in the Grading System (Teachers and class assignments).' : ($me['student'] ? 'You are not in any class for ' . h($sy) . ' yet. Your classes appear once you are on a class list in the Grading System.' : 'Your account is not linked to a teacher or student record. Ask the Power User to link it, or give it the LMS coordinator access.') ?></p></div><?php endif; ?>
+
+<div class="lms-dash">
+  <section class="lms-panel lms-timetable">
+    <div class="lms-ph"><h2><i class="bi bi-calendar3" aria-hidden="true"></i>My Weekly Timetable</h2>
+      <div class="lms-week"><a class="lms-week-btn" href="<?= url('dashboard', ['week' => $week - 1] + ($sy ? ['sy' => $sy] : [])) ?>" aria-label="Previous week"><i class="bi bi-chevron-left"></i></a>
+        <span><?= h($range) ?></span>
+        <a class="lms-week-btn" href="<?= url('dashboard', ['week' => $week + 1] + ($sy ? ['sy' => $sy] : [])) ?>" aria-label="Next week"><i class="bi bi-chevron-right"></i></a>
+        <?php if ($week !== 0): ?><a class="small ms-1" href="<?= url('dashboard', $sy ? ['sy' => $sy] : []) ?>">This week</a><?php endif; ?></div></div>
+    <?php if ($tt['slots']): ?>
+    <div class="table-responsive"><table class="lms-tt"><colgroup><col class="c-p"><col class="c-t"><?php foreach ($tt['days'] as $d): ?><col><?php endforeach; ?></colgroup>
+      <thead><tr><th scope="col">Period</th><th scope="col">Time</th><?php foreach ($tt['days'] as $d): $isToday = date('Y-m-d', $dayTs[$d]) === date('Y-m-d', $now); ?><th scope="col"<?= $isToday ? ' class="is-today"' : '' ?>><?= h(Schedules::DAYS[$d]) ?><small><?= h(date('M j', $dayTs[$d])) ?></small></th><?php endforeach; ?></tr></thead>
+      <tbody><?php foreach ($tt['slots'] as $p => [$st, $en]): ?><tr><th scope="row">P<?= $p + 1 ?></th><td class="lms-tt-time"><?= h(Schedules::time($st)) ?> – <?= h(Schedules::time($en)) ?></td>
+        <?php foreach ($tt['days'] as $d): $isToday = date('Y-m-d', $dayTs[$d]) === date('Y-m-d', $now); $cell = $tt['cells'][$p][$d] ?? []; ?><td<?= $isToday ? ' class="is-today"' : '' ?>>
+          <?php foreach ($cell as $m): ?><a href="<?= url('class', ['id' => $m['class']['id']]) ?>" title="<?= h($m['class']['subjectName'] . ' · ' . $m['class']['sectionName'] . ($m['room_code'] ? ' · Room ' . $m['room_code'] : '')) ?>"><?= h($m['class']['subjectName'] !== '' ? $m['class']['subjectName'] : $m['class']['subjectCode']) ?><small>(<?= h($m['class']['sectionName']) ?>)</small></a><?php endforeach; ?>
+          <?php if (!$cell): ?><span class="lms-tt-none" aria-label="No class">–</span><?php endif; ?></td><?php endforeach; ?></tr><?php endforeach; ?></tbody>
+    </table></div>
+    <?php else: ?><p class="lms-muted mb-0">No class times are set for your classes yet. The registrar sets them in the SIS class schedule.</p><?php endif; ?>
+  </section>
+
+  <div class="lms-dash-side">
+    <section class="lms-panel"><?= lms_panel_head('calendar-day', "Today's Classes", url('schedule'), 'View Schedule') ?>
+      <?php foreach ($todays as $m): $key = $m['class']['id'] . '|' . $m['label']; ?><div class="lms-tc">
+        <span class="lms-period">P<?= (int) $m['period'] ?></span><span class="lms-tc-name"><?= h(lms_class_label($m['class'])) ?></span><span class="lms-tc-time"><?= h(Schedules::time($m['start_time'])) ?> – <?= h(Schedules::time($m['end_time'])) ?></span>
+        <?php if ($m['class']['role'] !== 'STUDENT'): ?><a class="btn btn-sm <?= isset($done[$key]) ? 'btn-outline-primary' : 'btn-primary' ?> lms-tc-btn" href="<?= url('class', ['id' => $m['class']['id'], 'tab' => 'attendance', 'date' => date('Y-m-d', $now), 'label' => $m['label']]) ?>"><?= isset($done[$key]) ? 'Attendance taken' : 'Take Attendance' ?></a>
+        <?php else: ?><a class="btn btn-sm btn-outline-primary lms-tc-btn" href="<?= url('class', ['id' => $m['class']['id']]) ?>">Open class</a><?php endif; ?></div><?php endforeach; ?>
       <?php if (!$todays): ?><p class="lms-muted mb-0">No classes scheduled today.</p><?php endif; ?></section>
-  </aside>
+
+    <section class="lms-panel"><?= lms_panel_head('people', $teach ? 'Attendance Summary' : 'My Attendance', url('attendance'), 'View Details', $teach ? 'Today' : 'This school year') ?>
+      <div class="lms-attsum"><div class="lms-attsum-big"><b><?= $attPct === null ? '—' : $attPct . '%' ?></b><small><?= $att['total'] ? ($teach ? $att['present'] . ' of ' . $att['total'] . ' present' : ($att['present'] + $att['late'] + $att['excused']) . ' of ' . $att['total'] . ' attended') : ($teach ? 'Not taken yet today' : 'No meetings yet') ?></small></div>
+        <div class="lms-attsum-tiles"><span class="is-present"><b><?= $att['present'] ?></b>Present</span><span class="is-absent"><b><?= $att['absent'] ?></b>Absent</span><span class="is-late"><b><?= $att['late'] ?></b>Late</span></div></div></section>
+
+    <section class="lms-panel"><?= lms_panel_head('journal-text', $teach ? 'Assignments Awaiting Review' : 'Assignments Due', url('assignments', $teach ? ['show' => 'review'] : [])) ?>
+      <?php foreach (array_slice($review, 0, 4) as $w): $c = array_column($classes, null, 'id')[$w['class_id']]; ?><a class="lms-rv" href="<?= url('work', ['id' => $w['class_id'], 'w' => $w['id']]) ?>">
+        <i class="bi bi-file-earmark-text" aria-hidden="true"></i><span><b><?= h($w['title']) ?></b><small><?= h(lms_class_label($c)) ?></small></span>
+        <?php if ($teach): ?><em class="lms-count-pill"><?= (int) $w['to_grade'] ?> submission<?= (int) $w['to_grade'] === 1 ? '' : 's' ?></em>
+        <?php else: $late = $w['due_at'] && strtotime($w['due_at']) < $now; ?><em class="lms-count-pill<?= $late ? ' is-missing' : '' ?>"><?= $late ? 'Missing' : ($w['due_at'] ? 'Due ' . h(lms_when($w['due_at'], false)) : 'No due date') ?></em><?php endif; ?></a><?php endforeach; ?>
+      <?php if (!$review): ?><p class="lms-muted mb-0"><?= $teach ? 'Nothing waiting to be checked.' : 'Nothing due. Nice work!' ?></p><?php endif; ?></section>
+
+    <section class="lms-panel"><?= lms_panel_head('folder2', 'Course Materials', url('materials'), $teach ? 'Manage Materials' : 'View all') ?>
+      <?php foreach (array_slice($files, 0, 4) as $f): ?><div class="lms-mat"><?= lms_file_badge($f['name'], $f['mime']) ?><a href="<?= url('file', ['id' => $f['id']]) ?>"><b><?= h($f['name']) ?></b><small><?= h(strtoupper(pathinfo($f['name'], PATHINFO_EXTENSION))) ?> · <?= h(lms_size((int) $f['size_bytes'])) ?></small></a><span class="lms-mat-class"><?= h(lms_class_label($f['class'])) ?></span></div><?php endforeach; ?>
+      <?php if (!$files): ?><p class="lms-muted mb-0">No files shared yet.</p><?php endif; ?></section>
+  </div>
 </div>
 <?php layout_end();
