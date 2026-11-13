@@ -1971,3 +1971,70 @@ html[data-system] .nav-tabs .nav-link.active { color: var(--ui-primary); }
 #switchSystemMenu .dropdown-item { display: flex; align-items: center; }
 #switchSystemMenu .dropdown-item.active, #switchSystemMenu .dropdown-item:active { background: var(--navy-raised); color: #fff; }
 #switchSystemMenu .dropdown-item.active::after { content: "\2713"; margin-left: auto; font-weight: 700; }
+
+/* ==========================================================================
+   v63.1 Sign-in on phones: dark green top ("Your school. Connected."), then a white sheet with
+   "Welcome back", labelled fields, Remember me / Forgot password and a full-width Sign in button.
+   Larger screens keep the design above.
+   ========================================================================== */
+.sl-m-head, .sl-m-title, .sl-m-lead, .sl-m-need, .sl-m-foot, .sl-m-arrow { display: none; }
+@media (max-width: 767.98px) {
+  body:has(.sl) { background: #0b4636; }
+  .sl { --m-green: #0b4636; --m-deep: #08382b; --m-mint: #8fe3b0; --m-ink: #0d2e25; --m-muted: #5b6b66; --m-line: #9fcdb3; --m-sheet: #f7f6f2;
+    display: flex; flex-direction: column; min-height: 100dvh; background: var(--m-green); }
+  .sl-side, .sl-main-top, .sl-corner, .sl-wave, .sl-hello, .sl-name, .sl-intro, .sl-auth { display: none !important; }
+  .sl-m-head { display: block; color: #fff; padding: calc(18px + env(safe-area-inset-top)) 22px 34px; background: radial-gradient(120% 90% at 100% 0%, #11573f 0%, var(--m-green) 55%, var(--m-deep) 100%); }
+  .sl-m-bar { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+  .sl-m-brand { display: flex; align-items: center; gap: 12px; font-weight: 800; font-size: 1.45rem; letter-spacing: -.01em; min-width: 0; }
+  .sl-m-brand > span:last-child { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .sl-m-logo { width: 52px; height: 52px; border-radius: 50%; background: #fff; display: grid; place-items: center; flex-shrink: 0; overflow: hidden; box-shadow: 0 4px 14px #0003; }
+  .sl-m-logo img { width: 76%; height: 76%; object-fit: contain; }
+  .sl-m-help { width: 42px; height: 42px; border-radius: 50%; border: 2px solid #ffffffd9; background: transparent; color: #fff; display: grid; place-items: center; font-size: 1.15rem; flex-shrink: 0; }
+  .sl-m-help:focus-visible { outline: 3px solid var(--m-mint); outline-offset: 2px; }
+  .sl-m-hero { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 0 6px; margin-top: 30px; }
+  .sl-m-big { margin: 0; font-size: clamp(1.85rem, 8.4vw, 2.6rem); line-height: 1.06; font-weight: 800; letter-spacing: -.02em; }
+  .sl-m-nw { white-space: nowrap; } .sl-m-on { color: var(--m-mint); }
+  .sl-m-sub { flex-basis: 100%; margin: 12px 0 0; font-size: .98rem; color: #d7ebe1; }
+  .sl-m-art { width: 30%; max-width: 130px; flex-shrink: 0; }
+  .sl-main { flex: 1; display: flex; flex-direction: column; padding: 0; background: var(--m-sheet); border-radius: 28px 28px 0 0; margin-top: -18px; position: relative; z-index: 1; }
+  .sl-card { flex: 1; display: flex; flex-direction: column; margin: 0 !important; padding: 30px 22px calc(18px + env(safe-area-inset-bottom)) !important; background: transparent !important; box-shadow: none !important; border: 0 !important; border-radius: 0 !important; max-width: none !important; width: 100%; }
+  .sl-m-title { display: block; margin: 0; font-size: 2rem; font-weight: 800; color: var(--m-ink); letter-spacing: -.02em; line-height: 1.1; }
+  .sl-m-lead { display: block; margin: 6px 0 22px; color: var(--m-muted); font-size: 1rem; }
+  /* fields: the label above, a bordered box with the icon, a thin divider and the input */
+  .sl-form { display: flex; flex-direction: column; }
+  .sl-field { position: relative; display: flex !important; align-items: center; gap: 0 !important; min-height: 56px !important; margin: 32px 0 6px !important; padding: 0 14px 0 0 !important;
+    background: #fbfbf8 !important; border: 1.6px solid var(--m-line) !important; border-radius: 14px !important; box-shadow: none !important; }
+  .sl-form .sl-field:first-of-type { margin-top: 30px !important; }
+  .sl-field:focus-within { border-color: var(--m-green) !important; box-shadow: 0 0 0 3px #0b46361f !important; }
+  .sl-field-ic { width: 54px; height: 26px; display: grid !important; place-items: center; color: var(--m-ink) !important; font-size: 1.25rem; border-right: 1.5px solid #c9d6cf; margin-right: 12px; flex-shrink: 0; }
+  .sl-field-ic.bi-person-fill::before { content: "\F4E1"; } /* outlined person */
+  .sl-field-ic.bi-lock-fill::before { content: "\F47B"; }  /* outlined lock */
+  .sl-field-body { flex: 1; min-width: 0; display: block !important; }
+  .sl-field-label { position: absolute; top: -29px; left: 0; font-size: 1rem !important; font-weight: 700 !important; color: var(--m-ink) !important; text-transform: none !important; letter-spacing: 0 !important; }
+  .sl-field input { width: 100%; font-size: 1rem !important; padding: 14px 0 !important; background: transparent !important; border: 0 !important; color: var(--m-ink) !important; }
+  .sl-field input::placeholder { color: #8a9893; }
+  .sl-ok { display: none !important; }
+  .sl-eye { color: var(--m-ink) !important; font-size: 1.3rem; background: none !important; border: 0 !important; padding: 6px !important; }
+  .sl-row { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin: 14px 0 22px !important; }
+  .sl-row .form-check-input { width: 1.35em; height: 1.35em; border: 1.6px solid var(--m-line); border-radius: 5px; margin-top: 0; }
+  .sl-row .form-check-input:checked { background-color: var(--m-green); border-color: var(--m-green); }
+  .sl-row .form-check-label { color: var(--m-ink); font-size: 1rem; margin-left: 6px; }
+  .sl-forgot { color: var(--m-green) !important; font-weight: 600; text-decoration: underline !important; text-underline-offset: 3px; }
+  .sl-submit { position: relative; min-height: 56px !important; border-radius: 14px !important; background: var(--m-green) !important; border: 0 !important; color: #fff !important; font-size: 1.15rem !important; font-weight: 700 !important;
+    display: flex !important; align-items: center; justify-content: center; gap: 8px; box-shadow: 0 6px 16px #0b463633 !important; }
+  .sl-submit:active { transform: translateY(1px); }
+  .sl-submit > .bi:first-child { display: none; }
+  .sl-m-arrow { display: inline-block; position: absolute; right: 20px; font-size: 1.35rem; }
+  .sl-m-need { display: block; text-align: center; margin: 18px 0 0; color: var(--m-muted); font-size: .98rem; }
+  .sl-m-need a { color: var(--m-green); font-weight: 700; text-decoration: underline; text-underline-offset: 3px; }
+  .sl-m-helpbox { margin-top: 12px; background: #fff; border: 1px solid #dfe8e3; border-radius: 12px; padding: 12px 14px; font-size: .9rem; color: var(--m-ink); }
+  .sl-m-helpbox ul { padding-left: 1.1rem; }
+  .sl-m-foot { display: flex; align-items: center; justify-content: center; gap: 8px; margin: auto 0 0; padding-top: 28px; color: var(--m-muted); font-size: .92rem; text-align: center; }
+  .sl-m-foot .bi { font-size: 1.15rem; color: var(--m-ink); }
+  .sl-card .alert { margin: 0 0 6px; border-radius: 12px; }
+}
+@media (max-width: 767.98px) and (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) .sl { --m-sheet: #101a17; --m-ink: #e8f2ed; --m-muted: #a9bab3; --m-line: #3f6b56; }
+  :root:not([data-theme="light"]) .sl-field { background: #15221e !important; }
+  :root:not([data-theme="light"]) .sl-m-helpbox { background: #15221e; border-color: #2b3d36; }
+}

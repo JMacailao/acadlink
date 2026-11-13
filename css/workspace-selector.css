@@ -59,3 +59,35 @@
 #portalChooser .al-coins .bi{font-size:27px}
 @media(max-width:980px){#portalChooser .al-grid.n5,#portalChooser .al-grid.n6,#portalChooser .al-grid.n7{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(max-width:580px){#portalChooser .al-grid.n5,#portalChooser .al-grid.n6,#portalChooser .al-grid.n7{grid-template-columns:1fr}}
+/* v63.1 Phones: "Choose a workspace" as picture tiles, three a row, with a coloured name under each; the whole tile opens it */
+#portalChooser .al-m-account,#portalChooser .al-m-text,#portalChooser .al-m-name{display:none}
+@media (max-width:767.98px){
+#portalChooser{padding:calc(16px + env(safe-area-inset-top)) 16px 24px!important;background:#f3f6fb!important}
+#portalChooser .al-top{align-items:center!important;flex-wrap:nowrap!important}
+#portalChooser .al-account{display:none!important}
+#portalChooser .al-m-account{display:block}
+#portalChooser .al-m-pill{display:flex;align-items:center;gap:10px;padding:6px 14px 6px 6px;border-radius:999px;border:1.5px solid #dbe4ef;background:#fff;color:#1d3150;box-shadow:0 4px 12px #1d31500f}
+#portalChooser .al-m-pill::after{display:none}
+#portalChooser .al-m-avatar{width:40px;height:40px;border-radius:50%;background:#e3e9f2;display:grid;place-items:center;font-size:1.35rem;color:#33415c}
+#portalChooser .al-brand .brand-seal{width:52px;height:52px}
+#portalChooser .al-school{font-size:19px!important;font-weight:700}
+#portalChooser .al-intro{margin:34px 0 30px!important}
+#portalChooser h1{font-size:clamp(26px,7.6vw,34px)!important;font-weight:800!important;letter-spacing:-.8px!important;color:#152a47!important;margin-bottom:8px!important}
+#portalChooser .al-intro p{font-size:16px!important;color:#7a8aa0!important}
+#portalChooser .al-d-text{display:none}
+#portalChooser .al-m-text{display:inline}
+#portalChooser .al-grid,#portalChooser .al-grid.n1,#portalChooser .al-grid.n2,#portalChooser .al-grid.n4,#portalChooser .al-grid.n5,#portalChooser .al-grid.n6,#portalChooser .al-grid.n7{grid-template-columns:repeat(3,minmax(0,1fr))!important;gap:26px 12px!important;max-width:520px!important;justify-content:stretch!important}
+#portalChooser .al-grid.n1{grid-template-columns:minmax(0,150px)!important;justify-content:center!important}
+#portalChooser .al-grid.n2{grid-template-columns:repeat(2,minmax(0,150px))!important;justify-content:center!important}
+#portalChooser .al-card{background:transparent!important;border:0!important;box-shadow:none!important;padding:0!important;align-items:center;text-align:center;animation:none!important}
+#portalChooser .al-card:hover,#portalChooser .al-card:focus-within{transform:none!important}
+#portalChooser .al-card h2,#portalChooser .al-description,#portalChooser .al-features{display:none!important}
+#portalChooser .al-art{width:100%;height:auto!important;aspect-ratio:1/1.15;margin:0 0 10px!important;border-radius:22px!important;background:radial-gradient(ellipse at 50% 50%,var(--soft) 18%,#fff 70%)!important;border:1px solid #e6edf5;box-shadow:0 10px 22px #1f3a5f14;overflow:hidden;position:relative;transition:transform .15s,box-shadow .15s}
+#portalChooser .al-stage{position:absolute;left:0;top:0;width:232px;height:200px;transform-origin:0 0;transform:scale(var(--z,.48))}
+#portalChooser .al-card:active .al-art{transform:scale(.97)}
+#portalChooser .al-card:focus-within .al-art{box-shadow:0 0 0 3px var(--tone),0 10px 22px #1f3a5f14}
+#portalChooser .al-m-name{display:block;order:2;font-weight:700;font-size:clamp(14px,4.3vw,18px);color:var(--dark);line-height:1.2}
+#portalChooser .al-open{position:absolute!important;inset:0;z-index:2;min-height:0!important;background:transparent!important;box-shadow:none!important;font-size:0!important;color:transparent!important;border-radius:22px!important}
+#portalChooser .al-open .bi{display:none}
+#portalChooser .al-footer{display:none}
+}

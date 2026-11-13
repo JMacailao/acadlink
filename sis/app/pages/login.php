@@ -28,6 +28,14 @@ $features = $student
 layout_start('Sign in', true);
 ?>
 <div class="sl">
+  <!-- v63.1 Phones: brand, help and "Your school. Connected." (hidden on larger screens) -->
+  <header class="sl-m-head" aria-label="<?= h(School::brand()) ?>">
+    <div class="sl-m-bar"><span class="sl-m-brand"><span class="sl-m-logo"><img src="<?= h($logo ?: '../icons/acadlink-mark.png') ?>" alt=""></span><span><?= h(School::brand()) ?></span></span>
+      <button type="button" class="sl-m-help" data-bs-toggle="collapse" data-bs-target="#slHelp" aria-expanded="false" aria-controls="slHelp" aria-label="Help signing in"><i class="bi bi-question-lg" aria-hidden="true"></i></button></div>
+    <div class="sl-m-hero"><p class="sl-m-big"><span class="sl-m-nw">Your school.</span><br><span class="sl-m-on">Connected.</span></p>
+      <svg class="sl-m-art" viewBox="-14 0 144 90" aria-hidden="true" focusable="false"><g fill="none" stroke-width="3.2"><rect x="44" y="6" width="70" height="40" rx="11" transform="skewX(-18)" stroke="#5fae86" opacity=".75"/><rect x="18" y="36" width="70" height="40" rx="11" transform="skewX(-18)" stroke="#8fe3b0"/></g><circle cx="88" cy="7" r="4.5" fill="#a78bfa"/><circle cx="121" cy="42" r="4.5" fill="#f97316"/><circle cx="25" cy="76" r="4.5" fill="#86efac"/></svg>
+      <p class="sl-m-sub"><?= $student ? 'Grades, fees and receipts in one place.' : 'One account. Every workspace.' ?></p></div>
+  </header>
   <!-- Left: school, what the system is for, and the school's picture -->
   <aside class="sl-side<?= $hasPic ? ' has-pic' : '' ?>">
     <?php if ($hasPic): ?><img class="sl-pic" src="<?= url('signinpic') ?>" alt="" data-signin-pic><?php endif; ?>
@@ -58,6 +66,8 @@ layout_start('Sign in', true);
       <div class="sl-corner" aria-hidden="true"><i class="bi bi-<?= $student ? 'mortarboard' : 'book' ?>"></i></div>
       <div class="sl-wave" aria-hidden="true">👋</div>
       <p class="sl-hello"><span data-welcome-line>Welcome,</span></p>
+      <p class="sl-m-title" aria-hidden="true"><?= $forgot ? 'Forgot password' : 'Welcome back' ?></p>
+      <p class="sl-m-lead"><?= $forgot ? 'We email you a temporary password.' : 'Sign in to your ' . h($student ? 'Student Portal' : School::brand()) . ' account.' ?></p>
       <?php if ($forgot): ?>
       <h1 class="sl-name">Forgot password</h1>
       <p class="sl-intro">Enter your username or Student ID. If your account has an email, we send you a temporary password that works once for <?= PasswordReset::MINUTES ?> minutes.</p>
@@ -96,9 +106,15 @@ layout_start('Sign in', true);
           <label class="form-check m-0"><input class="form-check-input" type="checkbox" id="remember" data-remember> <span class="form-check-label">Remember me</span></label>
           <a class="sl-forgot" href="<?= url('forgot', $student ? ['portal' => 'student'] : []) ?>">Forgot password?</a>
         </div>
-        <button class="sl-submit"><i class="bi bi-box-arrow-in-right" aria-hidden="true"></i> Sign In</button>
+        <button class="sl-submit"><i class="bi bi-box-arrow-in-right" aria-hidden="true"></i> <span>Sign In</span><i class="bi bi-arrow-right sl-m-arrow" aria-hidden="true"></i></button>
       </form>
       <?php endif; ?>
+      <p class="sl-m-need">Need access? <a href="#slHelp" data-bs-toggle="collapse" role="button" aria-controls="slHelp">Contact your school</a></p>
+      <div class="collapse sl-m-helpbox" id="slHelp"><p class="mb-1"><b>Signing in</b></p><ul class="mb-0">
+        <li><?= $student ? 'Use your Student ID as the username.' : 'Use the username your school gave you. Students use their Student ID.' ?></li>
+        <li>Forgot your password? Tap <b>Forgot password?</b>; a temporary password goes to the email on your account.</li>
+        <li>No account yet, or still stuck? Ask the Registrar's office of <?= h(School::brand()) ?>.</li></ul></div>
+      <p class="sl-m-foot"><i class="bi bi-lock" aria-hidden="true"></i> Your school account, securely connected.</p>
       <p class="sl-auth"><i class="bi bi-shield-check" aria-hidden="true"></i> <?= $student ? 'Only students of ' . h(School::brand()) . ' can sign in here.' : 'Only authorized personnel are allowed to access this system.' ?></p>
     </div>
   </main>
