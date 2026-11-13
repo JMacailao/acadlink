@@ -110,7 +110,7 @@ function app_bottom_nav(): void
 {
     global $route;
     $sys = app_system();
-    if (!in_array($sys, ['LMS', 'CANTEEN'], true)) return;
+    if (!in_array($sys, ['LMS', 'CANTEEN', 'LIBRARY'], true)) return;
     $nav = []; foreach (app_nav() as [$r, $label, $icon, $perms]) if (!$perms || Auth::can(...$perms)) $nav[$r] = [$label, $icon];
     $item = fn(string $r, ?string $label = null, ?string $icon = null, array $also = [], int $badge = 0) => ['href' => url($r), 'label' => $label ?? $nav[$r][0], 'icon' => $icon ?? $nav[$r][1], 'active' => $route === $r || in_array($route, $also, true), 'badge' => $badge];
     $more = ['label' => 'More', 'icon' => 'grid', 'sheet' => 'sidebar', 'active' => false];
@@ -119,6 +119,16 @@ function app_bottom_nav(): void
         bottom_nav([$item('dashboard', 'Home', 'house-door'), $item('classes', 'Classes', 'people', ['class', 'work'])],
             $item('messages', 'Messages', 'chat-square-text', [], function_exists('lms_unread') ? lms_unread() : 0),
             [$item('assignments', 'Tasks', 'journal-text', ['todo']), $more], 'LMS menu');
+        return;
+    }
+    if ($sys === 'LIBRARY') { // v63.2: Home · Catalog · Circulation (middle) · Members · More
+        if (!$nav) return;
+        $lib = fn(string $r, string $label, string $icon, array $also = []) => isset($nav[$r]) ? $item($r, $label, $icon, $also) : null;
+        $center = $lib('circulation', 'Desk', 'arrow-left-right', ['loans']) ?? $lib('catalog', 'Catalog', 'book', ['acquisitions', 'stocktake', 'labels']);
+        if (!$center) return;
+        $left = array_values(array_filter([$lib('dashboard', 'Home', 'house-door'), $center['label'] === 'Catalog' ? $lib('reports', 'Reports', 'bar-chart') : $lib('catalog', 'Catalog', 'book', ['acquisitions', 'stocktake', 'labels'])]));
+        $right = array_values(array_filter([$lib('members', 'Members', 'people') ?? $lib('holds', 'Holds', 'bookmark'), $more]));
+        bottom_nav($left, $center, $right, 'Library menu');
         return;
     }
     $pick = array_values(array_filter(['sales', 'shift', 'products', 'reports', 'approvals', 'inventory', 'shifts', 'settings'], fn($r) => isset($nav[$r])));
@@ -212,7 +222,7 @@ function layout_start(string $title, bool $bare = false): void
 <?php if (app_system() === 'CANTEEN'): ?><link rel="stylesheet" href="assets/canteen.css?v=59b"><?php endif; ?>
 <?php if (app_system() === 'LIBRARY'): ?><link rel="stylesheet" href="assets/library.css?v=61c"><?php endif; ?>
 <?php if (app_system() === 'LMS'): ?><link rel="stylesheet" href="assets/lms.css?v=61.2"><?php endif; ?>
-<?php if (in_array(app_system(), ['LMS', 'CANTEEN', 'LIBRARY'], true)): ?><link rel="stylesheet" href="<?= sis_web() ?>assets/bottom-nav.css?v=62.2b"><?php endif; ?>
+<?php if (in_array(app_system(), ['LMS', 'CANTEEN', 'LIBRARY'], true)): ?><link rel="stylesheet" href="<?= sis_web() ?>assets/bottom-nav.css?v=63.2"><?php endif; ?>
 <?php if ($route === 'assessment' && ($_GET['tab'] ?? '') === 'names'): ?><script src="<?= sis_web() ?>assets/fee-templates.js?v=1" defer></script><?php endif; ?>
 <?php if ($route === 'documents' && ($_GET['tab'] ?? '') === 'settings'): ?><script src="<?= sis_web() ?>assets/documents-template-preview.js?v=1" defer></script><?php endif; ?>
 <?php if ($route === 'admission'): ?><link rel="stylesheet" href="<?= sis_web() ?>assets/admission-form.css?v=1"><?php endif; ?>
@@ -221,6 +231,7 @@ function layout_start(string $title, bool $bare = false): void
 <?php $embedFlashes = $bare && isset($_GET['embed']) ? take_flashes() : []; // pop-up pages show their own messages ?>
 <body data-client-scope="<?= h($u ? acadlink_client_scope(Auth::central()) : '') ?>" class="<?= $bare ? 'bare' : ('sis-theme' . ($system === 'sis' && $u ? ' sis-easy' : '')) ?>" data-user-id="<?= h((string) ($u['id'] ?? 'guest')) ?>" data-route="<?= h((string) $route) ?>"<?= array_filter($embedFlashes, fn($f) => $f[0] === 'success') ? ' data-changed="1"' : '' ?>>
 <?php if ($embedFlashes): ?><div class="embed-wrap pb-0"><?php foreach ($embedFlashes as [$type, $msg]): ?><div class="alert alert-<?= h($type) ?> py-2 mb-0" style="white-space:pre-line" role="alert"><?= h($msg) ?></div><?php endforeach; ?></div><?php endif; ?>
+<?php if (!$bare && $u) app_bottom_nav(); // v63.2: printed first, so the bottom menu is there at once while the page loads ?>
 <?php $LAYOUT_SIDEBAR = !$bare && $u; if ($LAYOUT_SIDEBAR):
     $logo = School::logo();
     $initials = strtoupper(implode('', array_map(fn($w) => mb_substr($w, 0, 1), array_slice(preg_split('/\s+/', trim((string) $u['full_name'])) ?: [], 0, 2))));
@@ -321,7 +332,6 @@ function layout_end(bool $bare = false): void
   </div></div>
 </div>
 <?php endif; ?>
-<?php if ($LAYOUT_SIDEBAR) app_bottom_nav(); ?>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" crossorigin="anonymous"></script>
 <script src="<?= sis_web() ?>assets/navigation.js?v=61"></script>
 <?php if (app_system() === 'LMS'): ?><script src="assets/lms.js?v=61.1" defer></script><?php endif; ?>

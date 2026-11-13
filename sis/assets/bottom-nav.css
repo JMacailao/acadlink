@@ -4,6 +4,7 @@
 html[data-system="portal"] { --bn-accent: #c2410c; }
 html[data-app="lms"], html[data-system][data-app="lms"] { --bn-accent: #2563eb; } /* students open the LMS in the Portal look: the LMS keeps its blue */
 html[data-app="canteen"], html[data-system][data-app="canteen"] { --bn-accent: #e0650f; }
+html[data-app="library"], html[data-system][data-app="library"] { --bn-accent: #6a1b83; }
 @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --bn-bg: #161b24; --bn-ink: #e5e9f0; --bn-muted: #aab4c3; --bn-line: #2b3445; } }
 :root[data-theme="dark"] { --bn-bg: #161b24; --bn-ink: #e5e9f0; --bn-muted: #aab4c3; --bn-line: #2b3445; }
 
@@ -61,3 +62,13 @@ html[data-app="canteen"], html[data-system][data-app="canteen"] { --bn-accent: #
 .al-bell .al-bell-n { position: absolute; top: 2px; right: 0; min-width: 18px; height: 18px; padding: 0 5px; border-radius: 9px; background: #dc2626; color: #fff; font-size: .68rem; font-weight: 700; display: grid; place-items: center; line-height: 1; }
 .portal-bell, .portal-bell:hover { color: #fff !important; } .portal-bell:hover { background: #ffffff26; }
 .al-alert-tabs a.active, .al-alert-tabs a.active:hover { color: #fff !important; }
+
+/* v63.2 The bottom menu stays where it is while another page opens: the browser keeps it in place during the page
+   change (cross-document View Transitions: Chrome/Edge 126+, Safari 18.2+; other browsers simply load the page). */
+@view-transition { navigation: auto; }
+@media (max-width: 991.98px) {
+  .al-bnav { view-transition-name: al-bnav; }
+  ::view-transition-group(al-bnav) { animation: none; z-index: 100; }
+  ::view-transition-old(al-bnav) { display: none; }
+  ::view-transition-new(al-bnav) { animation: none; }
+}
