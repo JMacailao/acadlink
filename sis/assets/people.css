@@ -1,0 +1,14 @@
+/* v62 Student photos, photo approvals, parent view and privacy pieces (SIS and Student Portal). */
+.st-photo { display: inline-grid; place-items: center; object-fit: cover; border-radius: 12px; background: #e8eef0; color: #47606b; font-weight: 700; flex-shrink: 0; border: 1px solid #0000001a; }
+.st-photo-sm { width: 40px; height: 40px; border-radius: 50%; font-size: .9rem; } .st-photo-md { width: 96px; height: 120px; font-size: 1.6rem; } .st-photo-lg { width: 150px; height: 188px; font-size: 2.2rem; }
+.st-photo-none { background: linear-gradient(135deg, #e5ecef, #d4dfe3); }
+.st-photo-queue { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 380px), 1fr)); gap: 14px; }
+.st-photo-compare { display: flex; align-items: center; gap: 12px; margin-bottom: 10px; } .st-photo-compare figure { margin: 0; text-align: center; } .st-photo-compare figcaption { font-size: .8rem; color: #6b7280; }
+.st-photo-box { display: flex; gap: 16px; align-items: flex-start; flex-wrap: wrap; }
+.st-photo-box .st-photo-actions { flex: 1; min-width: 200px; }
+.privacy-notice { background: #f6f8f7; border: 1px solid #dfe6e3; border-radius: 10px; padding: 12px 14px; font-size: .9rem; max-height: 220px; overflow: auto; }
+.privacy-notice h3 { font-size: 1rem; margin: 0 0 6px; }
+.parent-child { display: flex; gap: 14px; align-items: center; }
+.parent-stats { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 10px; margin: 12px 0; }
+.parent-stats div { border: 1px solid #e5e7eb; border-radius: 12px; padding: 10px 12px; background: #fff; } .parent-stats b { display: block; font-size: 1.4rem; } .parent-stats small { color: #6b7280; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .privacy-notice, :root:not([data-theme="light"]) .parent-stats div { background: #1d2422; border-color: #33403b; } }

@@ -34,6 +34,10 @@ require SIS_ROOT . '/app/lib/eligibility.php';
 require SIS_ROOT . '/app/lib/portal-enrollment.php';
 require SIS_ROOT . '/app/lib/payment-plans.php';
 require SIS_ROOT . '/app/lib/notifications.php';
+require SIS_ROOT . '/app/lib/notify.php'; // v62: personal notifications (in-app + email)
+require SIS_ROOT . '/app/lib/student-photo.php'; // v62: student photos
+require SIS_ROOT . '/app/lib/privacy.php'; // v62: Data Privacy Act helpers
+require SIS_ROOT . '/app/lib/parents.php'; // v62: parent / guardian accounts
 require SIS_ROOT . '/app/lib/balance-workspace.php';
 require FINANCE_ROOT . '/modules/accounting/lib/accounting.php';
 require FINANCE_ROOT . '/modules/accounting/lib/workflow.php';
@@ -101,6 +105,11 @@ function sis_boot(): void
     }
     Auth::startSession($cfg);
     sis_upgrade();
+    // v62: library reminders and canteen low-stock alerts (at most every 10 minutes), then queued emails, after the page is sent
+    if (PHP_SAPI !== 'cli') register_shutdown_function(function () {
+        try { if (!Auth::id()) return; if (function_exists('fastcgi_finish_request')) @fastcgi_finish_request(); Notify::scan(); Notify::flushEmails(25); }
+        catch (Throwable $e) { error_log('AcadLink notifications: ' . $e->getMessage()); }
+    });
 }
 
 /**
@@ -109,7 +118,7 @@ function sis_boot(): void
  */
 function sis_upgrade(): void
 {
-    if (PHP_SAPI !== 'cli' && ($_SESSION['sis_schema'] ?? 0) >= 31) return;
+    if (PHP_SAPI !== 'cli' && ($_SESSION['sis_schema'] ?? 0) >= 32) return;
     $have = array_map('strtolower', Db::col("SELECT table_name FROM information_schema.tables WHERE table_schema = DATABASE() AND table_name LIKE 'sis\\_%'"));
     if (!in_array('sis_registrations', $have, true) || !in_array('sis_fee_labels', $have, true)) return; // not installed yet
     // Tables of newer versions: created from schema.sql (CREATE TABLE IF NOT EXISTS only)
@@ -180,5 +189,9 @@ function sis_upgrade(): void
     Canteen::install(Db::pdo());       // v59: Canteen POS
     Library::install(Db::pdo());       // v60: Library
     Lms::install(Db::pdo());           // v61: LMS
-    if (PHP_SAPI !== 'cli') $_SESSION['sis_schema'] = 31; // v61.1: LMS messages
+    Notify::install(Db::pdo());        // v62: personal notifications
+    StudentPhoto::install(Db::pdo());  // v62: student photos
+    Privacy::install(Db::pdo());       // v62: privacy consents and reviews
+    ParentAccess::install(Db::pdo());  // v62: parent links
+    if (PHP_SAPI !== 'cli') $_SESSION['sis_schema'] = 32; // v62
 }

@@ -23,6 +23,7 @@ function portal_layout_start(string $title, bool $bare = false): void
     if (Auth::studentNumber()) array_splice($menu, 4, 0, [['documents', 'Documents', 'file-earmark-text', []]]); // v52: request TOR and certificates
     if (Auth::studentNumber() && Clearance::on()) array_splice($menu, 5, 0, [['clearance', 'Clearance', 'patch-check', []]]); // v55
     if (Auth::studentNumber()) $menu[] = ['library', 'Library', 'book', []]; // v60
+    if (ParentAccess::isParent()) $menu = [['children', 'My children', 'people', []], ['alerts', 'Notifications', 'bell', []], ['profile', 'My profile', 'person-gear', []]]; // v62
     $tab = $_GET['tab'] ?? 'grades';
     $GLOBALS['PORTAL_MENU'] = $bare || !$u ? null : $menu; // v61.2: for the bottom menu on phones and tablets
     ?><!doctype html>
@@ -41,7 +42,8 @@ function portal_layout_start(string $title, bool $bare = false): void
 <link rel="stylesheet" href="../sis/assets/app.css?v=56b">
 <link rel="stylesheet" href="../sis/assets/reference-ui.css?v=20261021portal">
 <link rel="stylesheet" href="assets/portal.css?v=53">
-<link rel="stylesheet" href="../sis/assets/bottom-nav.css?v=61.2b">
+<link rel="stylesheet" href="../sis/assets/bottom-nav.css?v=62c">
+<link rel="stylesheet" href="../sis/assets/people.css?v=62">
 </head>
 <body class="portal<?= $bare ? ' bare' : '' ?>" data-route="<?= h((string) $route) ?>">
 <?php if (!$bare && $u): ?>
@@ -49,6 +51,7 @@ function portal_layout_start(string $title, bool $bare = false): void
   <div class="portal-bar-inner">
     <a class="portal-brand" href="<?= url('my') ?>"><span class="portal-logo"><img src="<?= h($logo ?: '../icons/acadlink-mark.png') ?>" alt=""></span>
       <span class="portal-brand-text"><span class="portal-school"><?= h(School::brand()) ?></span><span class="portal-product">Student Portal</span></span></a>
+    <?php $mine = Notify::unread(); ?><a class="al-bell portal-bell" href="<?= url('alerts') ?>" aria-label="Notifications<?= $mine ? ': ' . $mine . ' unread' : '' ?>"><i class="bi bi-bell" aria-hidden="true"></i><?php if ($mine): ?><span class="al-bell-n"><?= $mine > 99 ? '99+' : $mine ?></span><?php endif; ?></a>
     <div class="dropdown portal-user">
       <button class="portal-user-btn dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
         <span class="portal-avatar" aria-hidden="true"><?= h(strtoupper(implode('', array_map(fn($w) => mb_substr($w, 0, 1), array_slice(preg_split('/[\s,]+/', trim((string) $u['full_name'])) ?: [], 0, 2))))) ?></span>
@@ -102,6 +105,10 @@ function portal_bottom_nav(array $menu): void
     $second = $get('schedule') ?? $get('myenrollment') ?? $get('myadmission');
     $left = array_values(array_filter([$get('my'), $second]));
     $center = $get('historygrades', ['label' => 'Grades']);
+    if (!$center && isset($items['children'])) { // v62: parents
+        bottom_nav([$get('children', ['label' => 'Children'])], $get('alerts', ['label' => 'Alerts']), [$get('profile', ['label' => 'Profile'])], 'Parent menu');
+        return;
+    }
     $right = array_values(array_filter([$get('historyassessments', ['label' => 'Fees']), ['label' => 'More', 'icon' => 'grid', 'sheet' => 'portalMore', 'active' => false]]));
     if (!$center) return;
     bottom_nav($left, $center, $right, 'Student Portal menu');
@@ -119,7 +126,7 @@ function portal_layout_end(bool $bare = false): void
 <?php if (!$bare && !empty($GLOBALS['PORTAL_MENU'])) portal_bottom_nav($GLOBALS['PORTAL_MENU']); ?>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" crossorigin="anonymous"></script>
 <script src="../sis/assets/navigation.js?v=49"></script>
-<script src="../sis/assets/app.js?v=41"></script>
+<script src="../sis/assets/app.js?v=62"></script>
 <script src="../sis/assets/success-sound.js?v=56"></script>
 </body>
 </html><?php

@@ -17,7 +17,7 @@ foreach ([dirname(SIS_ROOT) . '/api/install.sql', SIS_ROOT . '/database/schema.s
     $sql = preg_replace('/^\s*--.*$/m', '', file_get_contents($file));
     foreach (array_filter(array_map('trim', explode(";\n", $sql))) as $stmt) Db::q($stmt);
 }
-$c = Auth::central(); $c->install(); Schedules::install(Db::pdo()); Lms::install(Db::pdo()); Lms::install(Db::pdo());
+$c = Auth::central(); $c->install(); Schedules::install(Db::pdo()); Lms::install(Db::pdo()); Lms::install(Db::pdo()); Notify::install(Db::pdo()); // v62: notifications
 $pass = 0; $fail = 0;
 function ok(bool $v, string $m): void { if (!$v) throw new RuntimeException($m); }
 function test(string $label, callable $fn): void { global $pass, $fail; try { $fn(); $pass++; echo "PASS $label\n"; } catch (Throwable $e) { $fail++; echo "FAIL $label: " . $e->getMessage() . "\n"; } }

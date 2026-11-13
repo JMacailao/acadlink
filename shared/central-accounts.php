@@ -57,7 +57,7 @@ final class CentralAccounts
         $a=$this->account($id);
         if (!$a || $a['status']!=='ACTIVE') return [];
         if ($this->group($id)==='TEACHER' && (!$a['person_verified'] || !$a['teacher_doc_id'])) return [];
-        $rows=$this->q("SELECT p.code,gp.access_scope FROM central_user_groups ug JOIN central_groups g ON g.id=ug.group_id AND g.is_active=1 JOIN central_group_permissions gp ON gp.group_id=g.id AND gp.is_enabled=1 JOIN central_permissions p ON p.code=gp.permission_code WHERE ug.account_id=? AND ug.revoked_at IS NULL AND ug.valid_from<=NOW() AND (ug.expires_at IS NULL OR ug.expires_at>NOW()) AND (p.workspace='LMS' OR (?='STUDENT' AND p.workspace='PORTAL') OR (?='STAFF' AND p.workspace<>'PORTAL'))",[$id,$a['account_kind'],$a['account_kind']])->fetchAll(PDO::FETCH_ASSOC);
+        $rows=$this->q("SELECT p.code,gp.access_scope FROM central_user_groups ug JOIN central_groups g ON g.id=ug.group_id AND g.is_active=1 JOIN central_group_permissions gp ON gp.group_id=g.id AND gp.is_enabled=1 JOIN central_permissions p ON p.code=gp.permission_code WHERE ug.account_id=? AND ug.revoked_at IS NULL AND ug.valid_from<=NOW() AND (ug.expires_at IS NULL OR ug.expires_at>NOW()) AND (p.workspace='LMS' OR (?='STUDENT' AND p.workspace='PORTAL') OR (?='STAFF' AND p.workspace<>'PORTAL') OR p.code IN ('portal.workspace.view','portal.parent.view') AND g.code='PARENT')",[$id,$a['account_kind'],$a['account_kind']])->fetchAll(PDO::FETCH_ASSOC);
         $out=[];
         foreach ($rows as $r) $out[$r['code']]=$r['access_scope'];
         // Per-person module changes on top of the group (never for a Power User, who always keeps full access)
@@ -65,7 +65,8 @@ final class CentralAccounts
         $over=$group==='POWER_USER'?[]:$this->moduleOverrides($id);
         $out=ModuleAccess::apply($out,$over,$group);
         $student=$a['account_kind']==='STUDENT';
-        foreach (array_keys($out) as $code) if (!str_starts_with($code,'lms.') && str_starts_with($code,'portal.')!==$student) unset($out[$code]); // the LMS is for staff and students
+        foreach (array_keys($out) as $code) if (!str_starts_with($code,'lms.') && str_starts_with($code,'portal.')!==$student && !($group==='PARENT' && in_array($code,['portal.workspace.view','portal.parent.view'],true))) unset($out[$code]); // the LMS is for staff and students; v62: parents open the Portal
+        if ($group==='PARENT') $out=array_intersect_key($out,array_flip(['portal.workspace.view','portal.parent.view'])); // v62: parents only see their children, read-only
         return $this->permissionCache[$id]=$out;
     }
     /** This person's module overrides (rows of central_user_module_access). */
@@ -202,8 +203,17 @@ final class CentralAccounts
         return [$teacher?:null,$sd,$sn];
     }
     /** Called only from SIS administration (or the explicit, local bootstrap command). */
+    private bool $parentMode=false;
+    /** v62: Registrar staff (students manage) can create and update Parent / Guardian accounts only. */
+    public function saveParent(int $actor,array $in): int {
+        if ($this->group($actor)!=='POWER_USER' && !$this->can($actor,'sis.students.manage')) throw new CentralAccountError('Only the Registrar can create parent accounts.');
+        $id=(int)($in['id']??0);
+        if ($id && $this->group($id)!=='PARENT') throw new CentralAccountError('This account is not a parent account.');
+        $this->parentMode=true;
+        try { return $this->save($actor,['group'=>'PARENT','teacher_doc_id'=>'','student_number'=>'','source_sis'=>'','source_grading'=>'']+$in); } finally { $this->parentMode=false; }
+    }
     public function save(?int $actor,array $in,bool $bootstrap=false): int {
-        if (!$bootstrap) $this->requirePower($actor);
+        if (!$bootstrap) { if (!($this->parentMode && ($in['group']??'')==='PARENT')) $this->requirePower($actor); }
         elseif (PHP_SAPI!=='cli' || $this->q('SELECT COUNT(*) FROM central_accounts')->fetchColumn()) throw new CentralAccountError('Bootstrap is local and first-account only.');
         return $this->transaction(function() use($actor,$in,$bootstrap) {
             // Serialize account/group management and protect the last active Power User.
@@ -383,7 +393,7 @@ final class CentralAccounts
     }
     public function syncProjections(int $id): void {
         $a=$this->account($id); $group=$this->group($id);
-        $sisRole=['POWER_USER'=>'ADMIN','ACCOUNTING'=>'ACCOUNTING','CASHIER'=>'CASHIER','CANTEEN_CASHIER'=>'CASHIER','CANTEEN_SUPERVISOR'=>'CASHIER','LIBRARIAN'=>'CASHIER','REGISTRAR'=>'REGISTRAR','TEACHER'=>'TEACHER','STUDENT'=>'STUDENT'][$group]??'TEACHER';
+        $sisRole=['POWER_USER'=>'ADMIN','ACCOUNTING'=>'ACCOUNTING','CASHIER'=>'CASHIER','CANTEEN_CASHIER'=>'CASHIER','CANTEEN_SUPERVISOR'=>'CASHIER','LIBRARIAN'=>'CASHIER','REGISTRAR'=>'REGISTRAR','TEACHER'=>'TEACHER','STUDENT'=>'STUDENT','PARENT'=>'STUDENT'][$group]??'TEACHER';
         $sid=$this->legacyId($id,'SIS');
         if (!$sid) {
             // Avoid silently claiming a legacy username; it must be explicitly reviewed and linked.

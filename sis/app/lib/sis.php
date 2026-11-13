@@ -310,12 +310,14 @@ final class Admission
                 if (!$a['student_number'] || !GS::studentByNumber((string) $a['student_number'])) throw new AppError('This application has no existing Student ID. Edit it and enter the Student ID.');
                 Db::q("UPDATE sis_admissions SET status = 'ADMITTED', decided_by = ?, decided_at = NOW() WHERE id = ?", [Auth::id(), $id]);
                 Audit::log('readmission_approved', 'admission', $id, ['student_number' => $a['student_number']]);
+                StudentPhoto::linkAdmission($id, (string) $a['student_number']); // v62
                 return (string) $a['student_number'];
             }
             Db::val("SELECT COUNT(*) FROM docs WHERE col = 'students' FOR UPDATE");
             $number = GS::nextStudentNumber($a['school_year']);
             Db::q("UPDATE sis_admissions SET status = 'ADMITTED', student_number = ?, decided_by = ?, decided_at = NOW() WHERE id = ?", [$number, Auth::id(), $id]);
             Audit::log('admission_admitted', 'admission', $id, ['student_number' => $number]);
+            StudentPhoto::linkAdmission($id, (string) $number); // v62: the admission photo becomes the student's photo
             return $number;
         });
     }

@@ -105,8 +105,15 @@ final class Lms
     /** Classes the signed-in person teaches or takes (coordinators: every class of the school year). */
     public static function myClasses(?string $schoolYear = null): array
     {
+        static $cache = [];
         $me = self::me(); $sy = $schoolYear ?? (GS::schoolYears()[0] ?? '');
-        $all = array_filter(GS::all('gradingAssignments'), fn($a) => $sy === '' || ($a['schoolYear'] ?? '') === $sy);
+        $key = ($me['id'] ?? 0) . '|' . $sy;
+        if (isset($cache[$key]) && PHP_SAPI !== 'cli') return $cache[$key]; // v62: once per page
+        // v62: only this school year's classes are read (indexed column), and teachers read only their own
+        $where = "col = 'gradingAssignments'" . ($sy !== '' ? ' AND f_schoolYear = ?' : '');
+        $args = $sy !== '' ? [$sy] : [];
+        if (!$me['admin'] && $me['teacher'] && !$me['student']) { $where .= ' AND f_teacherDocId = ?'; $args[] = $me['teacher']; }
+        $all = array_map(fn($r) => ['id' => $r['id']] + (json_decode((string) $r['data'], true) ?: []), Db::all("SELECT id, data FROM docs WHERE $where", $args));
         $out = [];
         foreach ($all as $a) {
             $role = null;
@@ -116,7 +123,7 @@ final class Lms
             if ($role) $out[] = self::shape($a) + ['role' => $role];
         }
         usort($out, fn($x, $y) => [$x['term'], $x['subjectCode']] <=> [$y['term'], $y['subjectCode']]);
-        return $out;
+        return $cache[$key] = $out;
     }
 
     private static function shape(array $a): array
@@ -147,8 +154,11 @@ final class Lms
     public static function roster(array $c): array
     {
         $out = [];
+        $docs = [];
+        foreach (array_chunk($c['studentIds'], 500) as $chunk) // v62: one query instead of one per student
+            foreach (Db::all("SELECT id, data FROM docs WHERE col = 'students' AND id IN (" . implode(',', array_fill(0, count($chunk), '?')) . ')', $chunk) as $r) $docs[$r['id']] = json_decode((string) $r['data'], true) ?: [];
         foreach ($c['studentIds'] as $sid) {
-            $s = GS::get('students', $sid);
+            $s = $docs[$sid] ?? [];
             $out[$sid] = ['id' => $sid, 'no' => (string) ($s['studentId'] ?? ''), 'name' => (string) ($s['studentName'] ?? 'Unknown student'), 'email' => (string) ($s['email'] ?? '')];
         }
         uasort($out, fn($x, $y) => strcasecmp($x['name'], $y['name']));
@@ -215,6 +225,15 @@ final class Lms
 
     private static function storeFiles(string $type, int $ownerId, array $files): void
     {
+        if ($files) { // v62: each class has a storage limit
+            $classId = (string) Db::val($type === 'POST' ? 'SELECT class_id FROM lms_posts WHERE id = ?' : ($type === 'WORK' ? 'SELECT class_id FROM lms_work WHERE id = ?'
+                : 'SELECT w.class_id FROM lms_submissions s JOIN lms_work w ON w.id = s.work_id WHERE s.id = ?'), [$ownerId]);
+            $add = array_sum(array_map(fn($f) => strlen($f[2]), $files));
+            $used = self::classUsage($classId); $limit = self::quotaBytes();
+            if ($limit > 0 && $used + $add > $limit)
+                throw new AppError('This class has used ' . self::mb($used) . ' of its ' . self::mb($limit) . ' file space, so these files (' . self::mb($add) . ') don\'t fit. '
+                    . ($type === 'SUBMISSION' ? 'Ask your teacher.' : 'Remove old files or ask the LMS coordinator to free up space.'));
+        }
         foreach ($files as [$name, $mime, $bytes]) {
             $st = Db::pdo()->prepare('INSERT INTO lms_files (owner_type, owner_id, name, mime, size_bytes, sha1, bytes, uploaded_by) VALUES (?,?,?,?,?,?,?,?)');
             $st->bindValue(1, $type); $st->bindValue(2, $ownerId, PDO::PARAM_INT); $st->bindValue(3, $name); $st->bindValue(4, $mime);
@@ -263,6 +282,8 @@ final class Lms
                 'author_id' => Auth::id(), 'author_name' => (string) (Auth::user()['full_name'] ?? '')]);
             self::storeFiles('POST', $id, $files);
             Audit::log('lms_' . strtolower($kind) . '_posted', 'lms_class', $c['id'], ['post' => $id, 'title' => $title, 'files' => count($files)]);
+            Notify::toStudents($c['studentIds'], 'LMS_POST', ($kind === 'MATERIAL' ? 'New material' : 'New announcement') . ' in ' . $c['subjectCode'],
+                ($title !== '' ? $title . ': ' : '') . mb_strimwidth($body !== '' ? $body : 'Open the class to see it.', 0, 240, '…'), self::classLink($c['id'], $kind === 'MATERIAL' ? 'classwork' : 'stream'), 'lms-post:' . $id);
             return $id;
         });
     }
@@ -309,7 +330,8 @@ final class Lms
             'topic' => ($tp = trim((string) ($in['topic'] ?? ''))) !== '' ? mb_substr($tp, 0, 80) : null, 'points' => $points, 'due_at' => $due,
             'allow_late' => empty($in['allow_late']) ? 0 : 1, 'allow_resubmit' => empty($in['allow_resubmit']) ? 0 : 1, 'status' => ($in['status'] ?? '') === 'DRAFT' ? 'DRAFT' : 'PUBLISHED'];
         $files = array_map([self::class, 'readUpload'], $uploads);
-        return Db::tx(function () use ($c, $id, $row, $files) {
+        $wasPublished = $id ? Db::val('SELECT status FROM lms_work WHERE id = ? AND class_id = ?', [$id, $c['id']]) === 'PUBLISHED' : false;
+        $newId = Db::tx(function () use ($c, $id, $row, $files) {
             if ($id) {
                 if (!Db::val('SELECT 1 FROM lms_work WHERE id = ? AND class_id = ? AND deleted_at IS NULL', [$id, $c['id']])) throw new AppError('Classwork not found.');
                 Db::q('UPDATE lms_work SET ' . implode(', ', array_map(fn($k) => "$k = ?", array_keys($row))) . ' WHERE id = ?', [...array_values($row), $id]);
@@ -318,6 +340,25 @@ final class Lms
             Audit::log('lms_work_saved', 'lms_class', $c['id'], ['work' => $id, 'title' => $row['title'], 'points' => $row['points'], 'status' => $row['status']]);
             return (int) $id;
         });
+        if ($row['status'] === 'PUBLISHED' && !$wasPublished)
+            Notify::toStudents($c['studentIds'], 'LMS_WORK', 'New ' . ($row['kind'] === 'QUIZ' ? 'quiz' : strtolower($row['category'])) . ' in ' . $c['subjectCode'],
+                $row['title'] . ($row['due_at'] ? ' · due ' . date('D, M j, g:i A', strtotime($row['due_at'])) : '') . ' · ' . self::pts((float) $row['points']) . ((float) $row['points'] == 1.0 ? ' point' : ' points'), self::workLink($c['id'], $newId), 'lms-work:' . $newId);
+        return $newId;
+    }
+
+    /** 18, 18.5 (never "1" for 10). */
+    private static function pts(float $n): string { return rtrim(rtrim(number_format($n, 2, '.', ''), '0'), '.'); }
+
+    private static function classLink(string $classId, string $tab = 'stream'): string { return '../lms/index.php?' . http_build_query(['r' => 'class', 'id' => $classId, 'tab' => $tab]); }
+    private static function workLink(string $classId, int $workId): string { return '../lms/index.php?' . http_build_query(['r' => 'work', 'id' => $classId, 'w' => $workId]); }
+
+    /** Tell a student their work came back, with the score. */
+    private static function notifyReturned(array $w, string $studentDocId, float $score): void
+    {
+        $c = self::shape(GS::get('gradingAssignments', (string) $w['class_id']) ?: ['id' => $w['class_id']]);
+        Notify::toAccount(Notify::accountOfStudent($studentDocId), 'LMS_RETURNED', 'Your work was returned: ' . $w['title'],
+            'Score: ' . self::pts($score) . ' / ' . self::pts((float) $w['points']) . ($c['subjectCode'] !== '' ? ' · ' . $c['subjectCode'] : '') . '. Open it to see the feedback.',
+            self::workLink((string) $w['class_id'], (int) $w['id']));
     }
 
     public static function deleteWork(array $c, int $workId): void
@@ -514,6 +555,7 @@ final class Lms
             Db::q('UPDATE lms_submissions SET question_scores = ?, score = ?, feedback = ?, graded_by = ?, graded_at = NOW()' . ($return ? ", status = 'RETURNED', returned_at = NOW()" : '') . ' WHERE id = ?',
                 [json_encode($scores), $missing ? null : $total, trim($feedback) !== '' ? mb_substr(trim($feedback), 0, 10000) : null, Auth::id(), $s['id']]);
             Audit::log($return ? 'lms_quiz_returned' : 'lms_quiz_scored', 'lms_work', (int) $w['id'], ['student' => $s['student_no'], 'score' => $total]);
+            if ($return) self::notifyReturned($w, $studentDocId, (float) $total);
             return $total;
         });
     }
@@ -600,6 +642,7 @@ final class Lms
             Db::q('UPDATE lms_submissions SET score = ?, feedback = ?, graded_by = ?, graded_at = NOW()' . ($return ? ", status = 'RETURNED', returned_at = NOW()" : '') . ' WHERE id = ?',
                 [$sc, trim($feedback) !== '' ? mb_substr(trim($feedback), 0, 10000) : null, Auth::id(), $id]);
             Audit::log($return ? 'lms_work_returned' : 'lms_work_scored', 'lms_work', (int) $w['id'], ['student' => $st['no'], 'score' => $sc]);
+            if ($return) self::notifyReturned($w, $studentDocId, (float) $sc);
         });
     }
 
@@ -783,8 +826,13 @@ final class Lms
     /** Every meeting of the given classes (from the SIS class schedule), each with its class. */
     public static function allMeetings(array $classes): array
     {
-        $out = [];
-        foreach ($classes as $c) foreach (self::meetings($c) as $m) $out[] = $m + ['class' => $c, 'label' => Schedules::timeRange($m) . (($m['kind'] ?? '') === 'LAB' ? ' Lab' : '')];
+        $out = []; $lists = [];
+        foreach ($classes as $c) {
+            $k = $c['schoolYear'] . '|' . $c['term']; // v62: one schedule query per term, not per class
+            $lists[$k] ??= Schedules::list(['school_year' => $c['schoolYear'], 'term' => $c['term']]);
+            foreach ($lists[$k] as $m) if ($m['section_doc_id'] === $c['sectionId'] && $m['subject_doc_id'] === $c['subjectId'])
+                $out[] = $m + ['class' => $c, 'label' => Schedules::timeRange($m) . (($m['kind'] ?? '') === 'LAB' ? ' Lab' : '')];
+        }
         usort($out, fn($a, $b) => [$a['start_time'], $a['end_time']] <=> [$b['start_time'], $b['end_time']]);
         return $out;
     }
@@ -929,6 +977,9 @@ final class Lms
         $id = Db::insert('lms_messages', ['class_id' => $c['id'], 'student_doc_id' => $studentDocId, 'from_teacher' => $teacher ? 1 : 0, 'sender_id' => Auth::id(),
             'sender_name' => self::me()['name'] ?: ($teacher ? $c['teacherName'] : 'Student'), 'body' => $body]);
         Audit::log('lms_message_sent', 'lms_class', $c['id'], ['message' => $id, 'student' => $studentDocId, 'from_teacher' => $teacher]);
+        $to = $teacher ? Notify::accountOfStudent($studentDocId) : Notify::accountOfTeacher($c['teacherDocId']);
+        Notify::toAccount($to, 'LMS_MESSAGE', 'New message from ' . (self::me()['name'] ?: ($teacher ? $c['teacherName'] : 'a student')), mb_strimwidth($body, 0, 240, '…') . ' · ' . $c['subjectCode'],
+            '../lms/index.php?' . http_build_query(['r' => 'messages', 'c' => $c['id']] + ($teacher ? [] : ['s' => $studentDocId])));
         return $id;
     }
 
@@ -948,4 +999,70 @@ final class Lms
             'average' => $pct ? round(array_sum($pct) / count($pct), 2) : null, 'passing' => $passing, 'graded' => count($pct),
             'meetings' => (int) $att['meetings'], 'attendance' => (int) $att['n'] ? round((int) $att['ok'] * 100 / (int) $att['n'], 1) : null];
     }
+
+    // ------------------------------------------------------------------ v62 storage limits
+
+    public const DEFAULT_QUOTA_MB = 500;
+
+    /** The file space each class may use, in bytes (0 = no limit). Set by the LMS coordinator. */
+    public static function quotaBytes(): int
+    {
+        $v = Db::val("SELECT svalue FROM sis_settings WHERE skey = 'lms_class_quota_mb'");
+        return ($v === null || $v === false ? self::DEFAULT_QUOTA_MB : max(0, (int) $v)) * 1048576;
+    }
+
+    public static function saveQuota(int $mb): void
+    {
+        if (!self::me()['admin']) throw new Forbidden('Only the LMS coordinator can change the storage limit.');
+        if ($mb < 0 || $mb > 100000) throw new AppError('The limit is in MB (0 means no limit).');
+        Db::q("INSERT INTO sis_settings (skey, svalue) VALUES ('lms_class_quota_mb', ?) ON DUPLICATE KEY UPDATE svalue = VALUES(svalue)", [(string) $mb]);
+        Audit::log('lms_quota_saved', 'settings', 0, ['mb' => $mb]);
+    }
+
+    /** Bytes of files in a class: stream posts, classwork and students' hand-ins. */
+    public static function classUsage(string $classId): int
+    {
+        return (int) Db::val("SELECT COALESCE(SUM(f.size_bytes), 0) FROM lms_files f
+            LEFT JOIN lms_posts p ON f.owner_type = 'POST' AND p.id = f.owner_id
+            LEFT JOIN lms_work w ON f.owner_type = 'WORK' AND w.id = f.owner_id
+            LEFT JOIN lms_submissions s ON f.owner_type = 'SUBMISSION' AND s.id = f.owner_id LEFT JOIN lms_work sw ON sw.id = s.work_id
+            WHERE COALESCE(p.class_id, w.class_id, sw.class_id) = ?", [$classId]);
+    }
+
+    /** Storage by school year: classes, files and bytes (for the coordinator's clean-up). */
+    public static function usageByYear(): array
+    {
+        $years = [];
+        foreach (GS::all('gradingAssignments') as $a) $years[(string) ($a['id'])] = (string) ($a['schoolYear'] ?? '');
+        $rows = Db::all("SELECT COALESCE(p.class_id, w.class_id, sw.class_id) cid, COUNT(*) n, SUM(f.size_bytes) b FROM lms_files f
+            LEFT JOIN lms_posts p ON f.owner_type = 'POST' AND p.id = f.owner_id LEFT JOIN lms_work w ON f.owner_type = 'WORK' AND w.id = f.owner_id
+            LEFT JOIN lms_submissions s ON f.owner_type = 'SUBMISSION' AND s.id = f.owner_id LEFT JOIN lms_work sw ON sw.id = s.work_id GROUP BY cid");
+        $out = [];
+        foreach ($rows as $r) { $y = $years[(string) $r['cid']] ?? '(class removed)'; $out[$y] ??= ['files' => 0, 'bytes' => 0, 'classes' => 0]; $out[$y]['files'] += (int) $r['n']; $out[$y]['bytes'] += (int) $r['b']; $out[$y]['classes']++; }
+        krsort($out);
+        return $out;
+    }
+
+    /**
+     * Free up space: delete the files (not the grades, posts or hand-in records) of every class of an earlier school year.
+     * The current school year can't be cleaned. Returns [files, bytes] removed.
+     */
+    public static function cleanYear(string $schoolYear, string $confirm): array
+    {
+        if (!self::me()['admin']) throw new Forbidden('Only the LMS coordinator can free up space.');
+        $current = GS::schoolYears()[0] ?? '';
+        if ($schoolYear === '' || $schoolYear === $current) throw new AppError('Files of the current school year (' . $current . ') can\'t be removed.');
+        if (trim($confirm) !== $schoolYear) throw new AppError('Type the school year (' . $schoolYear . ') to confirm.');
+        $ids = array_values(array_map(fn($a) => (string) $a['id'], array_filter(GS::all('gradingAssignments'), fn($a) => ($a['schoolYear'] ?? '') === $schoolYear)));
+        if (!$ids) return [0, 0];
+        $in = implode(',', array_fill(0, count($ids), '?'));
+        $files = Db::all("SELECT f.id, f.size_bytes FROM lms_files f LEFT JOIN lms_posts p ON f.owner_type = 'POST' AND p.id = f.owner_id LEFT JOIN lms_work w ON f.owner_type = 'WORK' AND w.id = f.owner_id
+            LEFT JOIN lms_submissions s ON f.owner_type = 'SUBMISSION' AND s.id = f.owner_id LEFT JOIN lms_work sw ON sw.id = s.work_id WHERE COALESCE(p.class_id, w.class_id, sw.class_id) IN ($in)", $ids);
+        $bytes = array_sum(array_map(fn($f) => (int) $f['size_bytes'], $files));
+        foreach (array_chunk(array_column($files, 'id'), 500) as $chunk) Db::q('DELETE FROM lms_files WHERE id IN (' . implode(',', array_fill(0, count($chunk), '?')) . ')', $chunk);
+        Audit::log('lms_files_cleaned', 'settings', 0, ['school_year' => $schoolYear, 'files' => count($files), 'bytes' => $bytes]);
+        return [count($files), $bytes];
+    }
+
+    public static function mb(int $bytes): string { return $bytes >= 1073741824 ? number_format($bytes / 1073741824, 1) . ' GB' : number_format($bytes / 1048576, $bytes < 10485760 ? 1 : 0) . ' MB'; }
 }

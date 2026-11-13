@@ -15,6 +15,8 @@ const NAV = [
     ['clearance', 'Online Clearance', 'patch-check', ['clearance'], 'Enrollment', 'Sign and review student clearance'],
     ['eligibility', 'Enrollment Eligibility', 'shield-check', ['registration', 'eligibility.view'], 'Enrollment', 'Checks, holds and prerequisites'],
     ['students', 'Students', 'people', ['students'], 'Records', ''],
+    ['photos', 'Photo Approvals', 'person-bounding-box', ['students.edit'], 'Records', 'New photos students sent'],
+    ['privacy', 'Data Privacy', 'shield-lock', ['students.edit', 'settings.manage'], 'Records', 'Privacy notice and records to review'],
     ['teachers', 'Teachers', 'person-video3', ['teachers'], 'Records', ''],
     ['sections', 'Sections', 'collection', ['sections'], 'Records', ''],
     ['yearlevels', 'Year Levels', 'bar-chart-steps', ['yearlevels'], 'Records', ''],
@@ -201,6 +203,7 @@ function layout_start(string $title, bool $bare = false): void
 <link rel="stylesheet" href="<?= sis_web() ?>assets/sis-actions.css?v=20261021plans">
 <link rel="stylesheet" href="<?= sis_web() ?>assets/compact-workspace.css?v=20261025toolbar11">
 <link rel="stylesheet" href="<?= sis_web() ?>assets/theme.css?v=53">
+<link rel="stylesheet" href="<?= sis_web() ?>assets/people.css?v=62">
 <link rel="stylesheet" href="<?= sis_web() ?>assets/unified-toolbar.css?v=60">
 <link rel="stylesheet" href="../css/standard-toolbar.css?v=57">
 <link rel="stylesheet" href="<?= sis_web() ?>assets/registration-fees.css?v=4">
@@ -208,7 +211,7 @@ function layout_start(string $title, bool $bare = false): void
 <?php if (app_system() === 'CANTEEN'): ?><link rel="stylesheet" href="assets/canteen.css?v=59b"><?php endif; ?>
 <?php if (app_system() === 'LIBRARY'): ?><link rel="stylesheet" href="assets/library.css?v=61c"><?php endif; ?>
 <?php if (app_system() === 'LMS'): ?><link rel="stylesheet" href="assets/lms.css?v=61.2"><?php endif; ?>
-<?php if (in_array(app_system(), ['LMS', 'CANTEEN'], true)): ?><link rel="stylesheet" href="<?= sis_web() ?>assets/bottom-nav.css?v=61.2b"><?php endif; ?>
+<?php if (in_array(app_system(), ['LMS', 'CANTEEN', 'LIBRARY'], true)): ?><link rel="stylesheet" href="<?= sis_web() ?>assets/bottom-nav.css?v=62c"><?php endif; ?>
 <?php if ($route === 'assessment' && ($_GET['tab'] ?? '') === 'names'): ?><script src="<?= sis_web() ?>assets/fee-templates.js?v=1" defer></script><?php endif; ?>
 <?php if ($route === 'documents' && ($_GET['tab'] ?? '') === 'settings'): ?><script src="<?= sis_web() ?>assets/documents-template-preview.js?v=1" defer></script><?php endif; ?>
 <?php if ($route === 'admission'): ?><link rel="stylesheet" href="<?= sis_web() ?>assets/admission-form.css?v=1"><?php endif; ?>
@@ -251,7 +254,8 @@ function layout_start(string $title, bool $bare = false): void
       <form method="post" action="<?= url('logout') ?>" class="m-0"><?= csrf_field() ?><button class="dropdown-item"><i class="bi bi-box-arrow-right" aria-hidden="true"></i>Sign out</button></form>
     </div>
   </div>
-  <?php if (Auth::can(...ROUTES['notifications'][1])): ?><a class="sis-appbar-bell" href="<?= url('notifications') ?>" aria-label="Notifications<?= $unread ? ': ' . $unread . ' unread' : '' ?>"><i class="bi bi-bell" aria-hidden="true"></i><?php if ($unread): ?><span class="sis-dot" aria-hidden="true"></span><?php endif; ?></a><?php endif; ?>
+  <?php if (in_array(app_system(), ['LMS', 'CANTEEN', 'LIBRARY'], true)): $mine = Notify::unread(); // v62: personal notifications ?><a class="sis-appbar-bell" href="<?= url('alerts') ?>" aria-label="Notifications<?= $mine ? ': ' . $mine . ' unread' : '' ?>"><i class="bi bi-bell" aria-hidden="true"></i><?php if ($mine): ?><span class="sis-dot" aria-hidden="true"></span><?php endif; ?></a>
+  <?php elseif (Auth::can(...ROUTES['notifications'][1])): ?><a class="sis-appbar-bell" href="<?= url('notifications') ?>" aria-label="Notifications<?= $unread ? ': ' . $unread . ' unread' : '' ?>"><i class="bi bi-bell" aria-hidden="true"></i><?php if ($unread): ?><span class="sis-dot" aria-hidden="true"></span><?php endif; ?></a><?php endif; ?>
 
 </header>
 <div class="app-shell">
@@ -323,7 +327,7 @@ function layout_end(bool $bare = false): void
 <script src="<?= sis_web() ?>assets/record-list.js?v=48" defer></script>
 <script src="<?= sis_web() ?>assets/fixed-shell.js?v=31" defer></script>
 <script src="<?= sis_web() ?>assets/accounting-ui.js?v=31" defer></script>
-<script src="<?= sis_web() ?>assets/app.js?v=42"></script>
+<script src="<?= sis_web() ?>assets/app.js?v=62"></script>
 <script src="<?= sis_web() ?>assets/friendly-ui.js?v=48"></script>
 <script src="<?= sis_web() ?>assets/sis-actions.js?v=41"></script>
 <script src="<?= sis_web() ?>assets/theme.js?v=52"></script>

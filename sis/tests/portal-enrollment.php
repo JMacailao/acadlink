@@ -3,8 +3,10 @@
 declare(strict_types=1);
 if (PHP_SAPI!=='cli') exit;
 require __DIR__.'/../app/bootstrap.php';
-$cfg=sis_config(); $cfg['db_host']='127.0.0.1'; $cfg['db_port']=(int)(getenv('PORTAL_TEST_PORT')?:3369); $name='acadlink_portal_test_'.bin2hex(random_bytes(4));
-$server=new PDO('mysql:host=127.0.0.1;port='.$cfg['db_port'].';charset=utf8mb4',$cfg['db_user'],$cfg['db_pass'],[PDO::ATTR_ERRMODE=>PDO::ERRMODE_EXCEPTION]);
+// The configured MySQL server (or PORTAL_TEST_PORT=3369 for a separate test server); a new disposable database each run.
+$cfg=sis_config(); if(getenv('PORTAL_TEST_PORT')){$cfg['db_host']='127.0.0.1';$cfg['db_port']=(int)getenv('PORTAL_TEST_PORT');unset($cfg['db_socket']);} $name='acadlink_portal_test_'.bin2hex(random_bytes(4));
+$dsn=!empty($cfg['db_socket'])?'mysql:unix_socket='.$cfg['db_socket'].';charset=utf8mb4':sprintf('mysql:host=%s;port=%d;charset=utf8mb4',$cfg['db_host'],$cfg['db_port']);
+$server=new PDO($dsn,$cfg['db_user'],$cfg['db_pass'],[PDO::ATTR_ERRMODE=>PDO::ERRMODE_EXCEPTION]);
 $server->exec("CREATE DATABASE `$name` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci");$cfg['db_name']=$name;Db::connect($cfg);
 Db::pdo()->exec(file_get_contents(dirname(SIS_ROOT).'/INSTALL.sql'));
 $legacyApp=Db::insert('sis_portal_enrollments',['account_id'=>1,'student_number'=>'UPGRADE_ONLY','student_doc_id'=>'upgrade-fixture','student_name'=>'Upgrade Fixture','school_year'=>'2026-2027','term'=>'1st Semester','eligibility_snapshot'=>'{}']);

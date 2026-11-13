@@ -54,6 +54,7 @@ final class ModuleAccess
             'portal.receipts'    => ['PORTAL', 'My receipts', ['portal.receipts.view'], [], []],
             'portal.enrollment'  => ['PORTAL', 'My enrollment status', ['portal.enrollment.view'], [], []],
             'portal.apply'       => ['PORTAL', 'Apply for admission or enrollment', [], ['portal.admission.apply'], []],
+            'portal.parent'      => ['PORTAL', 'Parent view: their linked children\'s grades, attendance and balance (read-only)', ['portal.parent.view'], [], []],
             'lms.access'         => ['LMS', 'LMS: classes (teachers teach their classes, students take theirs)', ['lms.access.view'], [], ['lms.manage.all' => 'Coordinator: open and manage every class']],
             'canteen.pos'        => ['CANTEEN', 'Canteen: sell, receipts and own shift', ['canteen.sales.view'], ['canteen.sales.make'], []],
             'canteen.products'   => ['CANTEEN', 'Canteen: products, prices and QR code', ['canteen.products.view'], ['canteen.products.manage'], []],
@@ -184,10 +185,30 @@ final class ModuleAccess
         self::installV58($db);
         self::installV59($db);
         self::installV60($db);
+        self::installV62($db);
         $db->exec("INSERT IGNORE INTO central_permissions(code,workspace,label) VALUES ('lms.manage.all','LMS','Open and manage every LMS class (coordinator)')"); // v61
     }
 
     /** v60: Library permissions and the Librarian group. */
+    /** v62: Parent / Guardian group: opens the Student Portal and sees only the children linked to it, read-only. */
+    private static function installV62(PDO $db): void
+    {
+        $db->exec("INSERT IGNORE INTO central_permissions(code,workspace,label) VALUES ('portal.parent.view','PORTAL','See linked children: grades, attendance and balance (parents)')");
+        if ($db->query("SELECT 1 FROM central_schema_migrations WHERE migration_key='parents_v62'")->fetchColumn()) return;
+        $db->beginTransaction();
+        try {
+            $db->exec("INSERT IGNORE INTO central_groups(code,name,description,is_default,is_active) VALUES
+                ('PARENT','Parent / Guardian','See their own children only: grades, LMS work and attendance, balance and receipts. Read-only. The Registrar creates and links these accounts.',1,1)");
+            $db->exec("INSERT IGNORE INTO central_group_permissions(group_id,permission_code,access_scope)
+                       SELECT g.id,c.code,'ALL' FROM central_groups g JOIN central_permissions c ON c.code IN ('portal.workspace.view','portal.parent.view') WHERE g.code = 'PARENT'");
+            $db->exec("INSERT IGNORE INTO central_schema_migrations(migration_key) VALUES ('parents_v62')");
+            $db->commit();
+        } catch (Throwable $e) {
+            if ($db->inTransaction()) $db->rollBack();
+            throw $e;
+        }
+    }
+
     private static function installV60(PDO $db): void
     {
         $db->exec("INSERT IGNORE INTO central_permissions(code,workspace,label) VALUES

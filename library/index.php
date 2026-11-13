@@ -7,12 +7,13 @@
 declare(strict_types=1);
 
 const APP_SYSTEM = 'LIBRARY';
-const LOCAL_ROUTES = ['dashboard', 'circulation', 'members', 'cover', 'catalog', 'loans', 'holds', 'fines', 'acquisitions', 'stocktake', 'labels', 'reports', 'settings',
+const LOCAL_ROUTES = ['alerts', 'dashboard', 'circulation', 'members', 'cover', 'catalog', 'loans', 'holds', 'fines', 'acquisitions', 'stocktake', 'labels', 'reports', 'settings',
     'notifications', 'search', 'profile', 'password', 'navstate'];
 require __DIR__ . '/../sis/app/bootstrap.php';
 sis_boot();
 
 const ROUTES = [
+    'alerts'       => ['alerts', []], // v62: my notifications
     'dashboard'    => [__DIR__ . '/pages/overview.php', ['library.view', 'library.catalog', 'library.reports']],
     'circulation'  => [__DIR__ . '/pages/desk.php', ['library.view']],
     'members'      => [__DIR__ . '/pages/members.php', ['library.view']],

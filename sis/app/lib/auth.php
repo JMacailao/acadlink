@@ -77,14 +77,14 @@ final class Auth
             if (!$a) return null;
             $g=$c->group((int)$a['id']);
             $u['central_id']=(int)$a['id'];
-            $u['role']=['POWER_USER'=>'ADMIN','ACCOUNTING'=>'ACCOUNTING','CASHIER'=>'CASHIER','CANTEEN_CASHIER'=>'CASHIER','CANTEEN_SUPERVISOR'=>'CASHIER','LIBRARIAN'=>'CASHIER','REGISTRAR'=>'REGISTRAR','TEACHER'=>'TEACHER','STUDENT'=>'STUDENT'][$g]??'TEACHER';
+            $u['role']=['POWER_USER'=>'ADMIN','ACCOUNTING'=>'ACCOUNTING','CASHIER'=>'CASHIER','CANTEEN_CASHIER'=>'CASHIER','CANTEEN_SUPERVISOR'=>'CASHIER','LIBRARIAN'=>'CASHIER','REGISTRAR'=>'REGISTRAR','TEACHER'=>'TEACHER','STUDENT'=>'STUDENT','PARENT'=>'STUDENT'][$g]??'TEACHER';
             $u['username']=$a['username']; $u['full_name']=$a['display_name'];
             $u['must_change_password']=$a['must_change_password'];
             $u['student_number']=$a['person_verified']?$a['student_number']:null;
             unset($u['password_hash']);
         } elseif (!$u['is_active']) return null;
         $u['role_code']=$u['role']; $u['role_name']=self::ROLES[$u['role']]??$u['role'];
-        if (isset($g) && isset(['CANTEEN_CASHIER'=>1,'CANTEEN_SUPERVISOR'=>1,'LIBRARIAN'=>1][$g])) $u['role_name'] = ['CANTEEN_CASHIER'=>'Canteen Cashier','CANTEEN_SUPERVISOR'=>'Canteen Supervisor','LIBRARIAN'=>'Librarian'][$g];
+        if (isset($g) && isset(['CANTEEN_CASHIER'=>1,'CANTEEN_SUPERVISOR'=>1,'LIBRARIAN'=>1,'PARENT'=>1][$g])) $u['role_name'] = ['CANTEEN_CASHIER'=>'Canteen Cashier','CANTEEN_SUPERVISOR'=>'Canteen Supervisor','LIBRARIAN'=>'Librarian','PARENT'=>'Parent / Guardian'][$g];
         return $u;
     }
 
@@ -129,7 +129,7 @@ final class Auth
             'payments.view'=>['sis.receipts.view'], 'payments.record'=>['sis.payments.receive'], 'payments.void'=>['sis.payments.void'],
             'accounting'=>['sis.accounting.view','sis.journals.prepare','sis.journals.review','sis.journals.post','sis.reconciliation.manage','sis.reports.view'],
             'groups.manage'=>['admin.groups.manage'], 'reports'=>['sis.reports.view'],
-            'accounting.edit'=>['sis.journals.prepare'], 'self'=>['portal.workspace.view'],
+            'accounting.edit'=>['sis.journals.prepare'], 'self'=>['portal.workspace.view'], 'parent'=>['portal.parent.view'],
             // Listed in Users and Groups; each one now controls the action it names
             'admission.view'=>['sis.admission.view','sis.admission.manage'], 'admission.approve'=>['sis.admission.approve'],
             'registration.view'=>['sis.registration.view','sis.registration.manage'], 'enrollment.confirm'=>['sis.enrollment.confirm'], 'enrollment.reopen'=>['sis.enrollment.reopen'],

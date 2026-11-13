@@ -6,7 +6,7 @@
 declare(strict_types=1);
 
 define('PORTAL_ROOT', __DIR__);
-const LOCAL_ROUTES = ['my', 'myenrollment', 'myadmission', 'history', 'receipt', 'password', 'profile', 'documents', 'docreceipt', 'schedule', 'clearance', 'clearanceslip', 'clearancefile', 'library']; // links to other pages go to ../sis/
+const LOCAL_ROUTES = ['alerts', 'photo', 'children', 'my', 'myenrollment', 'myadmission', 'history', 'receipt', 'password', 'profile', 'documents', 'docreceipt', 'schedule', 'clearance', 'clearanceslip', 'clearancefile', 'library']; // links to other pages go to ../sis/
 require __DIR__ . '/../sis/app/bootstrap.php';
 sis_boot();
 
@@ -32,8 +32,12 @@ const PORTAL_ROUTES = [
     'clearanceslip'=> [SIS_ROOT . '/app/pages/clearanceslip.php', ['self']],
     'clearancefile'=> [SIS_ROOT . '/app/pages/clearancefile.php', ['self']],
     'library'      => [__DIR__ . '/../library/pages/portal.php', ['self']], // v60
+    'alerts'       => [SIS_ROOT . '/app/pages/alerts.php', []],              // v62: my notifications
+    'photo'        => [SIS_ROOT . '/app/pages/photo.php', []],               // v62: student photo
+    'children'     => [__DIR__ . '/pages/children.php', ['parent']],         // v62: parents: their children
 ];
-$route = is_string($_GET['r'] ?? null) && isset(PORTAL_ROUTES[$_GET['r']]) ? $_GET['r'] : 'my';
+$route = is_string($_GET['r'] ?? null) && isset(PORTAL_ROUTES[$_GET['r']]) ? $_GET['r'] : (ParentAccess::isParent() ? 'children' : 'my'); // v62: parents start on their children
+if (ParentAccess::isParent() && !in_array($route, ['children', 'profile', 'password', 'alerts', 'photo', 'receipt'], true)) $route = 'children'; // v62: parents use only their pages
 [$file, $perms] = PORTAL_ROUTES[$route];
 $isPost = ($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST';
 
