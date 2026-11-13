@@ -317,3 +317,31 @@ document.addEventListener('change', e => {
   window.alert('"' + bad.name + '" is ' + mb + ' MB. ' + (isImage ? 'Images can be at most 5 MB: choose a smaller photo, or take a screenshot of it.' : 'Files can be at most ' + input.dataset.maxMb + ' MB.'));
   input.value = '';
 });
+
+// v62.2: bottom menu — the curved dip and circle slide to the tapped item, then the page opens
+(function () {
+  const move = (nav, i) => {
+    nav.style.setProperty('--i', i);
+    nav.querySelectorAll('.al-bnav-item').forEach(a => a.classList.toggle('is-up', a.dataset.i === String(i)));
+  };
+  document.addEventListener('click', e => {
+    const a = e.target.closest && e.target.closest('.al-bnav-item');
+    if (!a || e.button !== 0 || e.ctrlKey || e.metaKey || e.shiftKey || e.altKey) return;
+    const nav = a.closest('[data-bnav]');
+    move(nav, a.dataset.i);
+    if (e.defaultPrevented) return; // another script is already opening the page
+    if (a.hasAttribute('data-bs-toggle')) return; // "More" opens the menu; the dip goes back when it closes
+    if (a.getAttribute('aria-current') === 'page') return;
+    const href = a.getAttribute('href');
+    if (!href || href.charAt(0) === '#') return;
+    e.preventDefault();
+    const reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    setTimeout(() => { location.href = href; }, reduce ? 0 : 260); // let the slide play
+  });
+  document.addEventListener('hidden.bs.offcanvas', () => {
+    document.querySelectorAll('[data-bnav]').forEach(nav => move(nav, nav.dataset.home));
+  });
+  window.addEventListener('pageshow', ev => { // coming back with the Back button: show the real page again
+    if (ev.persisted) document.querySelectorAll('[data-bnav]').forEach(nav => move(nav, nav.dataset.home));
+  });
+})();

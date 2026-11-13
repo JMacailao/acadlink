@@ -8,18 +8,21 @@ declare(strict_types=1);
  */
 function bottom_nav(array $left, array $center, array $right, string $label = 'Quick menu'): void
 {
-    $link = function (array $it, string $cls = ''): string {
+    // v62.2: the curved dip and the raised circle sit under the selected item and slide to whichever item is tapped.
+    $items = array_values(array_filter(array_merge($left, [$center], $right)));
+    $current = null;
+    foreach ($items as $k => $it) if (!empty($it['active'])) { $current = $k; break; }
+    $home = count($left); // nothing selected (a page that is not in this menu): the middle item keeps the dip
+    $at = $current ?? $home;
+    echo '<nav class="al-bnav d-print-none" aria-label="' . h($label) . '" data-bnav data-home="' . $at . '" style="--n:' . count($items) . ';--i:' . $at . '"><div class="al-bnav-row">'
+        . '<span class="al-bnav-ind" aria-hidden="true"><svg class="al-bnav-dip" viewBox="0 0 150 54" focusable="false"><path d="M0 0 C24 0 33 5 42 20 C52 38 60 48 75 48 C90 48 98 38 108 20 C117 5 126 0 150 0 Z"/></svg><span class="al-bnav-bubble"></span></span>';
+    foreach ($items as $k => $it) {
         $attrs = isset($it['sheet']) ? ' role="button" data-bs-toggle="offcanvas" data-bs-target="#' . h($it['sheet']) . '" aria-controls="' . h($it['sheet']) . '" href="#' . h($it['sheet']) . '"'
             : ' href="' . h($it['href']) . '"' . (!empty($it['active']) ? ' aria-current="page"' : '');
         $badge = !empty($it['badge']) ? '<span class="al-bnav-badge" aria-label="' . (int) $it['badge'] . ' new">' . ((int) $it['badge'] > 99 ? '99+' : (int) $it['badge']) . '</span>' : '';
-        return '<a class="al-bnav-item' . ($cls !== '' ? ' ' . $cls : '') . (!empty($it['active']) ? ' active' : '') . '"' . $attrs . '>'
+        echo '<a class="al-bnav-item' . ($k === $at ? ' is-up' : '') . (!empty($it['active']) ? ' active' : '') . '" data-i="' . $k . '"' . $attrs . '>'
             . '<span class="al-bnav-icon"><i class="bi bi-' . h($it['icon']) . '" aria-hidden="true"></i>' . $badge . '</span><span class="al-bnav-label">' . h($it['label']) . '</span></a>';
-    };
-    echo '<nav class="al-bnav d-print-none" aria-label="' . h($label) . '"><div class="al-bnav-row">';
-    foreach ($left as $it) echo $link($it);
-    echo '<div class="al-bnav-center"><svg class="al-bnav-dip" viewBox="0 0 150 54" aria-hidden="true" focusable="false"><path d="M0 0 C24 0 33 5 42 20 C52 38 60 48 75 48 C90 48 98 38 108 20 C117 5 126 0 150 0 Z"/></svg>'
-        . $link($center, 'al-bnav-main') . '</div>';
-    foreach ($right as $it) echo $link($it);
+    }
     echo '</div></nav>';
 }
 

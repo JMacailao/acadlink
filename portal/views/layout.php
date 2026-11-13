@@ -42,7 +42,7 @@ function portal_layout_start(string $title, bool $bare = false): void
 <link rel="stylesheet" href="../sis/assets/app.css?v=56b">
 <link rel="stylesheet" href="../sis/assets/reference-ui.css?v=20261021portal">
 <link rel="stylesheet" href="assets/portal.css?v=53">
-<link rel="stylesheet" href="../sis/assets/bottom-nav.css?v=62c">
+<link rel="stylesheet" href="../sis/assets/bottom-nav.css?v=62.2">
 <link rel="stylesheet" href="../sis/assets/people.css?v=62b">
 </head>
 <body class="portal<?= $bare ? ' bare' : '' ?>" data-route="<?= h((string) $route) ?>">
@@ -126,7 +126,7 @@ function portal_layout_end(bool $bare = false): void
 <?php if (!$bare && !empty($GLOBALS['PORTAL_MENU'])) portal_bottom_nav($GLOBALS['PORTAL_MENU']); ?>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" crossorigin="anonymous"></script>
 <script src="../sis/assets/navigation.js?v=49"></script>
-<script src="../sis/assets/app.js?v=62.1"></script>
+<script src="../sis/assets/app.js?v=62.2"></script>
 <script src="../sis/assets/success-sound.js?v=56"></script>
 </body>
 </html><?php

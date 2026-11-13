@@ -10,22 +10,25 @@ html[data-system="portal"] { --bn-accent: #c2410c; }
 @media (max-width: 991.98px) {
   .al-bnav { display: block; position: fixed; left: 0; right: 0; bottom: 0; z-index: 1035; background: var(--bn-bg); border-top: 3px solid var(--bn-accent);
     padding-bottom: env(safe-area-inset-bottom); box-shadow: 0 -4px 16px #0f172a14; }
-  .al-bnav-row { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); height: var(--bn-h); max-width: 720px; margin: 0 auto; }
-  .al-bnav-item { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; text-decoration: none !important; color: var(--bn-ink) !important; min-width: 0; padding: 6px 2px; -webkit-tap-highlight-color: transparent; }
-  .al-bnav-icon { position: relative; font-size: 1.45rem; line-height: 1; }
-  .al-bnav-label { font-size: .78rem; font-weight: 500; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--bn-muted); }
-  .al-bnav-item.active, .al-bnav-item.active .al-bnav-label { color: var(--bn-accent) !important; font-weight: 700; }
+  .al-bnav-row { position: relative; display: grid; grid-template-columns: repeat(var(--n, 5), minmax(0, 1fr)); height: var(--bn-h); max-width: 720px; margin: 0 auto; }
+  .al-bnav-item { position: relative; z-index: 1; display: flex; flex-direction: column; align-items: center; justify-content: flex-start; padding: 10px 2px 6px; gap: 4px;
+    text-decoration: none !important; color: var(--bn-ink) !important; min-width: 0; -webkit-tap-highlight-color: transparent; }
+  .al-bnav-icon { position: relative; font-size: 1.45rem; line-height: 1; height: 24px; display: grid; place-items: center; transition: transform .38s cubic-bezier(.34, 1.4, .5, 1), color .2s; }
+  .al-bnav-label { font-size: .78rem; font-weight: 500; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--bn-muted); transition: transform .38s cubic-bezier(.34, 1.4, .5, 1), color .2s; }
+  .al-bnav-item.active .al-bnav-label { color: var(--bn-accent) !important; font-weight: 700; }
   .al-bnav-item:focus-visible { outline: 2px solid var(--bn-accent); outline-offset: -4px; border-radius: 12px; }
   .al-bnav-badge { position: absolute; top: -6px; right: -12px; min-width: 18px; height: 18px; padding: 0 5px; border-radius: 9px; background: #dc2626; color: #fff; font-size: .68rem; font-weight: 700; display: grid; place-items: center; border: 2px solid var(--bn-bg); }
-  /* the raised middle button in a curved dip of the bar */
-  .al-bnav-center { position: relative; display: flex; justify-content: center; }
-  .al-bnav-dip { position: absolute; top: -3px; left: 50%; width: 150px !important; max-width: none !important; height: 54px !important; transform: translateX(-50%); fill: var(--bn-accent); pointer-events: none; }
-  .al-bnav-main { position: relative; justify-content: flex-end; padding-bottom: 6px; width: 100%; }
-  .al-bnav-main .al-bnav-icon { position: absolute; top: -28px; left: 50%; transform: translateX(-50%); width: 62px; height: 62px; border-radius: 50%; background: var(--bn-bg); color: var(--bn-ink);
-    display: grid; place-items: center; font-size: 1.6rem; box-shadow: 0 4px 12px #0f172a26; }
-  .al-bnav-main.active .al-bnav-icon { color: var(--bn-accent); }
-  .al-bnav-main .al-bnav-badge { top: 4px; right: 4px; }
-  .al-bnav-main .al-bnav-label { color: var(--bn-ink); }
+  /* the moving indicator: the curved dip with the white circle in it */
+  .al-bnav-ind { position: absolute; top: -3px; left: calc((var(--i, 2) + .5) * 100% / var(--n, 5)); width: 150px; height: 54px; transform: translateX(-50%); pointer-events: none; z-index: 0;
+    transition: left .38s cubic-bezier(.34, 1.25, .5, 1); }
+  .al-bnav-dip { position: absolute; inset: 0; width: 150px !important; max-width: none !important; height: 54px !important; fill: var(--bn-accent); }
+  .al-bnav-bubble { position: absolute; top: -25px; left: 50%; width: 62px; height: 62px; transform: translateX(-50%); border-radius: 50%; background: var(--bn-bg); box-shadow: 0 4px 12px #0f172a26; }
+  /* the selected item: icon rises into the circle, label sits under the dip */
+  .al-bnav-item.is-up .al-bnav-icon { transform: translateY(-17px) scale(1.12); color: var(--bn-accent); }
+  .al-bnav-item.is-up .al-bnav-label { transform: translateY(13px); color: var(--bn-ink); font-weight: 700; }
+  .al-bnav-item.is-up.active .al-bnav-label { color: var(--bn-accent) !important; }
+  .al-bnav-item.is-up .al-bnav-badge { top: -4px; right: -14px; }
+  @media (prefers-reduced-motion: reduce) { .al-bnav-ind, .al-bnav-icon, .al-bnav-label { transition: none; } }
   /* keep page content and other bottom bars clear of the menu */
   body:has(.al-bnav) { padding-bottom: calc(var(--bn-h) + 22px + env(safe-area-inset-bottom)) !important; }
   body:has(.al-bnav) .cpos-mobilebar { bottom: calc(var(--bn-h) + 3px + env(safe-area-inset-bottom)) !important; padding-bottom: 10px !important; }
@@ -34,7 +37,7 @@ html[data-system="portal"] { --bn-accent: #c2410c; }
   body.portal:has(.al-bnav) .portal-nav { display: none; }
   body.portal:has(.al-bnav) .portal-foot { display: none; }
 }
-@media (max-width: 360px) { .al-bnav-label { font-size: .7rem; } .al-bnav-dip { width: 130px !important; } }
+@media (max-width: 360px) { .al-bnav-label { font-size: .7rem; } .al-bnav-ind, .al-bnav-dip { width: 130px !important; } }
 @media print { .al-bnav, .al-bsheet { display: none !important; } }
 /* "More" sheet */
 .al-bsheet { border-radius: 18px 18px 0 0; height: auto !important; max-height: 75vh; }
