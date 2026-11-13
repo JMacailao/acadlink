@@ -69,3 +69,10 @@ How the restore protects you:
 - The Student Portal sign-in and Forgot password use the same look.
 - Tablets and computers keep the current design.
 - Source: `sis/app/pages/login.php`, `css/style.css`.
+- **Choose a workspace on phones**:
+  - each workspace is a picture tile with a short coloured name under it (Grading, Admission, LMS, Canteen POS,
+    Library, Finance, Student Portal), three per row; tap the tile to open it;
+  - "Tap a module to open it." under the title;
+  - a round account button (top right) with your name, Change password and Sign out.
+  - Tablets and computers keep the cards with descriptions and buttons.
+  - Source: `sis/app/pages/workspaces.php`, `css/workspace-selector.css`, `sis/assets/workspace-tiles.js`.

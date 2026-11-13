@@ -26,9 +26,11 @@ $cards = [
     'FINANCE' => ['teal', 'Finance', 'Manage fees, payments, and financial records with accuracy and transparency.', ['Billing', 'Collections', 'Reports'], 'Open Finance', '../finance/index.php', ''],
     'PORTAL'  => ['purple', 'Student Portal', 'View your grades, check assessments, and revisit your school history.', ['My Grades', 'Assessments', 'History'], 'Open Portal', url('my'), ''],
 ];
+$short = ['GRADING' => 'Grading', 'SIS' => 'Admission', 'LMS' => 'LMS', 'CANTEEN' => 'Canteen POS', 'LIBRARY' => 'Library', 'FINANCE' => 'Finance', 'PORTAL' => 'Student Portal']; // v63.1: phone tiles
+$initials = strtoupper(implode('', array_map(fn($w) => mb_substr($w, 0, 1), array_slice(preg_split('/[\s,]+/', trim((string) $a['display_name'])) ?: [], 0, 2))));
 layout_start('Choose a workspace', true);
 ?>
-<link rel="stylesheet" href="../css/workspace-selector.css?v=58">
+<link rel="stylesheet" href="../css/workspace-selector.css?v=63.1">
 <style>
   body { background: #f8fafc; }
   #portalChooser { min-height: 100dvh; max-width: 1180px; margin: 0 auto; padding: 28px 34px 24px !important; }
@@ -47,6 +49,10 @@ layout_start('Choose a workspace', true);
     <div class="al-brand"><span class="brand-seal has-logo<?= $logo ? '' : ' is-default' ?>" aria-hidden="true"><img src="<?= h($logo ?: '../icons/acadlink-mark.png') ?>" alt=""></span><div><div class="al-school"><?= h(School::brand()) ?></div><div class="al-product">AcadLink</div></div></div>
     <div class="al-account"><span>Signed in as <strong><?= h($a['display_name']) ?></strong></span>
       <form method="post" action="<?= url('logout') ?>"><?= csrf_field() ?><button><i class="bi bi-box-arrow-right" aria-hidden="true"></i> Sign out</button></form></div>
+    <div class="dropdown al-m-account"><button type="button" class="al-m-pill dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false" aria-label="Account: <?= h($a['display_name']) ?>"><span class="al-m-avatar" aria-hidden="true"><i class="bi bi-person-fill"></i></span><i class="bi bi-chevron-down" aria-hidden="true"></i></button>
+      <div class="dropdown-menu dropdown-menu-end"><div class="px-3 py-2 small">Signed in as<br><strong><?= h($a['display_name']) ?></strong></div><div class="dropdown-divider"></div>
+        <a class="dropdown-item" href="<?= url('password') ?>"><i class="bi bi-key me-2" aria-hidden="true"></i>Change password</a>
+        <form method="post" action="<?= url('logout') ?>" class="m-0"><?= csrf_field() ?><button class="dropdown-item"><i class="bi bi-box-arrow-right me-2" aria-hidden="true"></i>Sign out</button></form></div></div>
   </header>
   <?php if (!$systems): ?>
   <div class="al-intro"><h1>No workspace yet</h1></div>
@@ -55,17 +61,18 @@ layout_start('Choose a workspace', true);
     <p class="small text-muted mb-0">Ask the Power User (registrar or school administrator) to give your account access, then sign in again.</p></div>
   <?php else: ?>
   <div class="al-intro"><h1><?= count($systems) > 1 ? 'Choose a workspace' : 'Your workspace' ?></h1>
-    <p><?= count($systems) > 1 ? 'Your account can open these workspaces. Select one to get started.' : 'Your account opens this workspace.' ?></p></div>
+    <p><span class="al-d-text"><?= count($systems) > 1 ? 'Your account can open these workspaces. Select one to get started.' : 'Your account opens this workspace.' ?></span><span class="al-m-text">Tap a module to open it.</span></p></div>
   <nav class="al-grid n<?= count($systems) ?>" aria-label="Workspaces you can open">
     <?php foreach ($systems as $s): [$tone, $title, $text, $features, $open, $href, $badge] = $cards[$s]; $soon = in_array($s, ModuleAccess::COMING_SOON, true); ?>
     <section class="al-card system-card<?= $tone ? ' ' . $tone : '' ?><?= $soon ? ' is-soon' : '' ?>" data-system="<?= h($s) ?>">
-      <div class="al-art" aria-hidden="true"><?= $art[$s] ?></div>
+      <div class="al-art" aria-hidden="true"><div class="al-stage"><?= $art[$s] ?></div></div>
+      <span class="al-m-name"><?= h($short[$s] ?? strip_tags(html_entity_decode($title))) ?></span>
       <h2><?= $title ?><?= $badge !== '' ? '<span class="al-badge">' . h($badge) . '</span>' : '' ?></h2><p class="al-description"><?= h($text) ?></p>
       <div class="al-features"><?php foreach ($features as $f): ?><span><?= h($f) ?></span><?php endforeach; ?></div>
       <?php if ($soon): ?>
       <span class="al-open al-soon" role="button" aria-disabled="true" title="<?= h(strip_tags(html_entity_decode($title))) ?> is not available yet">Coming soon</span>
       <?php else: ?>
-      <a class="al-open" href="<?= h($href) ?>" target="_top"><?= h($open) ?><i class="bi bi-arrow-right" aria-hidden="true"></i></a>
+      <a class="al-open" href="<?= h($href) ?>" target="_top" aria-label="<?= h($open . ': ' . strip_tags(html_entity_decode($title))) ?>"><?= h($open) ?><i class="bi bi-arrow-right" aria-hidden="true"></i></a>
       <?php endif; ?>
     </section>
     <?php endforeach; ?>
@@ -73,4 +80,5 @@ layout_start('Choose a workspace', true);
   <?php endif; ?>
   <div class="al-footer"><i class="bi bi-shield-check" aria-hidden="true"></i><span>Only workspaces your account is allowed to use are shown.<?php if (Auth::role() === 'TEACHER'): ?> · <a href="<?= url('history', ['tab' => 'grades']) ?>">History of Grades</a><?php endif; ?></span></div>
 </div>
+<script src="<?= sis_web() ?>assets/workspace-tiles.js?v=63.1" defer></script>
 <?php layout_end(true);
