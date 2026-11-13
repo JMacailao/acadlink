@@ -6,6 +6,7 @@ $rows = Library::loans($f);
 $peso = fn(int $c) => '₱' . Money::fmt($c);
 $notices = isset($_GET['notices']);
 layout_start($notices ? 'Overdue notices' : 'Loans & Overdue');
+if (!$notices) { lib_page_head('journal-arrow-up', 'All loans & overdue', 'Everything on loan, overdue items and printable notices.'); lib_tabs(['circulation' => 'Desk', 'loans' => 'All loans & overdue'], 'loans'); }
 if ($notices):
     $by = [];
     foreach (Library::loans(['overdue' => 1, 'type' => $f['type']]) as $l) $by[$l['borrower_type'] . ':' . $l['borrower_ref']][] = $l;
@@ -24,7 +25,7 @@ if ($notices):
   <footer>Librarian: ______________________</footer>
 </article>
 <?php endforeach; if (!$by): ?><p class="text-muted">No overdue items.</p><?php endif; ?>
-<script src="assets/library.js?v=60" defer></script>
+<script src="assets/library.js?v=61" defer></script>
 <?php layout_end(); return; endif; ?>
 <form method="get" class="d-flex flex-wrap gap-2 mb-2"><input type="hidden" name="r" value="loans">
   <input class="form-control" style="max-width:280px" name="q" value="<?= h($f['q']) ?>" placeholder="Borrower, title or barcode" aria-label="Search loans">
@@ -35,7 +36,7 @@ if ($notices):
 <div class="table-responsive form-section"><table class="table table-sm align-middle mb-0">
   <thead><tr><th>Borrower</th><th>Title</th><th>Barcode</th><th>Borrowed</th><th>Due</th><th class="text-end">Fine so far</th></tr></thead><tbody>
   <?php foreach ($rows as $l): $late = (int) $l['days_late'] > 0; ?><tr>
-    <td><a href="<?= url('dashboard', ['b' => $l['borrower_type'] . ':' . $l['borrower_ref']]) ?>"><?= h($l['borrower_name']) ?></a><div class="small text-muted"><?= h(Library::BORROWER_TYPES[$l['borrower_type']]) ?> <?= h($l['borrower_no']) ?></div></td>
+    <td><a href="<?= url('circulation', ['b' => $l['borrower_type'] . ':' . $l['borrower_ref']]) ?>"><?= h($l['borrower_name']) ?></a><div class="small text-muted"><?= h(Library::BORROWER_TYPES[$l['borrower_type']]) ?> <?= h($l['borrower_no']) ?></div></td>
     <td><?= h($l['title']) ?></td><td class="font-monospace small"><?= h($l['barcode']) ?></td><td class="small"><?= h(date('M j', strtotime($l['loaned_at']))) ?></td>
     <td class="<?= $late ? 'text-danger fw-semibold' : '' ?>"><?= h(date('M j', strtotime($l['due_on']))) ?><?= $late ? ' · ' . (int) $l['days_late'] . 'd late' : '' ?></td>
     <td class="text-end"><?= $late ? $peso(Library::overdueFine($l['borrower_type'], (int) $l['days_late'])) : '—' ?></td></tr>

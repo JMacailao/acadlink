@@ -6,7 +6,8 @@ if ($isPost) { Library::saveRules($_POST); flash('success', 'Loan rules saved. T
 $r = Library::rules();
 $can = Auth::can('library.settings');
 $money = fn(string $k) => Money::dec($r[$k]);
-layout_start('Loan Rules');
+layout_start('Settings');
+lib_page_head('gear', 'Settings', 'Loan rules for students and teachers, fines and reservations.');
 ?>
 <form method="post" class="row g-3"><?= csrf_field() ?>
 <?php foreach (['student' => 'Students', 'teacher' => 'Teachers'] as $t => $label): ?>

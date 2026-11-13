@@ -1,11 +1,11 @@
 <?php
-/** Circulation desk: find the borrower (scan the ID), check out by scanning copies, return, renew, holds, lost items. */
+/** Circulation desk (v60.1 design): find the member, then check out, check in or renew by scanning; active loans with covers. */
 declare(strict_types=1);
 /** @var bool $isPost */
-if (!Auth::can('library.view')) redirect(Auth::can('library.catalog') ? 'catalog' : 'reports');
 $bKey = (string) ($_GET['b'] ?? $_POST['b'] ?? '');
 [$bType, $bRef] = array_pad(explode(':', $bKey, 2), 2, '');
 $keep = $bKey !== '' ? ['b' => $bKey] : [];
+$mode = in_array($_GET['mode'] ?? '', ['out', 'in', 'renew'], true) ? $_GET['mode'] : ($bKey !== '' ? 'out' : 'in');
 if ($isPost) {
     $a = (string) ($_POST['action'] ?? '');
     switch ($a) {
@@ -13,114 +13,130 @@ if ($isPost) {
             $id = Library::checkout($bType, $bRef, (string) ($_POST['barcode'] ?? ''), (string) ($_POST['due_on'] ?? ''));
             $l = Db::one('SELECT l.due_on, t.title FROM library_loans l JOIN library_copies c ON c.id = l.copy_id JOIN library_titles t ON t.id = c.title_id WHERE l.id = ?', [$id]);
             flash('success', 'Checked out: ' . $l['title'] . ' · due ' . date('D, M j', strtotime($l['due_on'])) . '.');
+            $keep['mode'] = 'out';
             break;
         case 'checkin':
             $r = Library::checkin((string) ($_POST['barcode'] ?? ''), !empty($_POST['damaged']), Money::cents((string) ($_POST['damage'] ?? '0')), trim((string) ($_POST['note'] ?? '')));
-            $msg = $r['found'] ? 'Found: ' . $r['title'] . ' was missing and is back on the shelf.' : 'Returned: ' . $r['title'] . ($r['loan'] ? ' (' . $r['loan']['borrower_name'] . ')' : '') . '.';
+            $msg = $r['found'] ? 'Found: ' . $r['title'] . ' was missing and is back on the shelf.' : 'Checked in: ' . $r['title'] . ($r['loan'] ? ' (' . $r['loan']['borrower_name'] . ')' : '') . '.';
             if (!$r['found'] && ($r['late'] ?? 0) > 0) $msg .= ' ' . $r['late'] . ' day(s) late' . ($r['fine'] ? ' — fine ₱' . Money::fmt($r['fine']) . ' charged.' : '.');
             if ($r['hold']) $msg .= ' Put it on the HOLD SHELF for ' . $r['hold']['borrower_name'] . ' (until ' . date('M j', strtotime((string) $r['hold']['expires_on'])) . ').';
             flash($r['hold'] || ($r['fine'] ?? 0) ? 'warning' : 'success', $msg);
-            if (!empty($_POST['returns_only'])) redirect('dashboard');
+            $keep['mode'] = 'in';
+            break;
+        case 'renew_scan':
+            [$due, $title, $who] = Library::renewByBarcode((string) ($_POST['barcode'] ?? ''));
+            flash('success', 'Renewed: ' . $title . ' (' . $who . ') · due ' . date('D, M j', strtotime($due)) . '.');
+            $keep['mode'] = 'renew';
             break;
         case 'renew':
             $due = Library::renew((int) ($_POST['loan'] ?? 0));
             flash('success', 'Renewed until ' . date('D, M j', strtotime($due)) . '.');
             break;
         case 'lost':
-            Library::markLost((int) ($_POST['loan'] ?? 0), (string) ($_POST['note'] ?? ''));
+            Library::markLost((int) ($_POST['loan'] ?? 0), 'Reported lost at the desk');
             flash('warning', 'Marked lost. The replacement price was charged as a fine.');
             break;
-        case 'cancel_hold':
-            Library::cancelHold((int) ($_POST['hold'] ?? 0));
-            flash('success', 'Hold cancelled.');
-            break;
-        case 'waive':
-            Library::waive((int) ($_POST['fine'] ?? 0), (string) ($_POST['reason'] ?? ''));
-            flash('success', 'Fine waived.');
-            break;
+        case 'cancel_hold': Library::cancelHold((int) ($_POST['hold'] ?? 0)); flash('success', 'Reservation cancelled.'); break;
+        case 'waive': Library::waive((int) ($_POST['fine'] ?? 0), (string) ($_POST['reason'] ?? '')); flash('success', 'Fine waived.'); break;
         default: throw new AppError('Unknown action.');
     }
-    redirect('dashboard', $keep);
+    redirect('circulation', $keep);
 }
 $q = trim((string) ($_GET['q'] ?? ''));
 if ($q !== '' && $bKey === '') {
-    if ($b = Library::borrowerByCode($q)) redirect('dashboard', ['b' => $b['type'] . ':' . $b['ref']]);
+    if ($found = Library::borrowerByCode($q)) redirect('circulation', ['b' => $found['type'] . ':' . $found['ref']]);
     $matches = Library::findBorrowers($q);
 }
 $b = $bKey !== '' ? Library::borrower($bType, $bRef) : null;
 $acc = $b ? Library::account($b['type'], $b['ref']) : null;
+$canDo = Auth::can('library.circulate');
 $peso = fn(int $c) => '₱' . Money::fmt($c);
-$today = date('Y-m-d');
-layout_start('Circulation Desk');
+$ini = fn(string $n) => mb_strtoupper(implode('', array_map(fn($w) => mb_substr($w, 0, 1), array_slice(preg_split('/[\s,]+/', trim($n)) ?: [], 0, 2))));
+layout_start('Circulation');
+lib_page_head('arrow-left-right', 'Circulation desk', 'Check out, check in, and renew library materials.', '<a class="btn btn-outline-primary" href="' . h(url('loans')) . '"><i class="bi bi-list-ul me-1"></i>All loans &amp; overdue</a>');
 ?>
-<div class="row g-3">
-  <div class="col-xl-8">
-    <form method="get" class="form-section lib-scan" data-autofocus><input type="hidden" name="r" value="dashboard">
-      <label class="form-label fw-semibold" for="libWho"><i class="bi bi-person-vcard me-1"></i>Borrower: scan the ID card, or type a Student ID, Teacher ID or name</label>
-      <div class="d-flex gap-2"><input class="form-control form-control-lg" id="libWho" name="q" value="<?= h($q) ?>" autocomplete="off" <?= $b ? '' : 'autofocus' ?>><button class="btn btn-primary">Find</button>
-        <?php if ($b): ?><a class="btn btn-outline-secondary" href="<?= url('dashboard') ?>">Next borrower</a><?php endif; ?></div>
-    </form>
-    <?php if (isset($matches)): ?><section class="form-section"><h2 class="h6">Choose the borrower</h2>
-      <?php foreach ($matches as $m): ?><a class="d-flex justify-content-between border rounded-3 p-2 mb-1 text-decoration-none" href="<?= url('dashboard', ['b' => $m['type'] . ':' . $m['ref']]) ?>"><span><b><?= h($m['name']) ?></b> <span class="text-muted"><?= h($m['no']) ?></span></span><span class="badge text-bg-light border"><?= h(Library::BORROWER_TYPES[$m['type']]) ?> <?= h($m['detail'] !== 'Teacher' ? $m['detail'] : '') ?></span></a><?php endforeach; ?>
-      <?php if (!$matches): ?><p class="text-muted mb-0">No student or teacher matches “<?= h($q) ?>”.</p><?php endif; ?></section><?php endif; ?>
-
-    <?php if ($b): $out = count($acc['loans']); ?>
-    <section class="form-section lib-borrower">
-      <div class="d-flex flex-wrap justify-content-between gap-2">
-        <div><h2 class="h5 mb-0"><?= h($b['name']) ?></h2><div class="text-muted small"><?= h(Library::BORROWER_TYPES[$b['type']]) ?> · <?= h($b['no']) ?><?= $b['detail'] && $b['detail'] !== 'Teacher' ? ' · ' . h($b['detail']) : '' ?></div></div>
-        <div class="d-flex gap-3 text-center">
-          <div><div class="fs-4 fw-bold"><?= $out ?>/<?= (int) $acc['max_items'] ?></div><div class="small text-muted">on loan</div></div>
-          <div><div class="fs-4 fw-bold <?= $acc['fines_cents'] ? 'text-danger' : '' ?>"><?= $peso($acc['fines_cents']) ?></div><div class="small text-muted">unpaid fines</div></div>
-        </div>
-      </div>
-      <?php if (Auth::can('library.circulate')): ?>
-      <form method="post" class="lib-checkout mt-3"><?= csrf_field() ?><input type="hidden" name="action" value="checkout"><input type="hidden" name="b" value="<?= h($bKey) ?>">
-        <label class="form-label small fw-semibold" for="libOut"><i class="bi bi-upc-scan me-1"></i>Check out: scan the copy barcode</label>
-        <div class="d-flex flex-wrap gap-2"><input class="form-control form-control-lg flex-grow-1" style="min-width:200px" id="libOut" name="barcode" required autocomplete="off" autofocus>
-          <input class="form-control" type="date" name="due_on" min="<?= $today ?>" aria-label="Due date (optional)" title="Leave empty for the usual <?= (int) $acc['loan_days'] ?> days" style="max-width:170px">
-          <button class="btn btn-primary">Check out</button></div>
-        <div class="form-text">Due in <?= (int) $acc['loan_days'] ?> days unless you pick a date.</div>
-      </form><?php endif; ?>
-    </section>
-    <section class="form-section"><h3 class="h6">On loan</h3>
-      <div class="table-responsive"><table class="table table-sm align-middle mb-0"><thead><tr><th>Title</th><th>Barcode</th><th>Due</th><th class="text-end">Fine so far</th><th></th></tr></thead><tbody>
-      <?php foreach ($acc['loans'] as $l): $late = (int) $l['days_late'] > 0; ?>
-        <tr><td><?= h($l['title']) ?><div class="small text-muted"><?= h($l['authors']) ?></div></td><td class="font-monospace small"><?= h($l['barcode']) ?></td>
-          <td class="<?= $late ? 'text-danger fw-semibold' : '' ?>"><?= h(date('M j', strtotime($l['due_on']))) ?><?= $late ? '<br><small>' . (int) $l['days_late'] . ' day(s) late</small>' : '' ?><?= (int) $l['renewals'] ? '<br><small class="text-muted">renewed ' . (int) $l['renewals'] . '×</small>' : '' ?></td>
-          <td class="text-end"><?= $l['accruing'] ? $peso((int) $l['accruing']) : '—' ?></td>
-          <td class="text-end text-nowrap"><?php if (Auth::can('library.circulate')): ?>
-            <form method="post" class="d-inline"><?= csrf_field() ?><input type="hidden" name="action" value="renew"><input type="hidden" name="b" value="<?= h($bKey) ?>"><input type="hidden" name="loan" value="<?= (int) $l['id'] ?>"><button class="btn btn-sm btn-outline-primary">Renew</button></form>
-            <form method="post" class="d-inline" data-confirm="Mark this item lost? Its replacement price is charged as a fine."><?= csrf_field() ?><input type="hidden" name="action" value="lost"><input type="hidden" name="b" value="<?= h($bKey) ?>"><input type="hidden" name="loan" value="<?= (int) $l['id'] ?>"><input type="hidden" name="note" value="Reported lost at the desk"><button class="btn btn-sm btn-outline-danger">Lost</button></form>
-          <?php endif; ?></td></tr>
-      <?php endforeach; if (!$acc['loans']): ?><tr><td colspan="5" class="text-muted text-center">Nothing on loan.</td></tr><?php endif; ?>
-      </tbody></table></div></section>
-    <?php if ($acc['holds']): ?><section class="form-section"><h3 class="h6">Holds</h3><ul class="list-unstyled mb-0">
-      <?php foreach ($acc['holds'] as $hd): ?><li class="d-flex justify-content-between align-items-center gap-2 py-1 border-bottom"><span><?= h($hd['title']) ?> · <?= $hd['status'] === 'READY' ? '<span class="badge text-bg-success">Ready on the hold shelf</span> ' . h((string) $hd['barcode']) . ' until ' . h(date('M j', strtotime((string) $hd['expires_on']))) : '<span class="badge text-bg-secondary">Waiting</span>' ?></span>
-        <?php if (Auth::can('library.circulate')): ?><form method="post"><?= csrf_field() ?><input type="hidden" name="action" value="cancel_hold"><input type="hidden" name="b" value="<?= h($bKey) ?>"><input type="hidden" name="hold" value="<?= (int) $hd['id'] ?>"><button class="btn btn-sm btn-link text-danger">Cancel</button></form><?php endif; ?></li><?php endforeach; ?>
-    </ul></section><?php endif; ?>
-    <?php if ($acc['fines']): ?><section class="form-section"><h3 class="h6">Unpaid fines <small class="text-muted fw-normal">— paid at the Cashier (SIS or Finance → Library Fines)</small></h3>
-      <?php foreach ($acc['fines'] as $f): ?><div class="d-flex flex-wrap justify-content-between gap-2 py-1 border-bottom"><span><?= h(Library::FINE_KINDS[$f['kind']]) ?> · <?= h($f['description']) ?> · <b><?= $peso((int) $f['amount_cents']) ?></b></span>
-        <?php if (Auth::can('library.waive')): ?><form method="post" class="d-flex gap-1"><?= csrf_field() ?><input type="hidden" name="action" value="waive"><input type="hidden" name="b" value="<?= h($bKey) ?>"><input type="hidden" name="fine" value="<?= (int) $f['id'] ?>"><input class="form-control form-control-sm" name="reason" required minlength="8" placeholder="Reason to waive" aria-label="Reason to waive" style="width:180px"><button class="btn btn-sm btn-outline-secondary">Waive</button></form><?php endif; ?></div><?php endforeach; ?>
-    </section><?php endif; ?>
-    <?php endif; ?>
-  </div>
-  <div class="col-xl-4">
-    <?php if (Auth::can('library.circulate')): ?>
-    <form method="post" class="form-section lib-return"><?= csrf_field() ?><input type="hidden" name="action" value="checkin"><input type="hidden" name="b" value="<?= h($bKey) ?>"><?php if (!$b): ?><input type="hidden" name="returns_only" value="1"><?php endif; ?>
-      <h2 class="h6"><i class="bi bi-box-arrow-in-down me-1"></i>Return</h2>
-      <label class="form-label small" for="libIn">Scan the copy barcode</label>
-      <input class="form-control form-control-lg mb-2" id="libIn" name="barcode" required autocomplete="off">
-      <label class="form-check small"><input class="form-check-input" type="checkbox" name="damaged" value="1" data-toggle-target="#libDamage"> Damaged</label>
-      <div id="libDamage" hidden><div class="input-group input-group-sm my-1"><span class="input-group-text">Damage fee ₱</span><input class="form-control" name="damage" inputmode="decimal" value="0"></div>
-        <input class="form-control form-control-sm mb-1" name="note" maxlength="255" placeholder="What is damaged?"></div>
-      <button class="btn btn-outline-primary w-100 mt-1">Return</button>
-      <p class="form-text mb-0">Overdue fines are charged automatically. If someone is waiting for the title, the copy goes to the hold shelf.</p>
-    </form><?php endif; ?>
-    <?php $due = Db::all("SELECT l.borrower_name, l.due_on, t.title FROM library_loans l JOIN library_copies c ON c.id = l.copy_id JOIN library_titles t ON t.id = c.title_id WHERE l.status = 'OPEN' AND l.due_on <= CURDATE() ORDER BY l.due_on LIMIT 8"); ?>
-    <section class="form-section"><h2 class="h6">Due today and overdue</h2>
-      <?php foreach ($due as $d): ?><div class="small py-1 border-bottom"><b><?= h($d['borrower_name']) ?></b> · <?= h($d['title']) ?> <span class="<?= $d['due_on'] < $today ? 'text-danger' : '' ?>">(<?= h(date('M j', strtotime($d['due_on']))) ?>)</span></div><?php endforeach; ?>
-      <?php if (!$due): ?><p class="small text-muted mb-0">Nothing due.</p><?php else: ?><a class="small" href="<?= url('loans', ['overdue' => 1]) ?>">All overdue and notices →</a><?php endif; ?></section>
-  </div>
+<div class="lib-desk-top">
+  <section class="lib-card">
+    <h2 class="lib-card-title">Find member</h2>
+    <form method="get" class="lib-find"><input type="hidden" name="r" value="circulation">
+      <i class="bi bi-person" aria-hidden="true"></i><input name="q" value="<?= h($q) ?>" placeholder="Student ID, Teacher ID or name" aria-label="Find member: scan the ID card or type an ID or name" autocomplete="off" <?= $b ? '' : 'autofocus' ?>>
+      <button aria-label="Find"><i class="bi bi-search" aria-hidden="true"></i></button></form>
+    <?php if (isset($matches)): ?><div class="lib-matches"><?php foreach ($matches as $m): ?><a href="<?= url('circulation', ['b' => $m['type'] . ':' . $m['ref']]) ?>"><b><?= h($m['name']) ?></b><span><?= h($m['no']) ?> · <?= h($m['detail'] ?: Library::BORROWER_TYPES[$m['type']]) ?></span></a><?php endforeach; ?>
+      <?php if (!$matches): ?><p class="lib-empty mb-0">No student or teacher matches “<?= h($q) ?>”.</p><?php endif; ?></div><?php endif; ?>
+  </section>
+  <section class="lib-card lib-member<?= $b ? '' : ' is-empty' ?>">
+    <div class="lib-member-head">Current member<?php if ($b): ?><a href="<?= url('circulation', ['mode' => 'in']) ?>">Clear</a><?php endif; ?></div>
+    <?php if ($b): ?>
+    <div class="lib-member-body">
+      <span class="lib-avatar" aria-hidden="true"><?= h($ini($b['name'])) ?></span>
+      <div class="lib-member-id"><b><?= h($b['name']) ?></b><span>ID: <?= h($b['no']) ?></span><span><?= h($b['type'] === 'TEACHER' ? 'Teacher' : ($b['detail'] ?: 'Student')) ?></span></div>
+      <div class="lib-member-count"><i class="bi bi-stack" aria-hidden="true"></i><small>Active loans</small><b><?= count($acc['loans']) ?></b><em>of <?= (int) $acc['max_items'] ?></em></div>
+    </div>
+    <?php $od = count(array_filter($acc['loans'], fn($l) => (int) $l['days_late'] > 0)); if ($acc['fines_cents'] || $od): ?><div class="lib-member-warn"><?php if ($acc['fines_cents']): ?><span><i class="bi bi-exclamation-circle"></i> Unpaid fines <?= $peso($acc['fines_cents']) ?> (pay at the Cashier)</span><?php endif; ?><?php if ($od): ?><span><i class="bi bi-clock-history"></i> <?= $od ?> overdue</span><?php endif; ?></div><?php endif; ?>
+    <?php else: ?><p class="lib-empty mb-0">Scan a library card or find a member to check out books. Check-in and renew work without a member.</p><?php endif; ?>
+  </section>
 </div>
-<script src="assets/library.js?v=60" defer></script>
+
+<?php if ($canDo): ?>
+<section class="lib-card lib-actions" data-lib-tabs data-mode="<?= h($mode) ?>">
+  <div class="lib-tabbar" role="tablist">
+    <button type="button" role="tab" data-tab="out">Check-out</button><button type="button" role="tab" data-tab="in">Check-in</button><button type="button" role="tab" data-tab="renew">Renew</button>
+  </div>
+  <div class="lib-panel" data-panel="out" role="tabpanel">
+    <h2><i class="bi bi-arrow-right" aria-hidden="true"></i>Check-out</h2>
+    <?php if ($b): ?><p>Scan or enter the book barcode or ISBN to check out to the current member.</p>
+    <form method="post" class="lib-scanrow"><?= csrf_field() ?><input type="hidden" name="action" value="checkout"><input type="hidden" name="b" value="<?= h($bKey) ?>">
+      <label class="lib-scan-input"><i class="bi bi-upc-scan" aria-hidden="true"></i><input name="barcode" required placeholder="Book barcode or ISBN" aria-label="Book barcode or ISBN" autocomplete="off" data-scan></label>
+      <input class="form-control lib-due" type="date" name="due_on" min="<?= date('Y-m-d') ?>" aria-label="Due date (optional)" title="Optional: leave empty for the usual <?= (int) $acc['loan_days'] ?> days">
+      <button class="btn btn-primary lib-go"><i class="bi bi-arrow-right" aria-hidden="true"></i>Check out</button></form>
+    <p class="lib-hint">Due in <?= (int) $acc['loan_days'] ?> days unless you pick a date.</p>
+    <?php else: ?><p class="lib-empty">Find a member first.</p><?php endif; ?>
+  </div>
+  <div class="lib-panel" data-panel="in" role="tabpanel">
+    <h2><i class="bi bi-arrow-left" aria-hidden="true"></i>Check-in</h2><p>Scan the book barcode. Overdue fines are charged automatically; reserved titles go to the hold shelf.</p>
+    <form method="post"><?= csrf_field() ?><input type="hidden" name="action" value="checkin"><input type="hidden" name="b" value="<?= h($bKey) ?>">
+      <div class="lib-scanrow"><label class="lib-scan-input"><i class="bi bi-upc-scan" aria-hidden="true"></i><input name="barcode" required placeholder="Book barcode" aria-label="Book barcode" autocomplete="off" data-scan></label>
+        <button class="btn btn-primary lib-go"><i class="bi bi-arrow-left" aria-hidden="true"></i>Check in</button></div>
+      <label class="form-check small mt-2"><input class="form-check-input" type="checkbox" name="damaged" value="1" data-toggle-target="#libDamage"> Returned damaged</label>
+      <div id="libDamage" class="lib-damage" hidden><div class="input-group input-group-sm"><span class="input-group-text">Damage fee ₱</span><input class="form-control" name="damage" inputmode="decimal" value="0"></div><input class="form-control form-control-sm" name="note" maxlength="255" placeholder="What is damaged?" aria-label="What is damaged?"></div>
+    </form>
+  </div>
+  <div class="lib-panel" data-panel="renew" role="tabpanel">
+    <h2><i class="bi bi-arrow-repeat" aria-hidden="true"></i>Renew</h2><p>Scan the book barcode to extend its due date (within the loan rules).</p>
+    <form method="post" class="lib-scanrow"><?= csrf_field() ?><input type="hidden" name="action" value="renew_scan"><input type="hidden" name="b" value="<?= h($bKey) ?>">
+      <label class="lib-scan-input"><i class="bi bi-upc-scan" aria-hidden="true"></i><input name="barcode" required placeholder="Book barcode" aria-label="Book barcode to renew" autocomplete="off" data-scan></label>
+      <button class="btn btn-primary lib-go"><i class="bi bi-arrow-repeat" aria-hidden="true"></i>Renew</button></form>
+  </div>
+</section>
+<?php endif; ?>
+
+<?php if ($b): ?>
+<section class="lib-card">
+  <h2 class="lib-card-title lg"><i class="bi bi-stack" aria-hidden="true"></i>Active loans (<?= count($acc['loans']) ?>)</h2>
+  <div class="table-responsive"><table class="lib-table lib-loans"><thead><tr><th>Book</th><th>Borrowed</th><th>Due date</th><th>Status</th><th>Action</th></tr></thead><tbody>
+  <?php foreach ($acc['loans'] as $l): $late = (int) $l['days_late']; ?>
+    <tr><td><span class="lib-book"><?= Library::coverHtml((int) $l['title_id'], $l['title'], $l['cover_ver'], 'md') ?><span><b><?= h($l['title']) ?></b><small><?= h($l['authors']) ?></small><small><?= $l['isbn'] ? 'ISBN ' . h($l['isbn']) . ' · ' : '' ?><?= h($l['barcode']) ?></small></span></span></td>
+      <td class="text-nowrap"><?= h(date('M j, Y', strtotime($l['loaned_at']))) ?></td><td class="text-nowrap"><?= h(date('M j, Y', strtotime($l['due_on']))) ?></td>
+      <td><?= $late > 0 ? '<span class="lib-pill is-late">Overdue (' . $late . ' day' . ($late === 1 ? '' : 's') . ')</span>' . ($l['accruing'] ? '<small class="d-block text-danger mt-1">fine so far ' . $peso((int) $l['accruing']) . '</small>' : '') : ($late === 0 ? '<span class="lib-pill is-due">Due today</span>' : '<span class="lib-pill is-out">On loan</span>') ?><?= (int) $l['renewals'] ? '<small class="d-block text-muted mt-1">renewed ' . (int) $l['renewals'] . '×</small>' : '' ?></td>
+      <td class="text-nowrap"><?php if ($canDo): ?>
+        <form method="post" class="d-inline"><?= csrf_field() ?><input type="hidden" name="action" value="renew"><input type="hidden" name="b" value="<?= h($bKey) ?>"><input type="hidden" name="loan" value="<?= (int) $l['id'] ?>"><button class="lib-renew"><i class="bi bi-arrow-repeat" aria-hidden="true"></i>Renew</button></form>
+        <form method="post" class="d-inline" data-confirm="Mark “<?= h($l['title']) ?>” lost? Its replacement price is charged as a fine."><?= csrf_field() ?><input type="hidden" name="action" value="lost"><input type="hidden" name="b" value="<?= h($bKey) ?>"><input type="hidden" name="loan" value="<?= (int) $l['id'] ?>"><button class="lib-link-danger">Lost</button></form>
+      <?php endif; ?></td></tr>
+  <?php endforeach; if (!$acc['loans']): ?><tr><td colspan="5" class="lib-empty">Nothing on loan.</td></tr><?php endif; ?>
+  </tbody></table></div>
+</section>
+<?php if ($acc['holds'] || $acc['fines']): ?>
+<div class="lib-grid-2 even">
+  <section class="lib-card"><h2 class="lib-card-title"><i class="bi bi-bookmark" aria-hidden="true"></i>Reservations</h2>
+    <?php foreach ($acc['holds'] as $hd): ?><div class="lib-row"><span><?= h($hd['title']) ?> <?= $hd['status'] === 'READY' ? '<span class="lib-pill is-ready">Ready · until ' . h(date('M j', strtotime((string) $hd['expires_on']))) . '</span>' : '<span class="lib-pill is-muted">Waiting</span>' ?></span>
+      <?php if ($canDo): ?><form method="post"><?= csrf_field() ?><input type="hidden" name="action" value="cancel_hold"><input type="hidden" name="b" value="<?= h($bKey) ?>"><input type="hidden" name="hold" value="<?= (int) $hd['id'] ?>"><button class="lib-link-danger">Cancel</button></form><?php endif; ?></div><?php endforeach; ?>
+    <?php if (!$acc['holds']): ?><p class="lib-empty mb-0">No reservations.</p><?php endif; ?></section>
+  <section class="lib-card"><h2 class="lib-card-title"><i class="bi bi-coin" aria-hidden="true"></i>Unpaid fines <small>paid at the Cashier</small></h2>
+    <?php foreach ($acc['fines'] as $f): ?><div class="lib-row"><span><?= h(Library::FINE_KINDS[$f['kind']]) ?> · <?= h($f['description']) ?> · <b><?= $peso((int) $f['amount_cents']) ?></b></span>
+      <?php if (Auth::can('library.waive')): ?><form method="post" class="d-flex gap-1"><?= csrf_field() ?><input type="hidden" name="action" value="waive"><input type="hidden" name="b" value="<?= h($bKey) ?>"><input type="hidden" name="fine" value="<?= (int) $f['id'] ?>"><input class="form-control form-control-sm" name="reason" required minlength="8" placeholder="Reason" aria-label="Reason to waive" style="width:150px"><button class="btn btn-sm btn-outline-secondary">Waive</button></form><?php endif; ?></div><?php endforeach; ?>
+    <?php if (!$acc['fines']): ?><p class="lib-empty mb-0">No unpaid fines.</p><?php endif; ?></section>
+</div>
+<?php endif; ?>
+<?php endif; ?>
+<script src="assets/library.js?v=61" defer></script>
 <?php layout_end();

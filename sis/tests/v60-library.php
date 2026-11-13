@@ -204,6 +204,35 @@ test('Student Portal: a student reserves, renews and cancels only their own', fu
     Library::cancelHold($h, true);
     denied(fn() => Library::checkout('STUDENT', $ref, 'LB0000001'));
 });
+test('v60.1: check-out by ISBN picks a free copy; renew by barcode; overview, members and covers', function () use ($lib) {
+    as_user($lib);
+    $ana = Library::borrowerByCode('LIB001')['ref'];
+    Db::q("UPDATE library_fines SET status='WAIVED' WHERE status='UNPAID'");
+    $free = (int) Db::val("SELECT COUNT(*) FROM library_copies c JOIN library_titles t ON t.id = c.title_id WHERE t.isbn = '9780306406157' AND c.status = 'AVAILABLE' AND c.reference_only = 0");
+    if ($free === 0) Db::q("UPDATE library_copies c JOIN library_titles t ON t.id = c.title_id SET c.status = 'AVAILABLE' WHERE t.isbn = '9780306406157' AND c.status NOT IN ('ON_LOAN')");
+    Db::q("UPDATE library_holds SET status='CANCELLED' WHERE status IN ('WAITING','READY')");
+    $loan = Library::checkout('STUDENT', $ana, '978-0-306-40615-7');
+    $code = (string) Db::val('SELECT c.barcode FROM library_loans l JOIN library_copies c ON c.id = l.copy_id WHERE l.id = ?', [$loan]);
+    ok(str_starts_with($code, 'LB'), 'ISBN resolved to copy ' . $code);
+    denied(fn() => Library::checkout('STUDENT', $ana, '9780000000002'), 'No title has ISBN');
+    [$due, $title] = Library::renewByBarcode($code);
+    ok($title === 'Noli Me Tangere' && $due > date('Y-m-d'), 'renewed by barcode');
+    denied(fn() => Library::renewByBarcode('NOPE-9'), 'No open loan');
+    $o = Library::overview();
+    ok($o['today'] >= 1 && $o['copies'] >= 6 && $o['members'] >= 2 && count($o['popular']) >= 1 && in_array('Borrowed', array_column($o['activity'], 'kind'), true), json_encode(array_slice($o, 0, 7)));
+    ok(count($o['due']) >= 0, 'due soon');
+    $m = array_column(Library::members(), null, 'no');
+    ok(isset($m['LIB001']) && $m['LIB001']['loans'] >= 1, 'members list');
+    ok(count(Library::members('cruz ben')) === 1, 'members search');
+    $png = tempnam(sys_get_temp_dir(), 'cv'); $im = imagecreatetruecolor(900, 1350); imagefill($im, 0, 0, imagecolorallocate($im, 30, 60, 120)); imagepng($im, $png);
+    $tid = (int) Db::val("SELECT id FROM library_titles WHERE isbn = '9780306406157'");
+    Library::saveCover($tid, ['error' => UPLOAD_ERR_OK, 'tmp_name' => $png, 'size' => filesize($png)]);
+    $cv = Library::cover($tid); [$w, $h] = getimagesizefromstring($cv[1]);
+    ok($cv[0] === 'image/png' && $w === 400 && $h === 600, "cover stored as bytes, shrunk to {$w}x{$h}");
+    ok(Library::title($tid)['cover_ver'] !== null && str_contains(Library::coverHtml($tid, 'Noli', Library::title($tid)['cover_ver']), 'r=cover'), 'cover link');
+    ok(str_contains(Library::coverHtml(99, 'El Filibusterismo', null), '>EF<'), 'generated cover tile');
+    Library::deleteCover($tid); ok(Library::cover($tid) === null, 'cover removed');
+});
 test('reports and labels', function () {
     $r = Library::report(date('Y-m-01'), date('Y-m-d'));
     ok($r['loans'] >= 5 && $r['titles'] === 3 && $r['charged'] > 0, json_encode(array_slice($r, 0, 9)));

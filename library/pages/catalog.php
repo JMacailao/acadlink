@@ -6,7 +6,12 @@ $edit = Auth::can('library.catalog.edit');
 $id = (int) ($_GET['id'] ?? 0);
 if ($isPost) {
     $a = (string) ($_POST['action'] ?? '');
-    if ($a === 'title') { $id = Library::saveTitle(((int) ($_POST['id'] ?? 0)) ?: null, $_POST); flash('success', 'Title saved.'); redirect('catalog', ['id' => $id]); }
+    if ($a === 'title') {
+        $id = Library::saveTitle(((int) ($_POST['id'] ?? 0)) ?: null, $_POST);
+        if (($_FILES['cover']['error'] ?? UPLOAD_ERR_NO_FILE) !== UPLOAD_ERR_NO_FILE) Library::saveCover($id, $_FILES['cover']);
+        elseif (!empty($_POST['remove_cover'])) Library::deleteCover($id);
+        flash('success', 'Title saved.'); redirect('catalog', ['id' => $id]);
+    }
     if ($a === 'copies') { $codes = Library::addCopies($id, (int) ($_POST['count'] ?? 1), $_POST); flash('success', count($codes) . ' copy(ies) added: ' . implode(', ', $codes) . '. Print their labels in Barcode Labels.'); redirect('catalog', ['id' => $id]); }
     if ($a === 'copy') { Library::updateCopy((int) ($_POST['copy'] ?? 0), $_POST); flash('success', 'Copy updated.'); redirect('catalog', ['id' => $id]); }
     if ($a === 'hold') {
@@ -23,11 +28,12 @@ if ($id || isset($_GET['new'])):
     $t = $id ? (Library::title($id) ?: throw new AppError('Title not found.')) : null;
     $showForm = $edit && (!$t || isset($_GET['edit']));
     layout_start($t ? $t['title'] : 'New title');
+    if (!$t || $showForm) lib_page_head('book', $t ? 'Edit title' : 'New title', $t ? $t['title'] : 'Add a book or other material to the catalog.');
 ?>
 <div class="mb-2"><a class="btn btn-sm btn-outline-secondary" href="<?= url('catalog') ?>"><i class="bi bi-arrow-left me-1"></i>Catalog</a>
   <?php if ($t && $edit && !$showForm): ?><a class="btn btn-sm btn-outline-primary" href="<?= url('catalog', ['id' => $id, 'edit' => 1]) ?>">Edit title</a> <a class="btn btn-sm btn-outline-secondary" href="<?= url('labels', ['title' => $id]) ?>"><i class="bi bi-upc me-1"></i>Print labels</a><?php endif; ?></div>
 <?php if ($showForm): $v = fn(string $k) => h((string) ($t[$k] ?? '')); ?>
-<form method="post" class="form-section"><?= csrf_field() ?><input type="hidden" name="action" value="title"><input type="hidden" name="id" value="<?= (int) $id ?>">
+<form method="post" enctype="multipart/form-data" class="form-section"><?= csrf_field() ?><input type="hidden" name="action" value="title"><input type="hidden" name="id" value="<?= (int) $id ?>">
   <div class="row g-2">
     <div class="col-md-8"><label class="form-label small" for="tT">Title</label><input class="form-control" id="tT" name="title" required maxlength="255" value="<?= $v('title') ?>"></div>
     <div class="col-md-4"><label class="form-label small" for="tM">Type</label><select class="form-select" id="tM" name="material"><?php foreach ($materials as $k => $m): ?><option value="<?= $k ?>"<?= ($t['material'] ?? 'BOOK') === $k ? ' selected' : '' ?>><?= $m ?></option><?php endforeach; ?></select></div>
@@ -40,15 +46,18 @@ if ($id || isset($_GET['new'])):
     <div class="col-md-3"><label class="form-label small" for="tSub">Subject</label><input class="form-control" id="tSub" name="subject" maxlength="120" value="<?= $v('subject') ?>"></div>
     <div class="col-md-3"><label class="form-label small" for="tC">Call number</label><input class="form-control font-monospace" id="tC" name="call_no" maxlength="60" value="<?= $v('call_no') ?>"></div>
     <div class="col-md-2"><label class="form-label small" for="tL">Language</label><input class="form-control" id="tL" name="language" maxlength="40" value="<?= $v('language') ?>"></div>
+    <div class="col-12"><label class="form-label small" for="tCv">Cover (PNG, JPEG or WebP, up to 5 MB; shrunk to 600 px)</label>
+      <div class="d-flex gap-3 align-items-center"><?= $t ? Library::coverHtml((int) $id, (string) $t['title'], $t['cover_ver'], 'sm') : '' ?><input class="form-control" type="file" id="tCv" name="cover" accept="image/png,image/jpeg,image/webp,image/gif">
+      <?php if ($t && $t['cover_ver']): ?><label class="form-check small text-nowrap"><input class="form-check-input" type="checkbox" name="remove_cover" value="1"> Remove cover</label><?php endif; ?></div></div>
     <div class="col-12"><label class="form-label small" for="tD">Description</label><textarea class="form-control" id="tD" name="description" rows="2" maxlength="4000"><?= $v('description') ?></textarea></div>
   </div>
   <div class="mt-2 d-flex gap-2"><button class="btn btn-primary">Save title</button><a class="btn btn-link" href="<?= url('catalog', $t ? ['id' => $id] : []) ?>">Cancel</a></div>
 </form>
 <?php else: ?>
-<section class="form-section"><h2 class="h5 mb-1"><?= h($t['title']) ?><?= $t['subtitle'] ? '<small class="text-muted fw-normal">: ' . h($t['subtitle']) . '</small>' : '' ?></h2>
+<section class="lib-card d-flex gap-3 align-items-start"><?= Library::coverHtml((int) $id, (string) $t['title'], $t['cover_ver'], 'lg') ?><div class="flex-grow-1 min-w-0"><h1 class="h3 fw-bold mb-1"><?= h($t['title']) ?><?= $t['subtitle'] ? '<small class="text-muted fw-normal">: ' . h($t['subtitle']) . '</small>' : '' ?></h1>
   <p class="mb-1"><?= h($t['authors']) ?></p>
   <p class="small text-muted mb-0"><?= h(implode(' · ', array_filter([$materials[$t['material']] ?? '', $t['publisher'], $t['pub_year'], $t['edition'], $t['subject'], $t['call_no'] ? 'Call no. ' . $t['call_no'] : null, $t['isbn'] ? 'ISBN ' . $t['isbn'] : null]))) ?></p>
-  <?php if ($t['description']): ?><p class="small mt-2 mb-0"><?= nl2br(h($t['description'])) ?></p><?php endif; ?></section>
+  <?php if ($t['description']): ?><p class="small mt-2 mb-0"><?= nl2br(h($t['description'])) ?></p><?php endif; ?></div></section>
 <div class="row g-3">
   <div class="col-xl-8"><section class="form-section"><h3 class="h6">Copies</h3><div class="table-responsive"><table class="table table-sm align-middle mb-0">
     <thead><tr><th>Barcode</th><th>Status</th><th>Location</th><th class="text-end">Price</th><?php if ($edit): ?><th></th><?php endif; ?></tr></thead><tbody>
@@ -88,6 +97,8 @@ endif;
 $q = trim((string) ($_GET['q'] ?? '')); $mat = isset($materials[$_GET['material'] ?? '']) ? $_GET['material'] : '';
 $rows = Library::search($q, $mat, 200);
 layout_start('Catalog');
+lib_page_head('book', 'Catalog', 'Titles and their copies. Search by title, author, subject, ISBN, call number or barcode.');
+lib_tabs(array_filter(['catalog' => 'Titles', 'acquisitions' => 'Acquisitions', 'stocktake' => 'Stocktake', 'labels' => 'Barcode labels'], fn($r) => Auth::can(...ROUTES[$r][1]), ARRAY_FILTER_USE_KEY), 'catalog');
 ?>
 <form method="get" class="d-flex flex-wrap gap-2 mb-2"><input type="hidden" name="r" value="catalog">
   <input class="form-control" style="max-width:360px" name="q" value="<?= h($q) ?>" placeholder="Title, author, subject, ISBN, call number or barcode" aria-label="Search the catalog" autofocus>
@@ -96,7 +107,7 @@ layout_start('Catalog');
   <?php if ($edit): ?><a class="btn btn-primary ms-auto" href="<?= url('catalog', ['new' => 1]) ?>"><i class="bi bi-plus-lg me-1"></i>Add title</a><?php endif; ?></form>
 <div class="table-responsive form-section"><table class="table table-sm align-middle mb-0">
   <thead><tr><th>Title</th><th>Author(s)</th><th>Call no.</th><th class="text-end">Copies</th><th class="text-end">Available</th><th class="text-end">Waiting</th></tr></thead><tbody>
-  <?php foreach ($rows as $r): ?><tr><td><a href="<?= url('catalog', ['id' => $r['id']]) ?>"><?= h($r['title']) ?></a><?= $r['pub_year'] ? ' <small class="text-muted">(' . (int) $r['pub_year'] . ')</small>' : '' ?></td><td><?= h($r['authors']) ?></td><td class="font-monospace small"><?= h((string) $r['call_no']) ?></td>
+  <?php foreach ($rows as $r): ?><tr><td><span class="lib-book"><?= Library::coverHtml((int) $r['id'], $r['title'], $r['cover_ver'], 'xs') ?><a href="<?= url('catalog', ['id' => $r['id']]) ?>"><?= h($r['title']) ?></a></span><?= $r['pub_year'] ? ' <small class="text-muted">(' . (int) $r['pub_year'] . ')</small>' : '' ?></td><td><?= h($r['authors']) ?></td><td class="font-monospace small"><?= h((string) $r['call_no']) ?></td>
     <td class="text-end"><?= (int) $r['copies'] ?></td><td class="text-end <?= (int) $r['available'] ? 'text-success fw-semibold' : 'text-muted' ?>"><?= (int) $r['available'] ?><?= (int) $r['reference_copies'] ? ' <small class="text-muted">+' . (int) $r['reference_copies'] . ' ref.</small>' : '' ?></td><td class="text-end"><?= (int) $r['waiting'] ?: '' ?></td></tr>
   <?php endforeach; if (!$rows): ?><tr><td colspan="6" class="text-center text-muted py-4"><?= $q !== '' ? 'Nothing matches “' . h($q) . '”.' : 'The catalog is empty. Add the first title.' ?></td></tr><?php endif; ?>
   </tbody></table></div>

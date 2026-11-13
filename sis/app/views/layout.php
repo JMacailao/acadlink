@@ -77,16 +77,14 @@ const CANTEEN_NAV = [
 
 /** v60: the Library menu (library/index.php). */
 const LIBRARY_NAV = [
-    ['dashboard', 'Circulation Desk', 'upc-scan', ['library.view'], '', 'Check out, return, renew'],
-    ['catalog', 'Catalog', 'book', ['library.catalog', 'library.view'], '', 'Titles and copies'],
-    ['loans', 'Loans & Overdue', 'journal-arrow-up', ['library.view'], '', 'What is out and overdue notices'],
-    ['holds', 'Holds', 'bookmark-star', ['library.view'], '', 'Reservations and the hold shelf'],
-    ['fines', 'Fines', 'cash-coin', ['library.view'], '', 'Charged, paid and waived'],
-    ['acquisitions', 'Acquisitions', 'truck', ['library.acquire'], 'Collection', 'Orders and receiving'],
-    ['stocktake', 'Stocktake', 'clipboard-check', ['library.stocktake'], 'Collection', 'Scan the shelves'],
-    ['labels', 'Barcode Labels', 'upc', ['library.catalog.edit'], 'Collection', 'Print copy barcodes'],
-    ['reports', 'Reports', 'graph-up', ['library.reports'], 'Reports', 'Circulation and fines'],
-    ['settings', 'Loan Rules', 'sliders', ['library.settings'], 'Reports', 'Days, limits and fines'],
+    ['dashboard', 'Overview', 'house-door', ['library.view', 'library.catalog', 'library.reports'], '', 'Today at the library'],
+    ['catalog', 'Catalog', 'book', ['library.catalog', 'library.view'], '', 'Titles, copies, acquisitions, stocktake, labels'],
+    ['circulation', 'Circulation', 'arrow-left-right', ['library.view'], '', 'Check out, check in, renew'],
+    ['members', 'Members', 'people', ['library.view'], '', 'Students and teachers who borrow'],
+    ['holds', 'Reservations', 'bookmark', ['library.view'], '', 'Holds and the hold shelf'],
+    ['fines', 'Fines', 'coin', ['library.view'], '', 'Charged, paid and waived'],
+    ['reports', 'Reports', 'bar-chart', ['library.reports'], '', 'Circulation and fines'],
+    ['settings', 'Settings', 'gear', ['library.settings', 'library.reports'], '', 'Loan rules'],
 ];
 
 /** The menu of the system this page belongs to. */
@@ -169,7 +167,7 @@ function layout_start(string $title, bool $bare = false): void
 <link rel="stylesheet" href="<?= sis_web() ?>assets/registration-fees.css?v=4">
 <link rel="stylesheet" href="<?= sis_web() ?>assets/assessment-fee-templates.css?v=1">
 <?php if (app_system() === 'CANTEEN'): ?><link rel="stylesheet" href="assets/canteen.css?v=59b"><?php endif; ?>
-<?php if (app_system() === 'LIBRARY'): ?><link rel="stylesheet" href="assets/library.css?v=60b"><?php endif; ?>
+<?php if (app_system() === 'LIBRARY'): ?><link rel="stylesheet" href="assets/library.css?v=61c"><?php endif; ?>
 <?php if ($route === 'assessment' && ($_GET['tab'] ?? '') === 'names'): ?><script src="<?= sis_web() ?>assets/fee-templates.js?v=1" defer></script><?php endif; ?>
 <?php if ($route === 'documents' && ($_GET['tab'] ?? '') === 'settings'): ?><script src="<?= sis_web() ?>assets/documents-template-preview.js?v=1" defer></script><?php endif; ?>
 <?php if ($route === 'admission'): ?><link rel="stylesheet" href="<?= sis_web() ?>assets/admission-form.css?v=1"><?php endif; ?>
@@ -217,7 +215,8 @@ function layout_start(string $title, bool $bare = false): void
 <div class="app-shell">
   <aside class="offcanvas-lg offcanvas-start sidebar d-print-none" tabindex="-1" id="sidebar" aria-label="Main navigation">
     <div class="sidebar-inner">
-      <?php if ($system === 'sis'): ?><a class="sis-rail-brand" href="<?= url('dashboard') ?>"><img src="<?= h($logo ?: '../icons/acadlink-mark.png') ?>" alt=""><span><strong><?= h(School::brand()) ?></strong><small><?= h(app_title()) ?></small></span></a><?php endif; ?>
+      <?php if (app_system() === 'LIBRARY'): ?><a class="sis-rail-brand lib-rail-brand" href="<?= url('dashboard') ?>"><i class="bi bi-book-half" aria-hidden="true"></i><span><strong>AcadLink</strong><strong>Library</strong></span></a>
+      <?php elseif ($system === 'sis'): ?><a class="sis-rail-brand" href="<?= url('dashboard') ?>"><img src="<?= h($logo ?: '../icons/acadlink-mark.png') ?>" alt=""><span><strong><?= h(School::brand()) ?></strong><small><?= h(app_title()) ?></small></span></a><?php endif; ?>
       <div class="sis-sidebar-head d-lg-none"><span><?= h(School::brand()) ?> <?= $system === 'portal' ? 'Portal' : (['FINANCE' => 'Finance', 'CANTEEN' => 'Canteen', 'LIBRARY' => 'Library'][app_system()] ?? 'SIS') ?></span><button type="button" class="btn-close" data-bs-dismiss="offcanvas" data-bs-target="#sidebar" aria-label="Close menu"></button></div>
       <nav class="pb-2"><?php if(in_array(Auth::role(),['TEACHER','STUDENT'],true)): ?><a class="side-link" href="<?= url('history',['tab'=>'grades']) ?>"><i class="bi bi-clock-history"></i><span>History of Grades</span></a><?php if(Auth::role()==='STUDENT'): ?><a class="side-link" href="<?= url('history',['tab'=>'assessments']) ?>"><i class="bi bi-receipt"></i><span>History of Assessments</span></a><?php endif; endif; ?>
       <?php if(Auth::can('self')): ?><a class="side-link" href="<?= url(Auth::studentNumber()?'myenrollment':'myadmission') ?>"><i class="bi bi-person-plus"></i><span><?= Auth::studentNumber()?'Apply for Enrollment':'My admission application' ?></span></a><?php endif; ?>
@@ -228,7 +227,7 @@ function layout_start(string $title, bool $bare = false): void
           if ($r === 'importall' && !ImportAll::can()) continue; // v56: needs both Curriculum and Assessment editing
           [$rr, $qs] = array_pad(explode('&', $r, 2), 2, '');
           parse_str($qs, $params);
-          $active = ($route === 'student' && $rr === 'students') || $here === $r || ($route === $rr && !$qs && !isset($_GET['tab'])) || ($route === 'assessment' && $rr === 'assessment' && !isset($_GET['tab']) && $r === 'assessment&tab=categories') || ($route === 'accounting' && !isset($_GET['tab']) && $r === 'accounting&tab=overview');
+          $active = ($route === 'student' && $rr === 'students') || $here === $r || ($route === $rr && !$qs && !isset($_GET['tab'])) || ($route === 'assessment' && $rr === 'assessment' && !isset($_GET['tab']) && $r === 'assessment&tab=categories') || ($route === 'accounting' && !isset($_GET['tab']) && $r === 'accounting&tab=overview') || (app_system() === 'LIBRARY' && (['acquisitions' => 'catalog', 'stocktake' => 'catalog', 'labels' => 'catalog', 'loans' => 'circulation'][$route] ?? '') === $rr);
           if ($g !== $group) {
               if ($group !== '') echo '</div></div>';
               $group = $g;
