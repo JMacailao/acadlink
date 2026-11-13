@@ -17,6 +17,8 @@ final class Auth
         'ACCOUNTING' => ['accounting.reconcile','accounting.review','accounting.post','accounting.close','migration.finance','students', 'payments.view', 'payments.record', 'payments.void', 'assessment', 'assessment.edit', 'accounting', 'accounting.edit', 'activity', 'registration.view', 'balances.view', 'balances.approve', 'discounts.manage'],
         'TEACHER' => [],
         'STUDENT'   => ['self'],
+        // v59: not a role; lets the CLI administrator (tests, tools) use the Canteen POS
+        'CANTEEN_ADMIN' => ['canteen.view', 'canteen.sell', 'canteen.products', 'canteen.products.edit', 'canteen.inventory', 'canteen.inventory.edit', 'canteen.supervise', 'canteen.reports'],
     ];
     public const ROLES = ['ADMIN' => 'Power User / Super Admin', 'TEACHER' => 'Teacher', 'REGISTRAR' => 'Registrar', 'ADMISSION' => 'Admission staff', 'CASHIER' => 'Cashier', 'ACCOUNTING' => 'Accounting staff', 'STUDENT' => 'Student'];
 
@@ -73,13 +75,14 @@ final class Auth
             if (!$a) return null;
             $g=$c->group((int)$a['id']);
             $u['central_id']=(int)$a['id'];
-            $u['role']=['POWER_USER'=>'ADMIN','ACCOUNTING'=>'ACCOUNTING','CASHIER'=>'CASHIER','REGISTRAR'=>'REGISTRAR','TEACHER'=>'TEACHER','STUDENT'=>'STUDENT'][$g]??'TEACHER';
+            $u['role']=['POWER_USER'=>'ADMIN','ACCOUNTING'=>'ACCOUNTING','CASHIER'=>'CASHIER','CANTEEN_CASHIER'=>'CASHIER','CANTEEN_SUPERVISOR'=>'CASHIER','REGISTRAR'=>'REGISTRAR','TEACHER'=>'TEACHER','STUDENT'=>'STUDENT'][$g]??'TEACHER';
             $u['username']=$a['username']; $u['full_name']=$a['display_name'];
             $u['must_change_password']=$a['must_change_password'];
             $u['student_number']=$a['person_verified']?$a['student_number']:null;
             unset($u['password_hash']);
         } elseif (!$u['is_active']) return null;
         $u['role_code']=$u['role']; $u['role_name']=self::ROLES[$u['role']]??$u['role'];
+        if (isset($g) && in_array($g, ['CANTEEN_CASHIER','CANTEEN_SUPERVISOR'], true)) $u['role_name'] = $g === 'CANTEEN_SUPERVISOR' ? 'Canteen Supervisor' : 'Canteen Cashier';
         return $u;
     }
 
@@ -132,6 +135,11 @@ final class Auth
             'eligibility.view'=>['sis.eligibility.view'], 'eligibility.holds'=>['sis.eligibility.holds.manage'],
             'documents'=>['sis.documents.view','sis.documents.issue'], 'schedules'=>['sis.schedules.view','sis.schedules.manage'], 'schedules.edit'=>['sis.schedules.manage'], 'documents.issue'=>['sis.documents.issue'], 'documents.void'=>['sis.documents.void'],
             'clearance'=>['sis.clearance.view','sis.clearance.manage'], 'clearance.manage'=>['sis.clearance.manage'],
+            // v59: Canteen POS
+            'canteen.view'=>['canteen.sales.view','canteen.sales.make','canteen.supervise'], 'canteen.sell'=>['canteen.sales.make'],
+            'canteen.products'=>['canteen.products.view','canteen.products.manage'], 'canteen.products.edit'=>['canteen.products.manage'],
+            'canteen.inventory'=>['canteen.inventory.view','canteen.inventory.manage'], 'canteen.inventory.edit'=>['canteen.inventory.manage'],
+            'canteen.supervise'=>['canteen.supervise'], 'canteen.reports'=>['canteen.reports.view','canteen.supervise'],
         ];
         $out=[];
         foreach($map as $p=>$keys) foreach($keys as $key) if(isset($central[$key])) { $out[$p]=true; break; }

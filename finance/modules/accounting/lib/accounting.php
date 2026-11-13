@@ -75,9 +75,9 @@ final class Accounting
         Db::tx(function () use ($in, $valid) {
             foreach ($in as $key => $acc) {
                 $key = (string) $key;
-                if (!preg_match('/^(ar|default_revenue|default_discount|adjust_charge|adjust_less|doc_fee|method:[A-Z]+|cat:\d+|label:\d+|discount:\d+)$/', $key)) continue;
+                if (!preg_match('/^(ar|default_revenue|default_discount|adjust_charge|adjust_less|doc_fee|canteen:(?:cash|qr|sales|overshort)|method:[A-Z]+|cat:\d+|label:\d+|discount:\d+)$/', $key)) continue;
                 if ($acc === '' || $acc === null) {
-                    if (isset(self::MAP_KEYS[$key]) || str_starts_with($key, 'method:')) throw new AppError('Choose an account for every required mapping.');
+                    if (isset(self::MAP_KEYS[$key]) || str_starts_with($key, 'method:') || str_starts_with($key, 'canteen:')) throw new AppError('Choose an account for every required mapping.');
                     Db::q('DELETE FROM sis_account_map WHERE map_key = ?', [$key]);
                     continue;
                 }

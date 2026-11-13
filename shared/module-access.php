@@ -16,7 +16,7 @@ final class ModuleAccess
     /** Order of the cards after sign-in. */
     public const CHOOSER_ORDER = ['GRADING', 'SIS', 'LMS', 'CANTEEN', 'LIBRARY', 'FINANCE', 'PORTAL'];
     /** Systems shown with a "Coming soon" card: they can be given to people, but do not open yet. */
-    public const COMING_SOON = ['LMS', 'CANTEEN', 'LIBRARY'];
+    public const COMING_SOON = ['LMS', 'LIBRARY']; // v59: Canteen POS is open
     public const LEVELS = ['NONE' => 'No access', 'VIEW' => 'View only', 'EDIT' => 'View and edit'];
 
     /** key => [system, label, view codes, edit codes, extra actions under Edit (code => label)] */
@@ -55,7 +55,11 @@ final class ModuleAccess
             'portal.enrollment'  => ['PORTAL', 'My enrollment status', ['portal.enrollment.view'], [], []],
             'portal.apply'       => ['PORTAL', 'Apply for admission or enrollment', [], ['portal.admission.apply'], []],
             'lms.access'         => ['LMS', 'LMS: Access', ['lms.access.view'], [], []],
-            'canteen.access'     => ['CANTEEN', 'Canteen POS: Access', ['canteen.access.view'], [], []],
+            'canteen.pos'        => ['CANTEEN', 'Canteen: sell, receipts and own shift', ['canteen.sales.view'], ['canteen.sales.make'], []],
+            'canteen.products'   => ['CANTEEN', 'Canteen: products, prices and QR code', ['canteen.products.view'], ['canteen.products.manage'], []],
+            'canteen.inventory'  => ['CANTEEN', 'Canteen: inventory and stocktakes', ['canteen.inventory.view'], ['canteen.inventory.manage'], []],
+            'canteen.supervise'  => ['CANTEEN', 'Canteen: approve voids and refunds, accept cash counts', [], ['canteen.supervise'], []],
+            'canteen.reports'    => ['CANTEEN', 'Canteen: sales reports', ['canteen.reports.view'], [], []],
             'library.access'     => ['LIBRARY', 'Library: Access', ['library.access.view'], [], []],
         ];
     }
@@ -174,6 +178,34 @@ final class ModuleAccess
                    WHERE NOT EXISTS (SELECT 1 FROM central_schema_migrations WHERE migration_key='lms_v1')");
         $db->exec("INSERT IGNORE INTO central_schema_migrations(migration_key) VALUES ('lms_v1')");
         self::installV58($db);
+        self::installV59($db);
+    }
+
+    /** v59: Canteen POS permissions and the Canteen Cashier and Canteen Supervisor groups. */
+    private static function installV59(PDO $db): void
+    {
+        $db->exec("INSERT IGNORE INTO central_permissions(code,workspace,label) VALUES
+            ('canteen.sales.view','CANTEEN','See canteen sales and receipts'),('canteen.sales.make','CANTEEN','Sell at the canteen and run a cashier shift'),
+            ('canteen.products.view','CANTEEN','See canteen products and prices'),('canteen.products.manage','CANTEEN','Manage canteen products, prices and the QR code'),
+            ('canteen.inventory.view','CANTEEN','See canteen stock'),('canteen.inventory.manage','CANTEEN','Receive, prepare, adjust and count canteen stock'),
+            ('canteen.supervise','CANTEEN','Approve canteen voids and refunds and accept cash counts'),('canteen.reports.view','CANTEEN','See canteen sales reports')");
+        if ($db->query("SELECT 1 FROM central_schema_migrations WHERE migration_key='canteen_v59'")->fetchColumn()) return;
+        $db->beginTransaction();
+        try {
+            $all = "'canteen.sales.view','canteen.sales.make','canteen.products.view','canteen.products.manage','canteen.inventory.view','canteen.inventory.manage','canteen.supervise','canteen.reports.view'";
+            $db->exec("INSERT IGNORE INTO central_groups(code,name,description,is_default,is_active) VALUES
+                ('CANTEEN_CASHIER','Canteen Cashier','Sell at the canteen, print receipts, run and count their own shift, and ask for voids and refunds.',1,1),
+                ('CANTEEN_SUPERVISOR','Canteen Supervisor','Run the canteen: products, prices, stock, stocktakes, approve voids and refunds, accept cash counts and see reports.',1,1)");
+            $db->exec("INSERT IGNORE INTO central_group_permissions(group_id,permission_code,access_scope)
+                       SELECT g.id,c.code,'ALL' FROM central_groups g JOIN central_permissions c ON c.code IN ($all) WHERE g.code IN ('POWER_USER','CANTEEN_SUPERVISOR')");
+            $db->exec("INSERT IGNORE INTO central_group_permissions(group_id,permission_code,access_scope)
+                       SELECT g.id,c.code,'ALL' FROM central_groups g JOIN central_permissions c ON c.code IN ('canteen.sales.view','canteen.sales.make','canteen.products.view','canteen.inventory.view') WHERE g.code='CANTEEN_CASHIER'");
+            $db->exec("INSERT IGNORE INTO central_schema_migrations(migration_key) VALUES ('canteen_v59')");
+            $db->commit();
+        } catch (Throwable $e) {
+            if ($db->inTransaction()) $db->rollBack();
+            throw $e;
+        }
     }
 
     /**

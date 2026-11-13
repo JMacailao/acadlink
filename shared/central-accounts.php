@@ -383,7 +383,7 @@ final class CentralAccounts
     }
     public function syncProjections(int $id): void {
         $a=$this->account($id); $group=$this->group($id);
-        $sisRole=['POWER_USER'=>'ADMIN','ACCOUNTING'=>'ACCOUNTING','CASHIER'=>'CASHIER','REGISTRAR'=>'REGISTRAR','TEACHER'=>'TEACHER','STUDENT'=>'STUDENT'][$group]??'TEACHER';
+        $sisRole=['POWER_USER'=>'ADMIN','ACCOUNTING'=>'ACCOUNTING','CASHIER'=>'CASHIER','CANTEEN_CASHIER'=>'CASHIER','CANTEEN_SUPERVISOR'=>'CASHIER','REGISTRAR'=>'REGISTRAR','TEACHER'=>'TEACHER','STUDENT'=>'STUDENT'][$group]??'TEACHER';
         $sid=$this->legacyId($id,'SIS');
         if (!$sid) {
             // Avoid silently claiming a legacy username; it must be explicitly reviewed and linked.

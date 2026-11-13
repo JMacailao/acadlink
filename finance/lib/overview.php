@@ -3,8 +3,8 @@ declare(strict_types=1);
 
 /**
  * v58 Finance overview: money collected by source, and the finance work waiting for someone.
- * Each source reads its own posted (not voided) receipts. Canteen POS and Library are listed already and show
- * "Not set up yet" until their systems record sales or fines; they plug in by adding their query here.
+ * Each source reads its own posted (not voided) receipts. Canteen POS counts net sales (v59). Library shows
+ * "Not set up yet" until its system records fines; it plugs in by adding its query here.
  */
 final class FinanceOverview
 {
@@ -12,7 +12,7 @@ final class FinanceOverview
     public const SOURCES = [
         'TUITION'   => ['Tuition and fees', 'mortarboard', "SELECT COALESCE(SUM(amount),0), COUNT(*) FROM sis_payments WHERE status='POSTED' AND paid_at >= ? AND paid_at < ?"],
         'DOCUMENTS' => ['Documents (TOR and certificates)', 'file-earmark-text', "SELECT COALESCE(SUM(amount),0), COUNT(*) FROM sis_document_payments WHERE status='POSTED' AND paid_at >= ? AND paid_at < ?"],
-        'CANTEEN'   => ['Canteen POS', 'shop', null],
+        'CANTEEN'   => ['Canteen POS', 'shop', 'canteen'], // v59: net sales (sales − approved refunds), see Canteen::netSales()
         'LIBRARY'   => ['Library fines', 'book', null],
     ];
 
@@ -27,7 +27,10 @@ final class FinanceOverview
         $rows = []; $total = 0;
         foreach (self::SOURCES as $key => [$label, $icon, $sql]) {
             $cents = 0; $count = 0;
-            if ($sql !== null) {
+            if ($sql === 'canteen') {
+                [$cents, $count] = Canteen::netSales($from . ' 00:00:00', $end . ' 00:00:00');
+                $total += $cents;
+            } elseif ($sql !== null) {
                 [$sum, $count] = self::sum($sql, $from, $end);
                 $cents = Money::cents((string) $sum);
                 $total += $cents;
