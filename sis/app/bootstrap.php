@@ -39,6 +39,7 @@ require SIS_ROOT . '/app/lib/student-photo.php'; // v62: student photos
 require SIS_ROOT . '/app/lib/privacy.php'; // v62: Data Privacy Act helpers
 require SIS_ROOT . '/app/lib/parents.php'; // v62: parent / guardian accounts
 require SIS_ROOT . '/app/lib/backup.php'; // v63: whole-system backup and restore
+require SIS_ROOT . '/app/lib/first-setup.php'; // v63.3: first password of power.admin
 require SIS_ROOT . '/app/lib/balance-workspace.php';
 require FINANCE_ROOT . '/modules/accounting/lib/accounting.php';
 require FINANCE_ROOT . '/modules/accounting/lib/workflow.php';
@@ -121,7 +122,7 @@ function sis_boot(): void
  */
 function sis_upgrade(): void
 {
-    if (PHP_SAPI !== 'cli' && ($_SESSION['sis_schema'] ?? 0) >= 32) return;
+    if (PHP_SAPI !== 'cli' && ($_SESSION['sis_schema'] ?? 0) >= 33) return;
     $have = array_map('strtolower', Db::col("SELECT table_name FROM information_schema.tables WHERE table_schema = DATABASE() AND table_name LIKE 'sis\\_%'"));
     if (!in_array('sis_registrations', $have, true) || !in_array('sis_fee_labels', $have, true)) return; // not installed yet
     // Tables of newer versions: created from schema.sql (CREATE TABLE IF NOT EXISTS only)
@@ -196,5 +197,6 @@ function sis_upgrade(): void
     StudentPhoto::install(Db::pdo());  // v62: student photos
     Privacy::install(Db::pdo());       // v62: privacy consents and reviews
     ParentAccess::install(Db::pdo());  // v62: parent links
-    if (PHP_SAPI !== 'cli') $_SESSION['sis_schema'] = 32; // v62
+    FirstSetup::install();             // v63.3: retire the old published starting password
+    if (PHP_SAPI !== 'cli') $_SESSION['sis_schema'] = 33; // v63.3
 }

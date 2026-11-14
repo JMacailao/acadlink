@@ -1,0 +1,14 @@
+# Portal: only index.php and assets/ are public (v63.3)
+DirectoryIndex index.php
+Options -Indexes
+<FilesMatch "^(config|config\.sample)\.php$|\.(sql|md|log)$|^\.">
+  Require all denied
+</FilesMatch>
+<IfModule mod_headers.c>
+  Header always set X-Content-Type-Options "nosniff"
+  Header always set Referrer-Policy "same-origin"
+</IfModule>
+# After HTTPS is enabled, uncomment:
+# RewriteEngine On
+# RewriteCond %{HTTPS} off
+# RewriteRule ^ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]

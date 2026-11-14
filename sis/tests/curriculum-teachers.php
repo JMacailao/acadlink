@@ -9,6 +9,7 @@ $sql=preg_replace('/^\s*--.*$/m','',(string)file_get_contents(dirname(SIS_ROOT).
 foreach(array_filter(array_map('trim',preg_split('/;\s*(?:\r?\n|$)/',$sql))) as $stmt){$s=$db->query($stmt);while($s->nextRowset()){}$s->closeCursor();}
 $cfg['db_name']=$name;Db::connect($cfg);
 $c=Auth::central();$power=(int)Db::val('SELECT id FROM central_accounts LIMIT 1');
+Db::q('UPDATE central_credentials SET password_hash=? WHERE account_id=?',[password_hash('Start-32f32c74-A1',PASSWORD_DEFAULT),$power]); // v63.3: INSTALL.sql leaves power.admin without a password
 $c->changePassword($power,'Start-32f32c74-A1','CurriculumAdmin123');Auth::actAs((int)$c->legacyId($power,'SIS'));
 $checks=0;
 function check(bool $ok,string $message):void {global $checks;if(!$ok)throw new RuntimeException($message);$checks++;echo "PASS $message\n";}
