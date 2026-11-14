@@ -36,13 +36,7 @@ const NAV = [
     ['libfines', 'Library Fines', 'book', ['payments.view'], 'Fees', 'Overdue, lost and damage fines to pay'],
     ['reports', 'Report Manager', 'printer', ['admission', 'registration', 'payments.view', 'accounting', 'reports'], 'Administration', 'Census, cashier reports'],
     ['users', 'Users and Groups', 'person-gear', ['users.manage'], 'Administration', 'Sign-in accounts'],
-    ['backup', 'Backup & Restore', 'cloud-arrow-down', ['users.manage'], 'Administration', 'A copy of all of AcadLink (power.admin only)'],
-    ['emailsetup', 'Email Sending', 'envelope-at', ['settings.manage'], 'Administration', 'Forgot password emails (EmailJS)'],
-    ['bulkaccounts', 'Bulk Accounts', 'people-fill', ['users.manage'], 'Administration', 'Create many teacher or student accounts'],
-    ['migration', 'Data Migration', 'file-earmark-arrow-up', ['registration','accounting','users.manage'], 'Administration', 'Reviewed historical imports'],
-    ['importall', 'Import All', 'cloud-upload', ['curriculum.edit'], 'Administration', 'Subjects, fees, teachers and curriculum'],
-    ['settings', 'Settings', 'gear', ['settings.manage'], 'Administration', 'Assessment & receipt printing'],
-    ['docrequirements', 'Document Requirements', 'list-check', ['settings.manage'], 'Administration', 'Registration document checklist'],
+    ['settings', 'Settings', 'gear', ['settings.manage', 'users.manage', 'registration', 'accounting', 'curriculum.edit'], 'Administration', 'Printing, document requirements, email, backup, accounts and imports'],
     ['activity', 'Activity Log', 'clock-history', ['activity'], 'Administration', 'Who did what'],
     ['help', 'Help', 'question-circle', [], '', 'How to use the SIS'],
 ];
@@ -151,6 +145,53 @@ function app_title(): string
     return ['FINANCE' => 'Finance', 'CANTEEN' => 'Canteen POS', 'LIBRARY' => 'Library', 'LMS' => 'Learning Management System', 'PORTAL' => 'Student Portal'][app_system()] ?? 'School Information System';
 }
 
+/**
+ * v63.7: Settings is one place in the side menu; these pages are listed in a Settings menu on the right of each of them.
+ * [route, label, icon, hint, permissions]
+ */
+const SETTINGS_HUB = [
+    ['settings', 'Printing', 'printer', 'Assessment and receipt printouts', ['settings.manage']],
+    ['docrequirements', 'Document Requirements', 'list-check', 'Registration document checklist', ['settings.manage']],
+    ['emailsetup', 'Email Sending', 'envelope-at', 'Forgot-password emails', ['settings.manage']],
+    ['backup', 'Backup & Restore', 'cloud-arrow-down', 'A copy of all of AcadLink', ['users.manage']],
+    ['bulkaccounts', 'Bulk Accounts', 'people-fill', 'Many teacher or student accounts', ['users.manage']],
+    ['migration', 'Data Migration', 'file-earmark-arrow-up', 'Reviewed historical imports', ['registration', 'accounting', 'users.manage']],
+    ['importall', 'Import All', 'cloud-upload', 'Subjects, fees, teachers and curriculum', ['curriculum.edit']],
+];
+
+/** The Settings pages this person may open, in menu order. */
+function settings_hub_pages(): array
+{
+    if (app_system() !== 'SIS' || !Auth::user()) return [];
+    $out = [];
+    foreach (SETTINGS_HUB as $p) {
+        if (!Auth::can(...$p[4])) continue;
+        if ($p[0] === 'backup' && !Backup::allowed()) continue; // power.admin only
+        if ($p[0] === 'importall' && !ImportAll::can()) continue; // needs Curriculum and Assessment editing
+        $out[] = $p;
+    }
+    return $out;
+}
+
+/** Is the current page one of the Settings pages? */
+function settings_hub_route(): bool
+{
+    global $route;
+    return app_system() === 'SIS' && in_array((string) $route, array_column(SETTINGS_HUB, 0), true);
+}
+
+/** The Settings menu shown on the right of every Settings page (on top on smaller screens). */
+function settings_hub_nav(): string
+{
+    global $route;
+    $html = '<aside class="settings-hub-nav d-print-none" aria-label="Settings"><div class="shn-card"><div class="shn-head"><i class="bi bi-gear" aria-hidden="true"></i>Settings</div><nav class="shn-links">';
+    foreach (settings_hub_pages() as [$r, $label, $icon, $hint]) {
+        $on = $route === $r;
+        $html .= '<a class="shn-link' . ($on ? ' active' : '') . '" href="' . h(url($r)) . '"' . ($on ? ' aria-current="page"' : '') . '><i class="bi bi-' . h($icon) . '" aria-hidden="true"></i><span><b>' . h($label) . '</b><small>' . h($hint) . '</small></span></a>';
+    }
+    return $html . '</nav></div></aside>';
+}
+
 /** Icon shown beside each sidebar group heading. */
 const NAV_GROUP_ICONS = ['Enrollment' => 'clipboard-check', 'Records' => 'folder2-open', 'Assessment' => 'calculator', 'Fees' => 'cash-stack', 'Accounting' => 'journal-bookmark', 'Administration' => 'gear-wide-connected', 'Finance' => 'wallet2', 'Cashier' => 'cash-coin', 'Balances' => 'wallet2', 'Reports' => 'printer', 'Supervisor' => 'person-check', 'Inventory' => 'box-seam'];
 
@@ -158,6 +199,7 @@ const NAV_GROUP_ICONS = ['Enrollment' => 'clipboard-check', 'Records' => 'folder
 function nav_group_of(string $route): string
 {
     if ($route === 'student') $route = 'students';
+    if (app_system() === 'SIS' && in_array($route, array_column(SETTINGS_HUB, 0), true)) return 'Administration'; // v63.7
     foreach (app_nav() as [$r, , , , $g]) if (explode('&', $r, 2)[0] === $route) return $g;
     return '';
 }
@@ -207,6 +249,7 @@ function layout_start(string $title, bool $bare = false): void
 <link rel="stylesheet" href="<?= sis_web() ?>assets/app.css?v=56b">
 <link rel="stylesheet" href="<?= sis_web() ?>assets/activity.css?v=31">
 <link rel="stylesheet" href="<?= sis_web() ?>assets/navigation.css?v=31">
+<?php if (settings_hub_route()): ?><link rel="stylesheet" href="<?= sis_web() ?>assets/settings-hub.css?v=1"><?php endif; ?>
 <link rel="stylesheet" href="<?= sis_web() ?>assets/reference-ui.css?v=20261021portal">
 <link rel="stylesheet" href="<?= sis_web() ?>assets/record-list.css?v=20261020b">
 <link rel="stylesheet" href="<?= sis_web() ?>assets/fixed-shell.css?v=20261020j">
@@ -285,11 +328,12 @@ function layout_start(string $title, bool $bare = false): void
           if ($perms && !Auth::can(...$perms)) continue;
           if ($r === 'clearance' && !Clearance::on()) continue; // v55: hidden while online clearance is off
           if ($r === 'importall' && !ImportAll::can()) continue; // v56: needs both Curriculum and Assessment editing
-          if ($r === 'backup' && !Backup::allowed()) continue; // v63: only power.admin
+          if ($r === 'settings' && app_system() === 'SIS' && !($hubPages = settings_hub_pages())) continue; // v63.7: no Settings page for this person
           if (app_system() === 'LMS' && function_exists('lms_nav_allows') && !lms_nav_allows($r)) continue; // v61.1: Reports and Settings are for teachers
           [$rr, $qs] = array_pad(explode('&', $r, 2), 2, '');
           parse_str($qs, $params);
           $active = ($route === 'student' && $rr === 'students') || $here === $r || ($route === $rr && !$qs && !isset($_GET['tab'])) || ($route === 'assessment' && $rr === 'assessment' && !isset($_GET['tab']) && $r === 'assessment&tab=categories') || ($route === 'accounting' && !isset($_GET['tab']) && $r === 'accounting&tab=overview') || (app_system() === 'LIBRARY' && (['acquisitions' => 'catalog', 'stocktake' => 'catalog', 'labels' => 'catalog', 'loans' => 'circulation'][$route] ?? '') === $rr) || (app_system() === 'LMS' && (['class' => 'classes', 'work' => 'classes', 'todo' => 'assignments'][$route] ?? '') === $rr);
+          if ($r === 'settings' && app_system() === 'SIS') { $rr = $hubPages[0][0]; $params = []; $active = settings_hub_route(); } // v63.7
           if ($g !== $group) {
               if ($group !== '') echo '</div></div>';
               $group = $g;
@@ -308,6 +352,7 @@ function layout_start(string $title, bool $bare = false): void
       <?php $crumbGroup = nav_group_of((string) $route); ?>
       <nav class="breadcrumbs d-print-none" aria-label="Breadcrumb"><a href="<?= url('dashboard') ?>"><i class="bi bi-house-door-fill" aria-hidden="true"></i>Home</a><?php if ($crumbGroup !== '' && $crumbGroup !== $title): ?><i class="bi bi-chevron-right" aria-hidden="true"></i><span><?= h($crumbGroup) ?></span><?php endif; ?><i class="bi bi-chevron-right" aria-hidden="true"></i><span aria-current="page"><?= h($title) ?></span></nav>
       </header>
+<?php if (settings_hub_route() && settings_hub_pages()): $GLOBALS['SETTINGS_HUB_OPEN'] = true; ?><div class="settings-hub"><div class="settings-hub-main"><?php endif; ?>
 <?php elseif (!$bare): ?>
 <main class="container py-4">
 <?php endif; ?>
@@ -322,6 +367,7 @@ function layout_end(bool $bare = false): void
 {
     if (defined('PORTAL_ROOT')) { portal_layout_end($bare); return; }
     global $route, $LAYOUT_SIDEBAR;
+    if (!empty($GLOBALS['SETTINGS_HUB_OPEN'])) echo "</div>" . settings_hub_nav() . "</div>\n"; // v63.7
     if (!$bare) echo "    </main>\n";
     if ($LAYOUT_SIDEBAR) echo "  </div>\n</div>\n";
     if ($LAYOUT_SIDEBAR): // the pop-up used by buttons with data-frame="url" (New registration, View assessment)

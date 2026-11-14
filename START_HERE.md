@@ -1,3 +1,5 @@
+**Updating to v63.7 (Settings in one place)?** Upload the files and press Ctrl+F5. Backup & Restore, Email Sending, Bulk Accounts, Data Migration, Import All and Document Requirements are now under Administration → Settings, in the menu on the right.
+
 **Updating to v63.5 or v63.6 (school logo in the LMS, Canteen POS and Library)?** Upload the files and press Ctrl+F5. Upload the school's logo in Grading System → School settings if you have not yet.
 
 **Updating to v63.3 (security fixes)?** Read the v63.3 part of `V63_UPDATE.md`. Upload the files (keep `api/config.php`) and press Ctrl+F5. If power.admin still used the old starting password, set a new one on First-time setup.
