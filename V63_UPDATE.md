@@ -278,3 +278,23 @@ How the restore protects you:
   `SET NAMES utf8mb4 COLLATE utf8mb4_unicode_ci`, the rule AcadLink's tables use. Nothing to change in `api/config.php`
   or the database.
 - Source: `sis/app/lib/core.php`, `api/lib.php`.
+
+## v63.20 — "Illegal mix of collations" can't come back
+- **One text rule everywhere.** On upgrade (the first page after an update, once per session), AcadLink sets the
+  database's default and every table to `utf8mb4_unicode_ci`. Tables a host or an older version created with another
+  rule (e.g. `utf8mb4_general_ci`, or `utf8mb4_uca1400_ai_ci` on newer MariaDB) are converted; their data is kept.
+  Binary tables (the Grading System's `docs`, `accounts`, `login_attempts`, restore jobs) and ascii token columns are
+  left as they are on purpose. Anything that could not be converted is written to the PHP error log.
+- **Every table names its rule.** The few `CREATE TABLE` statements that relied on the server's default
+  (`sis_payment_plans`, `sis_registration_plans`, `sis_payment_plan_events`, `sis_document_counters`, `sis_form_once`)
+  now say `COLLATE=utf8mb4_unicode_ci`, in `INSTALL.sql` too.
+- **New test suite `v63-db-collation`** (20 suites now), run on every pull request:
+  - builds a database the way Hostinger does: a `utf8mb4_general_ci` database, a user without SUPER, and a server
+    that forces `collation_connection = utf8mb4_unicode_ci`. It first proves that this setting reproduces the error;
+  - on it: setup password, sign-in, permissions, and accounts of every group;
+  - fails if any `CREATE TABLE` in the code doesn't name its collation, or any database connection doesn't start with
+    `SET NAMES utf8mb4 COLLATE …`.
+  Checked: removing either fix makes the suite fail.
+- Source: `sis/app/lib/core.php` (`Db::alignCollation`, `Db::COLLATION`), `sis/app/bootstrap.php`,
+  `sis/app/lib/documents.php`, `INSTALL.sql`, `sis/database/schema.sql`, `sis/database/demo_bulk_seed.sql`,
+  `sis/tests/v63-db-collation.php` (new), `sis/tests/all.sh`.

@@ -11,7 +11,7 @@ cd "$(dirname "$0")/../.."
 SUITES=(
   record-list grade-scale-parity
   central-accounts curriculum-teachers eligibility grading-restore-identity accounting-workflow e2e_lifecycle portal-enrollment
-  v56-features v57-toolbar v58-finance v59-canteen v60-library v61-lms v62-features v63-backup v63-security workspaces
+  v56-features v57-toolbar v58-finance v59-canteen v60-library v61-lms v62-features v63-backup v63-security v63-db-collation workspaces
 )
 [ "$#" -gt 0 ] && SUITES=("$@")
 

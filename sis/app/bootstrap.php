@@ -122,7 +122,7 @@ function sis_boot(): void
  */
 function sis_upgrade(): void
 {
-    if (PHP_SAPI !== 'cli' && ($_SESSION['sis_schema'] ?? 0) >= 33) return;
+    if (PHP_SAPI !== 'cli' && ($_SESSION['sis_schema'] ?? 0) >= 34) return;
     $have = array_map('strtolower', Db::col("SELECT table_name FROM information_schema.tables WHERE table_schema = DATABASE() AND table_name LIKE 'sis\\_%'"));
     if (!in_array('sis_registrations', $have, true) || !in_array('sis_fee_labels', $have, true)) return; // not installed yet
     // Tables of newer versions: created from schema.sql (CREATE TABLE IF NOT EXISTS only)
@@ -198,5 +198,8 @@ function sis_upgrade(): void
     Privacy::install(Db::pdo());       // v62: privacy consents and reviews
     ParentAccess::install(Db::pdo());  // v62: parent links
     FirstSetup::install();             // v63.3: retire the old published starting password
-    if (PHP_SAPI !== 'cli') $_SESSION['sis_schema'] = 33; // v63.3
+    // v63.20: one text-comparison rule for the database and its tables (never "Illegal mix of collations")
+    try { $c = Db::alignCollation(); if ($c['converted'] || $c['database']) error_log('AcadLink: text rule set to ' . Db::COLLATION . ' for ' . ($c['database'] ? 'the database' : '') . ($c['converted'] ? ' tables ' . implode(', ', $c['converted']) : '')); }
+    catch (Throwable $e) { error_log('AcadLink collation: ' . $e->getMessage()); }
+    if (PHP_SAPI !== 'cli') $_SESSION['sis_schema'] = 34; // v63.20
 }

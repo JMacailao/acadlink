@@ -27,9 +27,53 @@ final class Db
         ]);
         // v63.19: one text-comparison rule (collation) for the whole connection. Some hosts (e.g. Hostinger) set the server's
         // collation_connection to utf8mb4_unicode_ci while sent values get utf8mb4_general_ci: "Illegal mix of collations".
-        self::$pdo->exec('SET NAMES utf8mb4 COLLATE utf8mb4_unicode_ci');
+        self::$pdo->exec('SET NAMES utf8mb4 COLLATE ' . self::COLLATION);
         self::$pdo->exec("SET SESSION sql_mode = 'STRICT_ALL_TABLES,NO_ZERO_DATE,NO_ZERO_IN_DATE,ERROR_FOR_DIVISION_BY_ZERO,NO_ENGINE_SUBSTITUTION'");
         self::$pdo->exec("SET time_zone = '" . date('P') . "'");
+    }
+
+    /** v63.19: the text-comparison rule (collation) of every connection and of AcadLink's tables. */
+    public const COLLATION = 'utf8mb4_unicode_ci';
+
+    /**
+     * v63.20: makes the database and its tables use one text-comparison rule, so a comparison between two tables can
+     * never fail with "Illegal mix of collations" (e.g. tables a host created with utf8mb4_general_ci or
+     * utf8mb4_uca1400_ai_ci). Converts only tables whose text columns are all utf8mb4 and none is utf8mb4_bin
+     * (binary tables, e.g. the Grading System's docs, and ascii token columns are left as they are on purpose).
+     * Returns ['converted' => [...], 'skipped' => [table => reason], 'database' => bool].
+     */
+    public static function alignCollation(): array
+    {
+        $want = self::COLLATION; $out = ['converted' => [], 'skipped' => [], 'database' => false];
+        $pdo = self::pdo();
+        $dbColl = (string) $pdo->query('SELECT default_collation_name FROM information_schema.schemata WHERE schema_name = DATABASE()')->fetchColumn();
+        if ($dbColl !== $want) {
+            try { $pdo->exec('ALTER DATABASE `' . str_replace('`', '``', (string) $pdo->query('SELECT DATABASE()')->fetchColumn()) . "` CHARACTER SET utf8mb4 COLLATE $want"); $out['database'] = true; }
+            catch (PDOException $e) { error_log('AcadLink collation (database): ' . $e->getMessage()); }
+        }
+        $rows = $pdo->query("SELECT t.table_name AS t, t.table_collation AS tc,
+                SUM(c.collation_name IS NOT NULL AND c.collation_name NOT LIKE 'utf8mb4\\_%') AS other_charset,
+                SUM(c.collation_name = 'utf8mb4_bin') AS bin_cols,
+                SUM(c.collation_name LIKE 'utf8mb4\\_%' AND c.collation_name NOT IN ('$want', 'utf8mb4_bin')) AS wrong_cols
+            FROM information_schema.tables t LEFT JOIN information_schema.columns c ON c.table_schema = t.table_schema AND c.table_name = t.table_name
+            WHERE t.table_schema = DATABASE() AND t.table_type = 'BASE TABLE'
+            GROUP BY t.table_name, t.table_collation")->fetchAll(PDO::FETCH_ASSOC);
+        $todo = [];
+        foreach ($rows as $r) {
+            if ($r['tc'] === $want && (int) $r['wrong_cols'] === 0) continue;   // already right
+            if ($r['tc'] === 'utf8mb4_bin' && (int) $r['wrong_cols'] === 0) continue; // binary on purpose
+            if ((int) $r['other_charset'] > 0 || (int) $r['bin_cols'] > 0) { $out['skipped'][$r['t']] = 'has ascii or binary columns'; continue; }
+            $todo[] = $r['t'];
+        }
+        if (!$todo) return $out;
+        $pdo->exec('SET FOREIGN_KEY_CHECKS = 0');
+        try {
+            foreach ($todo as $t) {
+                try { $pdo->exec('ALTER TABLE `' . str_replace('`', '``', $t) . "` CONVERT TO CHARACTER SET utf8mb4 COLLATE $want"); $out['converted'][] = $t; }
+                catch (PDOException $e) { $out['skipped'][$t] = $e->getMessage(); error_log("AcadLink collation ($t): " . $e->getMessage()); }
+            }
+        } finally { $pdo->exec('SET FOREIGN_KEY_CHECKS = 1'); }
+        return $out;
     }
 
     public static function pdo(): PDO
@@ -663,7 +707,7 @@ const PAYMENT_METHODS = ['CASH', 'GCASH', 'MAYA', 'BANK', 'CARD', 'CHECK'];
  */
 final class FormOnce
 {
-    private const TABLE = 'CREATE TABLE IF NOT EXISTS sis_form_once (token CHAR(32) NOT NULL PRIMARY KEY, created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP, KEY (created_at)) ENGINE=InnoDB';
+    private const TABLE = 'CREATE TABLE IF NOT EXISTS sis_form_once (token CHAR(32) NOT NULL PRIMARY KEY, created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP, KEY (created_at)) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci';
 
     public static function token(): string { return bin2hex(random_bytes(16)); }
 
