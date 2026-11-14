@@ -186,6 +186,7 @@ function clientIp(): string { return substr((string)($_SERVER['REMOTE_ADDR']??'?
 function login(string $email,string $password,bool $takeOver=false): array {
   // v63.12: open on another device (One device at a time): the page asks, then signs in again with takeOver
   try { $a=centralAccounts()->login($email,$password,'GRADING',$takeOver); }
+  catch(CentralTwoStepRequired $t) { fail('auth/two-step-required','This account uses two-step sign-in: sign in from the AcadLink sign-in page (Admission & Registration).'); }
   catch(CentralSessionConflict $c) { $ago=max(0,time()-(int)strtotime($c->lastSeen)); fail('auth/session-conflict','It was last active '.($ago<90?'just now':round($ago/60).' minutes ago').'.'); }
   catch(CentralAccountError $e) { fail('auth/invalid-credential',$e->getMessage()); }
   $_SESSION['reauth']=time();

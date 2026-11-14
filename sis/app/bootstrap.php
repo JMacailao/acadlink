@@ -40,6 +40,7 @@ require SIS_ROOT . '/app/lib/privacy.php'; // v62: Data Privacy Act helpers
 require SIS_ROOT . '/app/lib/parents.php'; // v62: parent / guardian accounts
 require SIS_ROOT . '/app/lib/backup.php'; // v63: whole-system backup and restore
 require SIS_ROOT . '/app/lib/first-setup.php'; // v63.3: first password of power.admin
+require SIS_ROOT . '/app/lib/system-check.php'; // v63.16: Settings → System Check
 require SIS_ROOT . '/app/lib/balance-workspace.php';
 require FINANCE_ROOT . '/modules/accounting/lib/accounting.php';
 require FINANCE_ROOT . '/modules/accounting/lib/workflow.php';
