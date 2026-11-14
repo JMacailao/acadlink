@@ -179,6 +179,7 @@ final class Auth
     public static function login(string $username, string $password, bool $takeOver = true, array $remember = []): array
     {
         try { $a=self::central()->login($username,$password,'SIS',$takeOver); }
+        catch(CentralTwoStepRequired $t) { $_SESSION['pending_two_step']=['id'=>$t->accountId,'at'=>time(),'tries'=>0,'remember'=>$remember,'takeOver'=>$takeOver]; throw $t; }
         catch(CentralSessionConflict $c) { $_SESSION['pending_signin']=['id'=>$c->accountId,'at'=>time(),'last_seen'=>$c->lastSeen,'remember'=>$remember]; throw $c; }
         catch(CentralAccountError $e) { throw new AppError($e->getMessage()); }
         return self::signedIn($a);
@@ -199,7 +200,32 @@ final class Auth
         catch(CentralAccountError $e) { throw new AppError($e->getMessage()); }
         return self::signedIn($a);
     }
-    public static function cancelTakeOver(): void { unset($_SESSION['pending_signin']); }
+    public static function cancelTakeOver(): void { unset($_SESSION['pending_signin'], $_SESSION['pending_two_step']); }
+    /** v63.17: the sign-in waiting for its two-step code (5 minutes), or null. */
+    public static function pendingTwoStep(): ?array
+    {
+        $p=$_SESSION['pending_two_step'] ?? null;
+        if (!is_array($p) || (int)($p['at'] ?? 0) < time()-300) { unset($_SESSION['pending_two_step']); return null; }
+        return $p;
+    }
+    /** v63.17: checks the code; then the sign-in goes on (and may still ask about another device). */
+    public static function verifyTwoStep(string $code): array
+    {
+        $p=self::pendingTwoStep() ?? throw new AppError('That sign-in has expired. Enter your username and password again.');
+        $c=self::central(); $id=(int)$p['id'];
+        if (!$c->twoStep()->verify($id,$code)) {
+            $c->noteFailedCode($id);
+            $_SESSION['pending_two_step']['tries']=(int)$p['tries']+1;
+            Audit::log('two_step_failed','account',$id,[]);
+            if ($_SESSION['pending_two_step']['tries'] >= 5) { unset($_SESSION['pending_two_step']); throw new AppError('Too many wrong codes. Enter your username and password again.'); }
+            throw new AppError('That code is not right. Type the 6 digits your authenticator app shows now, or a recovery code.');
+        }
+        unset($_SESSION['pending_two_step']);
+        try { $a=$c->afterPassword($id,'SIS',(bool)$p['takeOver']); }
+        catch(CentralSessionConflict $x) { $_SESSION['pending_signin']=['id'=>$x->accountId,'at'=>time(),'last_seen'=>$x->lastSeen,'remember'=>$p['remember'] ?? []]; throw $x; }
+        catch(CentralAccountError $e) { throw new AppError($e->getMessage()); }
+        return self::signedIn($a);
+    }
     private static function signedIn(array $a): array
     {
         $_SESSION['uid']=(int)self::central()->legacyId((int)$a['id'],'SIS');
