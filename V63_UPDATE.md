@@ -267,3 +267,19 @@ How the restore protects you:
 - Source: `pages/settings.html`, `js/settings.js`, `js/app.js`, `shared/central-accounts.php`, both layouts, `sis/index.php`,
   `sis/app/front.php`, `sis/app/pages/login.php`; removed `sis/assets/idle-signout.js`, `idle-signout.css` and
   `sis/app/pages/keepalive.php` (they can be deleted from the server too).
+
+## v63.16 — System Check
+- New **Settings → System Check** (power.admin only, first in the Settings menu). It checks this server and the setup:
+  - **Server**: PHP version (8.3 recommended) and extensions, HTTPS, debug mode, memory, largest upload, time for long
+    jobs, database server and size.
+  - **Files uploaded**: all 12 `.htaccess` files (and that the HTTPS ones are this version), the `vendor` folder, and
+    files from older versions that can be deleted.
+  - **Backups**: kept outside the website folder or not, free disk space, automatic backups, the scheduled job, and when
+    a copy was last downloaded.
+  - **Accounts & security**: power.admin password, One device at a time, email for "Forgot password".
+  - **School**: name and logo.
+  Each line says OK, Look at, or Problem, with how to fix it. The page also has the **checklist for uploading a new
+  version**. power.admin's dashboard shows a red warning while the System Check finds a problem.
+- Email setup messages now point to Settings → System Settings / Email Sending.
+- Source: `sis/app/lib/system-check.php` (new), `sis/app/pages/syscheck.php` (new), `sis/index.php`, `sis/app/views/layout.php`,
+  `sis/app/bootstrap.php`, `sis/app/pages/dashboard.php`, `sis/app/lib/account-email.php`, `sis/app/pages/emailsetup.php`.
