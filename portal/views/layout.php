@@ -44,6 +44,7 @@ function portal_layout_start(string $title, bool $bare = false): void
 <link rel="stylesheet" href="assets/portal.css?v=53">
 <link rel="stylesheet" href="../sis/assets/bottom-nav.css?v=63.2">
 <link rel="stylesheet" href="../sis/assets/people.css?v=63">
+<link rel="stylesheet" href="../sis/assets/schedule-grid.css?v=63.4">
 </head>
 <body class="portal<?= $bare ? ' bare' : '' ?>" data-route="<?= h((string) $route) ?>">
 <?php if (!$bare && !empty($GLOBALS['PORTAL_MENU'])) portal_bottom_nav($GLOBALS['PORTAL_MENU']); // v63.2: first, so it shows at once ?>

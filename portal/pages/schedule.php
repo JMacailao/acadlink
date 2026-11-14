@@ -16,7 +16,7 @@ page_title('My schedule', '', 'Your classes for the term: days, times, rooms and
   <div><label class="form-label small mb-0" for="msReg">Term</label><select class="form-select" id="msReg" name="reg"><?php foreach ($regs as $x): ?><option value="<?= (int) $x['id'] ?>"<?= (int) $x['id'] === $pick ? ' selected' : '' ?>><?= h($x['school_year'] . ' · ' . $x['term'] . ' · ' . $x['section_name']) ?></option><?php endforeach; ?></select></div>
   <button class="btn btn-outline-primary">Show</button>
 </form>
-<section class="form-section"><h2 class="h6"><?= h($r['school_year'] . ' · ' . $r['term'] . ' · ' . $r['section_name']) ?></h2><?= Schedules::grid($sched['rows'], 'section') ?></section>
+<section class="form-section"><h2 class="h6"><?= h($r['school_year'] . ' · ' . $r['term'] . ' · ' . $r['section_name']) ?></h2><?= Schedules::grid($sched['rows'], 'section', (string) $r['section_name']) ?></section>
 <section class="form-section"><div class="table-responsive"><table class="table table-sm mb-0"><thead><tr><th>Subject</th><th>Days</th><th>Time</th><th>Room</th><th>Teacher</th></tr></thead><tbody>
 <?php foreach ($subs as $s): $meet = array_filter($sched['rows'], fn($m) => $m['subject_doc_id'] === $s['subject_doc_id']); ?>
   <?php if (!$meet): ?><tr><td><span class="font-monospace"><?= h($s['subject_code']) ?></span> <?= h($s['subject_name']) ?></td><td colspan="4" class="text-muted">Schedule not set yet</td></tr><?php endif; ?>

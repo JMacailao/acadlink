@@ -111,3 +111,18 @@ How the restore protects you:
   plus new `.htaccess` files in `lms/`, `canteen/`, `library/`, `portal/` (and their `lib`, `pages`, `views`
   folders) and `shared/`; `api/api.php`, `sis/index.php`, `sis/app/bootstrap.php`, `sis/app/pages/login.php`.
   Tests: `sis/tests/v63-security.php` (4 checks); `curriculum-teachers.php` sets its own power.admin password.
+
+## v63.4 — Class schedule like the school's sheet
+- Every timetable looks like the printed class-schedule sheet. That covers SIS → Class Schedules (section week and
+  Print), the registration's schedule, Student Portal → Schedule, My Schedule and LMS → Schedule:
+  - a dark blue header row with **TIME** and each day (Monday–Friday, plus Saturday/Sunday when used), each day
+    with its own light-blue **Room** column;
+  - half-hour rows from 7:30 to 6:00 (longer if a class starts earlier or ends later);
+  - each class is **one coloured block as tall as it lasts**, with the subject code and name; laboratory classes
+    show "(Lab)". The teacher's name is in bold in a darker band at the bottom. On a teacher's own timetable the
+    band shows the section instead. The room is beside it, or **TBA** when no room is set.
+  - each subject keeps the same colour all week; the section name is shown on top when known.
+  - classes that overlap in the same section are flagged "Clash" inside the block.
+  - colours print as they are on screen.
+- Source: `sis/app/lib/schedules.php` (`Schedules::grid`), `sis/assets/schedule-grid.css` (new), both layouts, and
+  the pages above.

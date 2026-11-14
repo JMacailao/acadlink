@@ -215,6 +215,7 @@ function layout_start(string $title, bool $bare = false): void
 <link rel="stylesheet" href="<?= sis_web() ?>assets/compact-workspace.css?v=20261025toolbar11">
 <link rel="stylesheet" href="<?= sis_web() ?>assets/theme.css?v=53">
 <link rel="stylesheet" href="<?= sis_web() ?>assets/people.css?v=63">
+<link rel="stylesheet" href="<?= sis_web() ?>assets/schedule-grid.css?v=63.4">
 <link rel="stylesheet" href="<?= sis_web() ?>assets/unified-toolbar.css?v=60">
 <link rel="stylesheet" href="../css/standard-toolbar.css?v=57">
 <link rel="stylesheet" href="<?= sis_web() ?>assets/registration-fees.css?v=4">
