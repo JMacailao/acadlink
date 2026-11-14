@@ -73,7 +73,6 @@ const ROUTES = [
     'gradingoptions' => ['gsframe', ['settings.manage']], // v63.9: the Grading System's Setup and options
     'systemsettings' => ['gsframe', ['settings.manage']], // v63.9: sign-in security, teacher downtime, database, email keys, Google Sheets
     'gradingaudit' => ['gsframe', ['settings.manage']], // v63.10: the Grading System's Audit trail
-    'gradingbackup' => ['gsframe', ['settings.manage']], // v63.10: the Grading System's Backup and restore
     'terms'        => ['terms', ['settings.manage']],
     'docrequirements' => ['docrequirements', ['settings.manage']], // v56: registration document checklist
     'documents'    => ['documents', ['documents.issue', 'settings.manage'], ['documents']],
