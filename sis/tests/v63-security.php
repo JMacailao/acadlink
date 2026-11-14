@@ -23,7 +23,10 @@ function denied(callable $fn, string $text = ''): void { try { $fn(); } catch (A
 $c = Auth::central();
 $id = (int) Db::val("SELECT account_id FROM central_login_identifiers WHERE identifier_key = 'power.admin'");
 $why = ''; // the reason the last sign-in was refused (shown when a check fails)
-$canLogin = function (string $pw) use ($c, &$why): bool { try { $c->login('power.admin', $pw, 'SIS'); $c->logout(); return true; } catch (Throwable $e) { $why = get_class($e) . ': ' . $e->getMessage(); return false; } };
+$canLogin = function (string $pw) use ($c, &$why): bool { try { $c->login('power.admin', $pw, 'SIS'); $c->logout(); return true; } catch (Throwable $e) {
+    $a = Db::one("SELECT a.status, a.failed_logins, a.locked_until, NOW() AS now, c.password_hash FROM central_accounts a JOIN central_credentials c ON c.account_id = a.id JOIN central_login_identifiers i ON i.account_id = a.id WHERE i.identifier_key = 'power.admin'") ?? [];
+    $why = get_class($e) . ': ' . $e->getMessage() . ' [status ' . ($a['status'] ?? '?') . ', failed ' . ($a['failed_logins'] ?? '?') . ', locked until ' . ($a['locked_until'] ?? 'none') . ', now ' . ($a['now'] ?? '?') . ', password matches ' . (isset($a['password_hash']) && password_verify($pw, (string) $a['password_hash']) ? 'yes' : 'no') . ']';
+    return false; } };
 
 test('a fresh installation has no usable power.admin password: nobody can sign in until setup', function () use ($id, $canLogin) {
     ok($id > 0 && FirstSetup::needed(), 'setup needed');
