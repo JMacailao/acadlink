@@ -160,3 +160,14 @@ How the restore protects you:
 - Links from other pages (Users and Groups → Bulk create accounts, Students → Import records, the admission
   checklist) still open the same pages.
 - Source: `sis/app/views/layout.php` (`SETTINGS_HUB`), `sis/assets/settings-hub.css` (new).
+
+## v63.8 — School Profile in the SIS
+- New **Administration → Settings → School Profile** (first in the Settings menu). It edits the same school details
+  as the Grading System's **School settings**: school name, short name, address, phone, email, website, registrar's
+  name and title, the **school logo** and the **sign-in page picture**.
+- Saving updates every system at once: SIS, Student Portal, Grading System, LMS, Canteen POS, Library, receipts and
+  printouts. Other Grading System settings are kept as they are.
+- The logo is made small (160 px) and the sign-in picture compressed in the browser, the same way as the Grading
+  System, then checked again on the server. Only people with Settings rights can open it; each save is in the Activity Log.
+- The Grading System's School settings still work; its connection, email and Google Sheets parts stay there.
+- Source: `sis/app/pages/school.php` (new), `sis/assets/school-profile.js` (new), `sis/index.php`, `sis/app/views/layout.php`.

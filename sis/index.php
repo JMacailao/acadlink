@@ -69,6 +69,7 @@ const ROUTES = [
     'backup'       => ['backup', ['users.manage']], // v63: Backup & Restore (power.admin only, checked inside)
     'emailsetup'   => ['emailsetup', ['settings.manage']],
     'settings'     => ['settings', ['settings.manage']],
+    'school'       => ['school', ['settings.manage']], // v63.8: School Profile (the Grading System's School settings)
     'terms'        => ['terms', ['settings.manage']],
     'docrequirements' => ['docrequirements', ['settings.manage']], // v56: registration document checklist
     'documents'    => ['documents', ['documents.issue', 'settings.manage'], ['documents']],
