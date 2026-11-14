@@ -52,7 +52,7 @@ try {
       reply(['ok'=>true,'clearance'=>$clr,'manageAccounts'=>(bool)($a && centralAccounts()->group((int)$a['id'])==='POWER_USER' && centralAccounts()->can((int)$a['id'],'admin.accounts.manage')),'permissions'=>$codes,
         'systems'=>$a?ModuleAccess::systems(centralAccounts()->permissions((int)$a['id'])):[]]);
     case "whoami": reply(["ok" => true, "user" => currentUser()]);
-    case "login": reply(["ok" => true, "user" => login(str(g($body, "email")), str(g($body, "password")))]);
+    case "login": reply(["ok" => true, "user" => login(str(g($body, "email")), str(g($body, "password")), g($body, "takeOver") === true)]);
     case "logout": logout(); reply(["ok" => true]);
     case "reauth": reauth(str(g($body, "password"))); reply(["ok" => true]);
     case "changePassword": changePassword(str(g($body, "password"))); reply(["ok" => true]);

@@ -45,6 +45,11 @@ try {
     while (ob_get_level() > $obLevel) ob_end_flush();
 } catch (AuthRequired) {
     while (ob_get_level() > $obLevel) ob_end_clean();
+    // v63.12: background checks (page cache, idle timer) just say "signed out"; they are never a page to return to
+    if (in_array($route, ['navstate', 'keepalive'], true)) {
+        http_response_code(401); header('Content-Type: application/json; charset=utf-8'); header('Cache-Control: no-store');
+        echo '{"signedIn":false}'; exit;
+    }
     // A form sent after the sign-in timed out was not saved; say so, and return to the same page after signing in.
     if ($isPost) flash('warning', 'Your session ended, so this was NOT saved. Sign in and try again.');
     if (!in_array($route, ['login', 'logout'], true)) $_SESSION['return_to'] = ['r' => $route, 'params' => array_filter(array_diff_key($_GET, ['r' => 1]), 'is_scalar'), 'app' => app_system()];

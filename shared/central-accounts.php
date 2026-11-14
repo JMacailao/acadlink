@@ -3,6 +3,12 @@
 declare(strict_types=1);
 require_once __DIR__.'/module-access.php';
 class CentralAccountError extends RuntimeException {}
+/** v63.12: the account is signed in on another device and "One device at a time" is on: ask before continuing. */
+final class CentralSessionConflict extends RuntimeException {
+    public function __construct(public readonly int $accountId, public readonly string $lastSeen) {
+        parent::__construct('Your account is open on another device.');
+    }
+}
 final class CentralAccounts
 {
     public const COOKIE = 'ACADLINK_AUTH';
@@ -10,10 +16,12 @@ final class CentralAccounts
     private ?array $currentCache=null;
     private bool $currentChecked=false;
     private string $checkedToken='';
+    private ?array $policyCache=null;
     public function __construct(private PDO $db, private bool $forceSecureCookie=false) {}
     public function clearCache(): void {
         $this->accountCache=$this->groupCache=$this->permissionCache=[];
         $this->currentChecked=false;
+        $this->policyCache=null;
     }
     public function q(string $sql, array $args = []): PDOStatement {
         // Cache only within this PHP request. Any service mutation clears all identity data.
@@ -90,7 +98,7 @@ final class CentralAccounts
         if ($this->currentChecked && $this->checkedToken===$token) return $this->currentCache;
         $this->checkedToken=$token; $this->currentChecked=true; $this->currentCache=null;
         if (!preg_match('/^[a-f0-9]{64}$/D',$token) || !$this->installed()) return null;
-        $s=$this->one("SELECT s.account_id FROM central_sessions s JOIN central_accounts a ON a.id=s.account_id JOIN central_security_policy p ON p.id=1 WHERE s.token_hash=? AND s.revoked_at IS NULL AND s.expires_at>NOW() AND s.last_seen_at>NOW()-INTERVAL 30 MINUTE AND a.status='ACTIVE' AND s.account_auth_version=a.auth_version AND s.policy_version=p.policy_version",[hash('sha256',$token)]);
+        $s=$this->one("SELECT s.account_id FROM central_sessions s JOIN central_accounts a ON a.id=s.account_id JOIN central_security_policy p ON p.id=1 WHERE s.token_hash=? AND s.revoked_at IS NULL AND s.expires_at>NOW() AND s.last_seen_at>NOW()-INTERVAL ? MINUTE AND a.status='ACTIVE' AND s.account_auth_version=a.auth_version AND s.policy_version=p.policy_version",[hash('sha256',$token),$this->idleWindow()]);
         if (!$s || $this->temporaryExpired((int)$s['account_id'])) return null;
         $this->q('UPDATE central_sessions SET last_seen_at=NOW() WHERE token_hash=?',[hash('sha256',$token)]);
         $this->currentChecked=true;
@@ -112,15 +120,25 @@ final class CentralAccounts
         return $a;
     }
     /** v63.10: Is "One device at a time" on? (the Grading System's settings/security; on unless turned off) */
-    public function singleDevice(): bool {
+    public function singleDevice(): bool { return $this->securityPolicy()['single']; }
+    /**
+     * v63.12: Sign-in security (Settings → System Settings), shared by every system: ['single' => One device at a time,
+     * 'idle' => minutes without activity before signing out, 0 = off]. Missing settings use the Grading System's defaults.
+     */
+    public function securityPolicy(): array {
+        if ($this->policyCache!==null) return $this->policyCache;
+        $out=['single'=>true,'idle'=>0];
         try {
-            if (!$this->q("SELECT 1 FROM information_schema.tables WHERE table_schema=DATABASE() AND table_name='docs'")->fetchColumn()) return false;
+            if (!$this->q("SELECT 1 FROM information_schema.tables WHERE table_schema=DATABASE() AND table_name='docs'")->fetchColumn()) return $this->policyCache=['single'=>false,'idle'=>0];
             $raw=$this->q("SELECT data FROM docs WHERE col='settings' AND id='security'")->fetchColumn();
-            if ($raw===false) return true;
-            $d=json_decode((string)$raw,true);
-            return !is_array($d) || !array_key_exists('singleSession',$d) || !empty($d['singleSession']);
-        } catch (Throwable) { return false; }
+            $d=$raw===false ? [] : (json_decode((string)$raw,true) ?: []);
+            if (array_key_exists('singleSession',$d)) $out['single']=!empty($d['singleSession']);
+            $out['idle']=max(0,min(1440,(int)($d['autoLogoutMinutes'] ?? 0)));
+        } catch (Throwable) { $out=['single'=>false,'idle'=>0]; }
+        return $this->policyCache=$out;
     }
+    /** Minutes without a request before the server ends a sign-in: the school's setting (plus a minute), else 30. */
+    public function idleWindow(): int { $m=$this->securityPolicy()['idle']; return $m>0 ? $m+1 : 30; }
     /** v63.10: Was this browser's sign-in ended because the account signed in on another device? */
     public function endedElsewhere(): bool {
         $token=$this->token();
@@ -129,7 +147,7 @@ final class CentralAccounts
         if (!$s || $s['revoked_at']===null) return false;
         return (bool)$this->q('SELECT 1 FROM central_sessions WHERE account_id=? AND token_hash<>? AND created_at>=? AND created_at<=? LIMIT 1',[$s['account_id'],hash('sha256',$token),$s['created_at'],$s['revoked_at']])->fetchColumn();
     }
-    public function login(string $login,string $password,string $workspace): array {
+    public function login(string $login,string $password,string $workspace,bool $takeOver=true): array {
         if (!$this->installed()) throw new CentralAccountError('Central accounts are not installed. Ask the administrator to follow CENTRAL_ACCOUNTS.md.');
         $login=strtolower(trim($login));
         $this->q('DELETE FROM login_attempts WHERE at<NOW()-INTERVAL 1 DAY');
@@ -148,12 +166,28 @@ final class CentralAccounts
         }
         if ($this->temporaryExpired((int)$r['id'])) throw new CentralAccountError('Your temporary password has expired. Ask the Power User to reset it in SIS.');
         if ($workspace==='GRADING' && !$this->can((int)$r['id'],'grading.workspace.view')) throw new CentralAccountError('Use SIS or the Student Portal for this account.');
-        $this->logout();
-        $this->q('UPDATE central_accounts SET failed_logins=0,locked_until=NULL,last_login_at=NOW() WHERE id=?',[$r['id']]);
+        // v63.12: open on another device and "One device at a time" is on: nothing changes until the person agrees
+        if (!$takeOver && ($other=$this->otherSession((int)$r['id']))) throw new CentralSessionConflict((int)$r['id'],$other);
         $this->q('DELETE FROM login_attempts WHERE email=?',[$login]);
         if (!$usedTemporary && password_needs_rehash($r['password_hash'],PASSWORD_DEFAULT)) $this->q('UPDATE central_credentials SET password_hash=? WHERE account_id=?',[password_hash($password,PASSWORD_DEFAULT),$r['id']]);
-        $this->audit((int)$r['id'],(int)$r['id'],'login',['workspace'=>$workspace]);
-        return $this->establish((int)$r['id']);
+        return $this->completeLogin((int)$r['id'],$workspace);
+    }
+    /** Finishes a sign-in whose password was already checked (also after "Sign out the other device and continue"). */
+    public function completeLogin(int $id,string $workspace): array {
+        $this->logout();
+        $this->q('UPDATE central_accounts SET failed_logins=0,locked_until=NULL,last_login_at=NOW() WHERE id=?',[$id]);
+        $this->audit($id,$id,'login',['workspace'=>$workspace]);
+        return $this->establish($id);
+    }
+    /**
+     * v63.12: when "One device at a time" is on, the last activity of the account's sign-in on another device
+     * (another browser: this browser's own sign-in does not count), or null.
+     */
+    public function otherSession(int $id): ?string {
+        if (!$this->singleDevice()) return null;
+        $mine=$this->token();
+        $at=$this->q('SELECT MAX(last_seen_at) FROM central_sessions WHERE account_id=? AND token_hash<>? AND revoked_at IS NULL AND expires_at>NOW() AND last_seen_at>NOW()-INTERVAL ? MINUTE',[$id,hash('sha256',$mine),$this->idleWindow()])->fetchColumn();
+        return $at ? (string)$at : null;
     }
     /** An unused, unexpired emailed temporary password: makes it the account's password (must be changed now). */
     private function useTemporary(int $id,string $password): bool {

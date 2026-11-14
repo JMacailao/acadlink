@@ -8,12 +8,29 @@ if ($isPost && $forgot) {
     flash($res['ok'] ? 'success' : 'warning', $res['message']);
     redirect('forgot', ($_GET['portal'] ?? '') === 'student' ? ['portal' => 'student'] : []);
 }
+$conflict = null; // v63.12: the account is open on another device (One device at a time): ask first
+if ($isPost && isset($_POST['cancel_takeover'])) {
+    Auth::cancelTakeOver();
+    flash('info', 'Sign-in cancelled. Your account stays open on the other device.');
+    redirect('login', ($_GET['portal'] ?? '') === 'student' ? ['portal' => 'student'] : []);
+}
 if ($isPost) {
-    $u = Auth::login((string) In::str($_POST, 'username', 64, true, 'Username'), (string) ($_POST['password'] ?? ''));
+    if (isset($_POST['takeover'])) {
+        $remember = (Auth::pendingSignin() ?? [])['remember'] ?? [];
+        $u = Auth::takeOver();
+        $_POST['next'] = (string) ($remember['next'] ?? '');
+    } else {
+        try {
+            $u = Auth::login((string) In::str($_POST, 'username', 64, true, 'Username'), (string) ($_POST['password'] ?? ''), false, ['next' => (string) ($_POST['next'] ?? '')]);
+        } catch (CentralSessionConflict $c) { $u = null; $conflict = $c; }
+    }
+}
+if ($isPost && $u) {
     $next = (string) ($_POST['next'] ?? '');
     if (!$u['must_change_password'] && preg_match('/^[a-z-]+\.html$/', $next) && $next !== 'login.html' && $next !== 'dashboard.html' && Auth::central()->can((int) Auth::centralId(), 'grading.workspace.view')) { header('Location: ../pages/' . $next); exit; }
     $back = $_SESSION['return_to'] ?? null;
     unset($_SESSION['return_to']);
+    if (is_array($back) && in_array($back['r'] ?? '', ['navstate', 'keepalive'], true)) $back = null; // v63.12: background checks are not pages
     // v58: back to the Finance page that asked for the sign-in (finance/index.php checks the route and access again)
     if (!$u['must_change_password'] && is_array($back) && in_array($back['app'] ?? '', ['FINANCE', 'CANTEEN', 'LIBRARY', 'LMS'], true) && preg_match('/^[a-z]+$/', (string) ($back['r'] ?? ''))) { header('Location: ../' . strtolower((string) $back['app']) . '/index.php?' . http_build_query(['r' => $back['r']] + array_filter((array) ($back['params'] ?? []), 'is_scalar'))); exit; }
     if (!$u['must_change_password'] && is_array($back) && (isset(ROUTES[$back['r'] ?? '']) || in_array($back['r'] ?? '', ['my', 'myenrollment', 'myadmission'], true)) && !in_array($back['r'], ['login', 'logout'], true)) redirect($back['r'], (array) ($back['params'] ?? []));
@@ -65,7 +82,7 @@ layout_start('Sign in', true);
     <div class="sl-card">
       <div class="sl-corner" aria-hidden="true"><i class="bi bi-<?= $student ? 'mortarboard' : 'book' ?>"></i></div>
       <div class="sl-wave" aria-hidden="true">👋</div>
-      <p class="sl-hello"><span data-welcome-line>Welcome,</span></p>
+      <?php if (!$conflict): ?><p class="sl-hello"><span data-welcome-line>Welcome,</span></p><?php endif; // v63.12: not above the "another device" question ?>
       <p class="sl-m-title" aria-hidden="true"><?= $forgot ? 'Forgot password' : 'Welcome back' ?></p>
       <p class="sl-m-lead"><?= $forgot ? 'We email you a temporary password.' : 'Sign in to your ' . h($student ? 'Student Portal' : School::brand()) . ' account.' ?></p>
       <?php if ($forgot): ?>
@@ -82,6 +99,15 @@ layout_start('Sign in', true);
         <button class="sl-submit"><i class="bi bi-envelope-arrow-up" aria-hidden="true"></i> Send temporary password</button>
       </form>
       <p class="mt-3 mb-3 text-center"><a class="sl-forgot" href="<?= url('login', $student ? ['portal' => 'student'] : []) ?>"><i class="bi bi-arrow-left" aria-hidden="true"></i> Back to sign in</a></p>
+      <?php else: ?>
+      <?php if ($conflict): $ago = max(0, time() - (int) strtotime($conflict->lastSeen)); ?>
+      <h1 class="sl-name">Open on another device</h1>
+      <div class="alert alert-warning py-2" role="alert"><i class="bi bi-laptop me-1" aria-hidden="true"></i>Your account is signed in on another device (last active <?= $ago < 90 ? 'just now' : h((string) round($ago / 60)) . ' minutes ago' ?>). Only one device can be signed in at a time.</div>
+      <p class="sl-intro">Sign out the other device and continue here? Anything not yet saved on the other device will be lost.</p>
+      <form method="post" class="d-grid gap-2 mb-3"><?= csrf_field() ?>
+        <button class="btn btn-primary sl-submit" name="takeover" value="1" autofocus>Sign out the other device and continue</button>
+        <button class="btn btn-outline-secondary" name="cancel_takeover" value="1">Cancel</button>
+      </form>
       <?php else: ?>
       <h1 class="sl-name" data-welcome-name><?= $student ? 'Student' : 'Sign in' ?></h1>
       <p class="sl-intro">Sign in once. You will then see the systems your account can open.</p>
@@ -109,7 +135,7 @@ layout_start('Sign in', true);
         </div>
         <button class="sl-submit"><i class="bi bi-box-arrow-in-right" aria-hidden="true"></i> <span>Sign In</span><i class="bi bi-arrow-right sl-m-arrow" aria-hidden="true"></i></button>
       </form>
-      <?php endif; ?>
+      <?php endif; endif; // v63.12: conflict question / sign-in form ?>
       <p class="sl-m-need">Need access? <a href="#slHelp" data-bs-toggle="collapse" role="button" aria-controls="slHelp">Contact your school</a></p>
       <div class="collapse sl-m-helpbox" id="slHelp"><p class="mb-1"><b>Signing in</b></p><ul class="mb-0">
         <li><?= $student ? 'Use your Student ID as the username.' : 'Use the username your school gave you. Students use their Student ID.' ?></li>

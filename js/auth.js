@@ -99,7 +99,21 @@ async function signin(e) {
 
   setBusy(els.btnSignin, true, "Signing in…");
   try {
-    const cred = await signInWithEmailAndPassword(auth, username, password);
+    let cred;
+    try {
+      cred = await signInWithEmailAndPassword(auth, username, password);
+    } catch (err) {
+      // v63.12: One device at a time covers every AcadLink system; nothing has changed yet, so ask first
+      if (err.code !== "auth/session-conflict") throw err;
+      const ok = await confirmDialog({
+        title: "Your account is open on another device",
+        message: `${err.message} Only one device can be signed in at a time. Sign out the other device and continue here?`,
+        confirmText: "Sign out the other device and continue",
+        variant: "primary",
+      });
+      if (!ok) { showError(els.signinError, "Sign-in cancelled. Your account stays open on the other device."); return; }
+      cred = await signInWithEmailAndPassword(auth, username, password, true);
+    }
     if (cred.user.mustChangePassword) { location.assign('../sis/index.php?r=password'); return; }
     const profile = await loadProfile(cred.user.uid);
     if (!profile || profile.active === false) {
@@ -107,26 +121,9 @@ async function signin(e) {
       showError(els.signinError, profile ? REASONS.disabled : REASONS.noprofile);
       return;
     }
-    // One device at a time: ask before signing out the other device
+    // One device at a time: the server already asked (above); mark this device as the Grading System's active one
     const security = await getSecurity(true);
-    if (security.singleSession) {
-      const other = profile.activeSession;
-      if (other && other.id && other.id !== mySession(cred.user.uid)) {
-        const ok = await confirmDialog({
-          title: "Your account is open on another device",
-          message: `It's signed in on ${other.device || "another device"}${other.at ? `, ${timeAgo(other.at)}` : ""}. ` +
-            "Sign out the other device and continue here?",
-          confirmText: "Sign out the other device and continue",
-          variant: "primary",
-        });
-        if (!ok) {
-          await signOut(auth);
-          showError(els.signinError, "Sign-in cancelled. Your account stays open on the other device.");
-          return;
-        }
-      }
-      await claimSession(cred.user.uid);
-    }
+    if (security.singleSession) await claimSession(cred.user.uid);
     rememberUi(profile);
     location.replace(destination());
   } catch (err) {

@@ -183,8 +183,10 @@ function currentUser(): ?array {
   return ['uid'=>$uid,'email'=>$a['username'].'@central.invalid','mustChangePassword'=>(bool)$a['must_change_password']];
 }
 function clientIp(): string { return substr((string)($_SERVER['REMOTE_ADDR']??'?'),0,64); }
-function login(string $email,string $password): array {
-  try { $a=centralAccounts()->login($email,$password,'GRADING'); }
+function login(string $email,string $password,bool $takeOver=false): array {
+  // v63.12: open on another device (One device at a time): the page asks, then signs in again with takeOver
+  try { $a=centralAccounts()->login($email,$password,'GRADING',$takeOver); }
+  catch(CentralSessionConflict $c) { $ago=max(0,time()-(int)strtotime($c->lastSeen)); fail('auth/session-conflict','It was last active '.($ago<90?'just now':round($ago/60).' minutes ago').'.'); }
   catch(CentralAccountError $e) { fail('auth/invalid-credential',$e->getMessage()); }
   $_SESSION['reauth']=time();
   if ($a['must_change_password']) return ['uid'=>centralAccounts()->legacyId((int)$a['id'],'GRADING'),'email'=>$a['username'].'@central.invalid','mustChangePassword'=>true];

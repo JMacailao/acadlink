@@ -45,6 +45,7 @@ function portal_layout_start(string $title, bool $bare = false): void
 <link rel="stylesheet" href="../sis/assets/bottom-nav.css?v=63.2">
 <link rel="stylesheet" href="../sis/assets/people.css?v=63">
 <link rel="stylesheet" href="../sis/assets/schedule-grid.css?v=63.4">
+<?php if (!$bare && $u): // v63.12: sign out after no activity ?><meta name="acadlink-idle" content="<?= (int) Auth::central()->securityPolicy()['idle'] ?>" data-sis="../sis/" data-csrf="<?= h(Auth::csrfToken()) ?>"><link rel="stylesheet" href="../sis/assets/idle-signout.css?v=1"><script src="../sis/assets/idle-signout.js?v=2" defer></script><?php endif; ?>
 </head>
 <body class="portal<?= $bare ? ' bare' : '' ?>" data-route="<?= h((string) $route) ?>">
 <?php if (!$bare && !empty($GLOBALS['PORTAL_MENU'])) portal_bottom_nav($GLOBALS['PORTAL_MENU']); // v63.2: first, so it shows at once ?>
