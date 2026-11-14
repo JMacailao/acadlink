@@ -49,6 +49,9 @@ test('setup needs proof: from this computer when the database has no password; n
     ok((int) Db::val("SELECT COUNT(*) FROM sis_audit_logs WHERE action = 'first_setup_done'") === 1, 'logged');
 });
 test('an existing install still using the old starting password is switched to setup; a changed password is left alone', function () use ($id, $canLogin, &$why) {
+    // An existing install starts with no failed sign-ins (the tests above try wrong passwords on purpose, and when the test
+    // database has a password the setup test never signs in, so they would still count here and lock the account).
+    Db::q('UPDATE central_accounts SET failed_logins = 0, locked_until = NULL WHERE id = ?', [$id]); Db::q('DELETE FROM login_attempts');
     Db::q('UPDATE central_credentials SET password_hash = ? WHERE account_id = ?', [password_hash('Start-32f32c74-A1', PASSWORD_DEFAULT), $id]);
     FirstSetup::install(); ok(FirstSetup::needed() && !$canLogin('Start-32f32c74-A1'), 'old password retired');
     Db::q('UPDATE central_credentials SET password_hash = ? WHERE account_id = ?', [password_hash('SchoolOwn2026', PASSWORD_DEFAULT), $id]);
