@@ -20,7 +20,6 @@ const ROUTES = [
     'signinpic'    => ['signinpic', null],
     'setup'        => ['setup', null], // v63.3: first-time setup of power.admin (only while it has no password)
     'logout'       => ['logout', []],
-    'keepalive'    => ['keepalive', []], // v63.12: the idle timer's "still here" signal
     'password'     => ['password', []],
     'workspaces'   => ['workspaces', []],
     'enrollment' => ['enrollment', ['admission'], ['admission.view']],

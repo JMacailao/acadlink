@@ -275,7 +275,6 @@ function layout_start(string $title, bool $bare = false): void
 <?php if ($route === 'documents' && ($_GET['tab'] ?? '') === 'settings'): ?><script src="<?= sis_web() ?>assets/documents-template-preview.js?v=1" defer></script><?php endif; ?>
 <?php if ($route === 'admission'): ?><link rel="stylesheet" href="<?= sis_web() ?>assets/admission-form.css?v=1"><?php endif; ?>
 <?php if ($system === 'sis' && !$bare && $u): ?><link rel="stylesheet" href="<?= sis_web() ?>assets/easy-navigation.css?v=6"><link rel="stylesheet" href="<?= sis_web() ?>assets/dashboard.css?v=2"><?php endif; ?>
-<?php if (!$bare && $u): // v63.12: Sign-in security → sign out after no activity, in every system ?><meta name="acadlink-idle" content="<?= (int) Auth::central()->securityPolicy()['idle'] ?>" data-sis="<?= h(sis_web()) ?>" data-csrf="<?= h(Auth::csrfToken()) ?>"><link rel="stylesheet" href="<?= sis_web() ?>assets/idle-signout.css?v=1"><script src="<?= sis_web() ?>assets/idle-signout.js?v=2" defer></script><?php endif; ?>
 </head>
 <?php $embedFlashes = $bare && isset($_GET['embed']) ? take_flashes() : []; // pop-up pages show their own messages ?>
 <body data-client-scope="<?= h($u ? acadlink_client_scope(Auth::central()) : '') ?>" class="<?= $bare ? 'bare' : ('sis-theme' . ($system === 'sis' && $u ? ' sis-easy' : '')) ?>" data-user-id="<?= h((string) ($u['id'] ?? 'guest')) ?>" data-route="<?= h((string) $route) ?>"<?= array_filter($embedFlashes, fn($f) => $f[0] === 'success') ? ' data-changed="1"' : '' ?>>

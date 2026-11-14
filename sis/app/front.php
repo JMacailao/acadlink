@@ -45,8 +45,8 @@ try {
     while (ob_get_level() > $obLevel) ob_end_flush();
 } catch (AuthRequired) {
     while (ob_get_level() > $obLevel) ob_end_clean();
-    // v63.12: background checks (page cache, idle timer) just say "signed out"; they are never a page to return to
-    if (in_array($route, ['navstate', 'keepalive'], true)) {
+    // v63.12: the background page-cache check just says "signed out"; it is never a page to return to
+    if ($route === 'navstate') {
         http_response_code(401); header('Content-Type: application/json; charset=utf-8'); header('Cache-Control: no-store');
         echo '{"signedIn":false}'; exit;
     }

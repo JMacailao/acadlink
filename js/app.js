@@ -234,7 +234,6 @@ export async function initLayout(pageKey) {
     }
     watchSession(profile.uid);
   }
-  startIdleTimer(security.autoLogoutMinutes);
 
   // An account with a default or temporary password must choose its own first
   if (profile.mustChangePassword) openChangePassword({ forced: true, uid: profile.uid });
@@ -955,7 +954,6 @@ export function nextTeacherIds(existingIds, count = 1, avoid = []) {
 
 // ---------- Sign-in security: one device at a time, automatic sign-out ----------
 const SESSION_KEY = "gs-session";          // this device's session { uid, id }
-const ACTIVITY_KEY = "gs-last-activity";   // last click/keypress/scroll, shared by tabs
 // ---------- Setup and options (settings/options) ----------
 const OPTIONS_CACHE = "gs-options";
 
@@ -1159,56 +1157,6 @@ function watchSession(uid) {
       logout("elsewhere");
     }
   }, () => {});
-}
-
-// Automatic sign-out after no activity
-function markActivity() {
-  try { localStorage.setItem(ACTIVITY_KEY, String(Date.now())); } catch {}
-}
-function lastActivity() {
-  return Number(localStorage.getItem(ACTIVITY_KEY) || 0) || Date.now();
-}
-function idleWarning(secondsLeft) {
-  let box = document.getElementById("idleWarning");
-  if (secondsLeft === null) { if (box) box.remove(); return; }
-  if (!box) {
-    document.body.insertAdjacentHTML("beforeend", `
-      <div id="idleWarning" class="idle-warning shadow" role="alertdialog" aria-live="assertive" aria-labelledby="idleWarningText">
-        <i class="bi bi-hourglass-split fs-4"></i>
-        <div class="flex-grow-1"><div class="fw-semibold">Still there?</div><div class="small" id="idleWarningText"></div></div>
-        <button type="button" class="btn btn-sm btn-primary">Stay signed in</button>
-      </div>`);
-    box = document.getElementById("idleWarning");
-    box.querySelector("button").addEventListener("click", () => { markActivity(); idleWarning(null); });
-  }
-  box.querySelector("#idleWarningText").textContent = `You'll be signed out in ${secondsLeft} second${secondsLeft === 1 ? "" : "s"} because there's been no activity.`;
-}
-
-function startIdleTimer(minutes) {
-  minutes = Number(minutes) || 0;
-  if (!minutes) return;
-  const limit = minutes * 60 * 1000;
-  // Closed the laptop or left the tab longer than the limit: sign out right away
-  const stored = Number(localStorage.getItem(ACTIVITY_KEY) || 0);
-  if (stored && Date.now() - stored > limit) { logout("idle"); return; }
-  markActivity();
-  let lastMark = 0;
-  const onActivity = () => {
-    const now = Date.now();
-    if (now - lastMark > 5000) { lastMark = now; markActivity(); }
-    idleWarning(null);
-  };
-  ["pointerdown", "keydown", "scroll", "touchstart", "wheel", "mousemove"].forEach((ev) =>
-    document.addEventListener(ev, onActivity, { passive: true, capture: true }));
-  const warnBefore = Math.min(60000, Math.max(15000, limit * 0.25));
-  let signingOut = false;
-  setInterval(() => {
-    if (signingOut) return;
-    const idle = Date.now() - lastActivity(); // includes activity in other tabs
-    if (idle >= limit) { signingOut = true; idleWarning(null); logout("idle"); }
-    else if (idle >= limit - warnBefore) idleWarning(Math.ceil((limit - idle) / 1000));
-    else idleWarning(null);
-  }, 1000);
 }
 
 // ---------- One grading assignment per student, per subject, per school year and term ----------
