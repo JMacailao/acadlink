@@ -150,6 +150,7 @@ function app_title(): string
  * [route, label, icon, hint, permissions]
  */
 const SETTINGS_HUB = [
+    ['school', 'School Profile', 'building', 'Name, logo, contacts, sign-in picture', ['settings.manage']],
     ['settings', 'Printing', 'printer', 'Assessment and receipt printouts', ['settings.manage']],
     ['docrequirements', 'Document Requirements', 'list-check', 'Registration document checklist', ['settings.manage']],
     ['emailsetup', 'Email Sending', 'envelope-at', 'Forgot-password emails', ['settings.manage']],
