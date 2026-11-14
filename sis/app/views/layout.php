@@ -221,7 +221,7 @@ function layout_start(string $title, bool $bare = false): void
 <link rel="stylesheet" href="<?= sis_web() ?>assets/registration-fees.css?v=4">
 <link rel="stylesheet" href="<?= sis_web() ?>assets/assessment-fee-templates.css?v=1">
 <?php if (app_system() === 'CANTEEN'): ?><link rel="stylesheet" href="assets/canteen.css?v=63.5"><?php endif; ?>
-<?php if (app_system() === 'LIBRARY'): ?><link rel="stylesheet" href="assets/library.css?v=61c"><?php endif; ?>
+<?php if (app_system() === 'LIBRARY'): ?><link rel="stylesheet" href="assets/library.css?v=63.6"><?php endif; ?>
 <?php if (app_system() === 'LMS'): ?><link rel="stylesheet" href="assets/lms.css?v=63.5"><?php endif; ?>
 <?php if (in_array(app_system(), ['LMS', 'CANTEEN', 'LIBRARY'], true)): ?><link rel="stylesheet" href="<?= sis_web() ?>assets/bottom-nav.css?v=63.2"><?php endif; ?>
 <?php if ($route === 'assessment' && ($_GET['tab'] ?? '') === 'names'): ?><script src="<?= sis_web() ?>assets/fee-templates.js?v=1" defer></script><?php endif; ?>
@@ -275,7 +275,7 @@ function layout_start(string $title, bool $bare = false): void
   <aside class="offcanvas-lg offcanvas-start sidebar d-print-none" tabindex="-1" id="sidebar" aria-label="Main navigation">
     <div class="sidebar-inner">
       <?php if (app_system() === 'LMS'): ?><a class="sis-rail-brand lms-rail-brand" href="<?= url('dashboard') ?>"><span class="lms-rail-mark has-logo" aria-hidden="true"><img src="<?= h($logo ?: '../icons/acadlink-mark.png') ?>" alt=""></span><span><strong><?= h(School::brand()) ?></strong><small>LMS</small></span></a>
-      <?php elseif (app_system() === 'LIBRARY'): ?><a class="sis-rail-brand lib-rail-brand" href="<?= url('dashboard') ?>"><i class="bi bi-book-half" aria-hidden="true"></i><span><strong>AcadLink</strong><strong>Library</strong></span></a>
+      <?php elseif (app_system() === 'LIBRARY'): ?><a class="sis-rail-brand lib-rail-brand" href="<?= url('dashboard') ?>"><span class="lib-rail-logo" aria-hidden="true"><img src="<?= h($logo ?: '../icons/acadlink-mark.png') ?>" alt=""></span><span><strong><?= h(School::brand()) ?></strong><small>Library</small></span></a>
       <?php elseif ($system === 'sis'): ?><a class="sis-rail-brand" href="<?= url('dashboard') ?>"><img src="<?= h($logo ?: '../icons/acadlink-mark.png') ?>" alt=""><span><strong><?= h(School::brand()) ?></strong><small><?= h(app_title()) ?></small></span></a><?php endif; ?>
       <div class="sis-sidebar-head d-lg-none"><span><?= h(School::brand()) ?> <?= $system === 'portal' ? 'Portal' : (['FINANCE' => 'Finance', 'CANTEEN' => 'Canteen', 'LIBRARY' => 'Library', 'LMS' => 'LMS'][app_system()] ?? 'SIS') ?></span><button type="button" class="btn-close" data-bs-dismiss="offcanvas" data-bs-target="#sidebar" aria-label="Close menu"></button></div>
       <nav class="pb-2"><?php if(app_system()==='SIS' && in_array(Auth::role(),['TEACHER','STUDENT'],true)): ?><a class="side-link" href="<?= url('history',['tab'=>'grades']) ?>"><i class="bi bi-clock-history"></i><span>History of Grades</span></a><?php if(Auth::role()==='STUDENT'): ?><a class="side-link" href="<?= url('history',['tab'=>'assessments']) ?>"><i class="bi bi-receipt"></i><span>History of Assessments</span></a><?php endif; endif; ?>
