@@ -136,3 +136,9 @@ How the restore protects you:
 - Until a school uploads its logo, the AcadLink mark is shown, as everywhere else. Phones already showed the logo in
   the top bar.
 - Source: `sis/app/views/layout.php`, `canteen/pages/receipt.php`, `lms/assets/lms.css`, `canteen/assets/canteen.css`.
+
+## v63.6 — The school's logo in the Library
+- The Library side menu on computers shows the school's logo and name with "Library" under it, instead of the book
+  icon and "AcadLink Library". The AcadLink mark is shown until a logo is uploaded in Grading System → School settings.
+- Library fine receipts (Finance → Library fines) already print the school logo in their header.
+- Source: `sis/app/views/layout.php`, `library/assets/library.css`.

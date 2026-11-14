@@ -169,3 +169,10 @@ html[data-app="library"] #sidebar .sis-rail-profile strong, html[data-app="libra
   .lib-tabbar button { flex: 1; padding: 10px 8px; } .lib-go { width: 100%; justify-content: center; } .lib-due { max-width: none; width: 100%; }
 }
 @media print { .lib-notice { border: 0; page-break-after: always; margin: 0; max-width: none; } .lib-labels { grid-template-columns: repeat(3, 1fr); gap: 2mm; } .lib-label { border-color: #eee; } .lib-head-actions, .lib-tabs { display: none; } }
+
+/* v63.6: the school's logo and name in the side menu */
+.lib-rail-logo { width: 46px; height: 46px; border-radius: 50%; background: #fff; padding: 3px; flex-shrink: 0; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,.2); }
+.lib-rail-logo img { width: 100%; height: 100%; object-fit: contain; border-radius: 50%; display: block; }
+.lib-rail-brand span:last-child { min-width: 0; }
+.lib-rail-brand strong { overflow-wrap: anywhere; }
+.lib-rail-brand small { color: #f1e3f7; font-size: .95rem; font-weight: 500; }
