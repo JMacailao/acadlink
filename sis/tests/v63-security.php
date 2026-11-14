@@ -22,7 +22,8 @@ function test(string $label, callable $fn): void { global $pass, $fail; try { $f
 function denied(callable $fn, string $text = ''): void { try { $fn(); } catch (AppError|Forbidden|CentralAccountError $e) { if ($text !== '' && stripos($e->getMessage(), $text) === false) throw new RuntimeException('Wrong error: ' . $e->getMessage()); return; } throw new RuntimeException('Expected a refusal' . ($text ? " ($text)" : '')); }
 $c = Auth::central();
 $id = (int) Db::val("SELECT account_id FROM central_login_identifiers WHERE identifier_key = 'power.admin'");
-$canLogin = function (string $pw) use ($c): bool { try { $c->login('power.admin', $pw, 'SIS'); $c->logout(); return true; } catch (Throwable) { return false; } };
+$why = ''; // the reason the last sign-in was refused (shown when a check fails)
+$canLogin = function (string $pw) use ($c, &$why): bool { try { $c->login('power.admin', $pw, 'SIS'); $c->logout(); return true; } catch (Throwable $e) { $why = get_class($e) . ': ' . $e->getMessage(); return false; } };
 
 test('a fresh installation has no usable power.admin password: nobody can sign in until setup', function () use ($id, $canLogin) {
     ok($id > 0 && FirstSetup::needed(), 'setup needed');
@@ -44,11 +45,11 @@ test('setup needs proof: from this computer when the database has no password; n
     denied(fn() => FirstSetup::complete('', 'Another2026x', 'Another2026x'), 'already done');
     ok((int) Db::val("SELECT COUNT(*) FROM sis_audit_logs WHERE action = 'first_setup_done'") === 1, 'logged');
 });
-test('an existing install still using the old starting password is switched to setup; a changed password is left alone', function () use ($id, $canLogin) {
+test('an existing install still using the old starting password is switched to setup; a changed password is left alone', function () use ($id, $canLogin, &$why) {
     Db::q('UPDATE central_credentials SET password_hash = ? WHERE account_id = ?', [password_hash('Start-32f32c74-A1', PASSWORD_DEFAULT), $id]);
     FirstSetup::install(); ok(FirstSetup::needed() && !$canLogin('Start-32f32c74-A1'), 'old password retired');
     Db::q('UPDATE central_credentials SET password_hash = ? WHERE account_id = ?', [password_hash('SchoolOwn2026', PASSWORD_DEFAULT), $id]);
-    FirstSetup::install(); ok(!FirstSetup::needed() && $canLogin('SchoolOwn2026'), 'own password kept');
+    FirstSetup::install(); ok(!FirstSetup::needed(), 'own password kept (no setup needed)'); ok($canLogin('SchoolOwn2026'), 'own password kept (sign-in: ' . $GLOBALS['why'] . ')');
 });
 test('system folders refuse direct web access (Apache .htaccess); only index.php and assets stay public', function () {
     $root = dirname(SIS_ROOT);
