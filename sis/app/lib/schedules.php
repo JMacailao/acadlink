@@ -227,26 +227,56 @@ final class Schedules
 
     // ------------------------------------------------------------------ timetable
 
-    /** Weekly timetable HTML (days across, times down) for a list of schedules. $label: what each cell shows. */
-    public static function grid(array $rows, string $show = 'section'): string
+    /** Soft colour (and a deeper one for the teacher band) of a subject, the same everywhere. */
+    public const GRID_COLORS = [['#fff36b', '#f2e24a'], ['#f3d0ef', '#e4b3df'], ['#bdf0c0', '#95dc9b'], ['#fbe0cc', '#f2c4a3'], ['#e2d4f7', '#cbb5ef'],
+        ['#cfe6fb', '#a9d1f5'], ['#f9c9a8', '#ef9f6c'], ['#c9f1ea', '#9fe0d4'], ['#ffd6d6', '#f7b0b0'], ['#e6efc4', '#cfe09a']];
+
+    /**
+     * v63.4 Weekly timetable like the school's class-schedule sheet: half-hour rows from 7:30 to 6:00 (longer if a class
+     * starts earlier or ends later), Monday to Friday (and Saturday/Sunday when used), each day with its Room column.
+     * A class is one coloured block as tall as it lasts, with the subject and, at the bottom in bold, the teacher
+     * ($show = 'teacher' shows the section there instead, for a teacher's own timetable). Each subject keeps one colour.
+     * $title: shown in the top-left corner (for example the section, "BSHM 4-2").
+     */
+    public static function grid(array $rows, string $show = 'section', string $title = ''): string
     {
         if (!$rows) return '<p class="text-muted mb-0">No classes scheduled.</p>';
-        $used = []; foreach ($rows as $r) foreach (self::parseDays(explode(',', $r['days'])) as $d) $used[$d] = true;
+        $min = fn(string $t) => (int) substr($t, 0, 2) * 60 + (int) substr($t, 3, 2);
+        $from = 450; $to = 1080; // 7:30 AM – 6:00 PM
+        foreach ($rows as $r) { $from = min($from, intdiv($min($r['start_time']), 30) * 30); $to = max($to, (int) ceil($min($r['end_time']) / 30) * 30); }
+        $used = ['M' => 1, 'T' => 1, 'W' => 1, 'Th' => 1, 'F' => 1];
+        foreach ($rows as $r) foreach (self::parseDays(explode(',', $r['days'])) as $d) $used[$d] = 1;
         $days = array_values(array_intersect(array_keys(self::DAYS), array_keys($used)));
-        $h = '<div class="table-responsive"><table class="table table-sm table-bordered sched-grid mb-0"><thead><tr><th style="width:120px">Time</th>';
-        foreach ($days as $d) $h .= '<th>' . self::DAYS[$d] . '</th>';
+        $full = ['M' => 'Monday', 'T' => 'Tuesday', 'W' => 'Wednesday', 'Th' => 'Thursday', 'F' => 'Friday', 'S' => 'Saturday', 'Su' => 'Sunday'];
+        // colour per subject, in the order subjects first appear in the week
+        $order = $rows; usort($order, fn($a, $b) => [$min($a['start_time']), $a['subject_code']] <=> [$min($b['start_time']), $b['subject_code']]);
+        $color = [];
+        foreach ($order as $r) $color[$r['subject_code']] ??= self::GRID_COLORS[count($color) % count(self::GRID_COLORS)];
+        // place each class: [day][slot index] => list of classes starting there; covered slots are skipped
+        $n = intdiv($to - $from, 30); $start = []; $cover = [];
+        foreach ($rows as $r) foreach (self::parseDays(explode(',', $r['days'])) as $d) {
+            $i = intdiv($min($r['start_time']) - $from, 30); $span = max(1, (int) ceil(($min($r['end_time']) - $from) / 30) - $i);
+            if (isset($cover[$d][$i])) { $start[$d][$cover[$d][$i]]['also'][] = $r; continue; } // a clash: shown in the same block
+            $start[$d][$i] = ['r' => $r, 'span' => $span, 'also' => []];
+            for ($k = $i; $k < $i + $span && $k < $n; $k++) $cover[$d][$k] = $i;
+        }
+        $label = fn(array $r) => '<span class="sg-subj">' . h($r['subject_code'] . ($r['subject_name'] !== '' ? '-' . $r['subject_name'] : '')) . ($r['kind'] === 'LAB' ? ' <small>(Lab)</small>' : '') . '</span>';
+        $who = fn(array $r) => $show === 'teacher' ? $r['section_name'] : ($r['teacher_name'] !== '' ? $r['teacher_name'] : 'TBA');
+        $h = '<div class="table-responsive sg-wrap"><table class="sg"><thead>' . ($title !== '' ? '<tr><th class="sg-name" colspan="' . (1 + 2 * count($days)) . '">' . h($title) . '</th></tr>' : '') . '<tr><th class="sg-title">TIME</th>';
+        foreach ($days as $d) $h .= '<th class="sg-day">' . $full[$d] . '</th><th class="sg-roomh">Room</th>';
         $h .= '</tr></thead><tbody>';
-        $slots = [];
-        foreach ($rows as $r) $slots[$r['start_time'] . '|' . $r['end_time']] = true;
-        ksort($slots);
-        foreach (array_keys($slots) as $slot) {
-            [$st, $en] = explode('|', $slot);
-            $h .= '<tr><th class="small text-nowrap">' . h(self::time($st) . '–' . self::time($en)) . '</th>';
+        for ($i = 0; $i < $n; $i++) {
+            $t = $from + $i * 30;
+            $fmt = fn(int $m) => sprintf('%d:%02d', intdiv($m, 60) % 12 ?: 12, $m % 60);
+            $h .= '<tr><th class="sg-time">' . $fmt($t) . ' - ' . $fmt($t + 30) . '</th>';
             foreach ($days as $d) {
-                $cell = array_filter($rows, fn($r) => $r['start_time'] === $st && $r['end_time'] === $en && in_array($d, self::parseDays(explode(',', $r['days'])), true));
-                $h .= '<td>' . implode('', array_map(fn($r) => '<div class="sched-cell"><strong>' . h($r['subject_code']) . '</strong> <span class="small">' . h(self::KINDS[$r['kind']]) . '</span><div class="small">'
-                    . h(implode(' · ', array_filter([$show !== 'section' ? $r['section_name'] : '', $show !== 'room' ? ($r['room_code'] ? 'Room ' . $r['room_code'] : '') : '', $show !== 'teacher' ? $r['teacher_name'] : ''])))
-                    . '</div></div>', $cell)) . '</td>';
+                if (isset($start[$d][$i])) {
+                    $c = $start[$d][$i]; $r = $c['r']; [$bg, $band] = $color[$r['subject_code']];
+                    $more = $c['also'] ? '<span class="sg-clash">Clash: ' . h(implode(', ', array_map(fn($x) => $x['subject_code'] . ' ' . self::timeRange($x), $c['also']))) . '</span>' : '';
+                    $h .= '<td class="sg-class" rowspan="' . $c['span'] . '" style="--sg-bg:' . $bg . ';--sg-band:' . $band . '" title="' . h($r['subject_code'] . ' ' . $r['subject_name'] . ' · ' . self::timeRange($r) . ' · ' . $who($r)) . '">'
+                        . '<div class="sg-box">' . $label($r) . $more . '<b class="sg-who">' . h($who($r)) . '</b></div></td>'
+                        . '<td class="sg-room" rowspan="' . $c['span'] . '">' . h($show === 'room' ? $r['section_name'] : ((string) $r['room_code'] !== '' ? (string) $r['room_code'] : 'TBA')) . '</td>';
+                } elseif (!isset($cover[$d][$i])) $h .= '<td class="sg-empty"></td><td class="sg-empty sg-room"></td>';
             }
             $h .= '</tr>';
         }

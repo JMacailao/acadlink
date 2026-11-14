@@ -639,7 +639,7 @@ if ($id) {
       <div class="modal-header"><h2 class="modal-title fs-5" id="mScheduleT">Class schedule · <?= h($r['section_name'] . ' · ' . $r['term'] . ' ' . $r['school_year']) ?></h2><button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button></div>
       <div class="modal-body">
         <?php foreach ($schedReg['clashes'] as $c): ?><div class="alert alert-danger py-2 small"><?= h($c) ?></div><?php endforeach; ?>
-        <?= Schedules::grid($schedReg['rows'], 'section') ?>
+        <?= Schedules::grid($schedReg['rows'], 'section', (string) $r['section_name']) ?>
         <?php $unscheduled = array_filter($subs, fn($x) => !in_array($x['subject_doc_id'], array_column($schedReg['rows'], 'subject_doc_id'), true)); if ($unscheduled): ?>
         <p class="small text-muted mt-2 mb-0">No schedule yet: <?= h(implode(', ', array_column($unscheduled, 'subject_code'))) ?>.<?= Auth::can('schedules.edit') ? ' <a href="' . url('schedules', ['school_year' => $r['school_year'], 'term' => $r['term'], 'section' => $r['section_doc_id']]) . '">Set it in Class Schedules</a>.' : '' ?></p><?php endif; ?>
       </div>

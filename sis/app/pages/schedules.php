@@ -80,7 +80,7 @@ page_title('Class Schedules', '', 'Days, times, rooms and teachers of each secti
 <div class="form-section" data-record-detail>
   <div class="d-flex flex-wrap align-items-center gap-2 mb-2"><h2 class="h5 mb-0 me-auto"><?= h(School::brand()) ?> · Class schedule of <?= h(['section' => 'section ', 'teacher' => '', 'room' => 'room '][$by] . $whoName) ?> · <?= h($term . ' ' . $sy) ?></h2>
     <div class="doc-toolbar d-print-none"><button type="button" class="btn btn-sm btn-outline-secondary" id="docPrint"><i class="bi bi-printer"></i> Print</button></div></div>
-  <?= Schedules::grid($rows, $by) ?>
+  <?= Schedules::grid($rows, $by, $whoName) ?>
 </div>
 <script src="assets/doc-print.js?v=50"></script>
 <?php endif; ?>

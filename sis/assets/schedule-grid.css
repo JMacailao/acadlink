@@ -1,0 +1,20 @@
+/* v63.4 Class schedule like the school's sheet: dark blue header, day + Room columns, coloured class blocks. */
+.sg-wrap { border-radius: 10px; border: 1px solid #c9d2de; background: #fff; }
+.sg { width: 100%; border-collapse: collapse; font-size: .82rem; color: #1f2937; min-width: 860px; table-layout: fixed; }
+.sg th, .sg td { border: 1px solid #c9d2de; padding: 0; }
+.sg thead th { background: #13305a; color: #fff; font-weight: 700; text-align: center; padding: 6px 4px; text-transform: uppercase; letter-spacing: .02em; }
+.sg thead .sg-name { background: #fff; color: #13305a; text-align: left; font-size: 1rem; padding: 6px 10px; text-transform: none; }
+.sg thead .sg-roomh { background: #a9c5e8; color: #13305a; font-weight: 600; text-transform: none; width: 66px; }
+.sg thead .sg-title { width: 104px; }
+.sg-time { background: #f3f6fa; font-weight: 600; text-align: left; white-space: nowrap; padding: 2px 8px !important; font-size: .78rem; height: 22px; }
+.sg-empty { height: 22px; }
+.sg-room { text-align: center; vertical-align: middle; font-weight: 600; font-size: .78rem; color: #111827; padding: 2px 4px !important; }
+.sg-class { background: var(--sg-bg); vertical-align: top; }
+.sg-box { min-height: 100%; height: 100%; display: flex; flex-direction: column; justify-content: space-between; }
+.sg-subj { display: block; text-align: center; padding: 6px 6px 4px; font-size: .78rem; line-height: 1.25; overflow-wrap: anywhere; }
+.sg-subj small { font-size: .9em; color: #4b5563; }
+.sg-who { display: block; background: var(--sg-band); padding: 3px 6px; font-size: .8rem; text-transform: uppercase; margin-top: auto; overflow-wrap: anywhere; }
+.sg-clash { display: block; margin: 0 6px 4px; padding: 2px 4px; border-radius: 4px; background: #fee2e2; color: #991b1b; font-size: .7rem; font-weight: 700; }
+.sg-class { height: 1px; } /* lets the block fill its rows, so the teacher band sits at the bottom */
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .sg-wrap { background: #fff; } }
+@media print { .sg-wrap { border: 0; } .sg { min-width: 0; font-size: 9pt; } .sg thead th, .sg-class, .sg-who, .sg-time { -webkit-print-color-adjust: exact; print-color-adjust: exact; } }
