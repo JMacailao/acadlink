@@ -267,3 +267,14 @@ How the restore protects you:
 - Source: `pages/settings.html`, `js/settings.js`, `js/app.js`, `shared/central-accounts.php`, both layouts, `sis/index.php`,
   `sis/app/front.php`, `sis/app/pages/login.php`; removed `sis/assets/idle-signout.js`, `idle-signout.css` and
   `sis/app/pages/keepalive.php` (they can be deleted from the server too).
+
+## v63.19 — Works on Hostinger databases ("Illegal mix of collations")
+- **Fixed:** on Hostinger, My profile (and so every page for a Power User without an email) answered
+  **500 / a blank page**. The log said `SQLSTATE[HY000]: General error: 1267 Illegal mix of collations
+  (utf8mb4_general_ci,COERCIBLE) and (utf8mb4_unicode_ci,COERCIBLE)`. Hostinger's database server sets the
+  connection's text-comparison rule (collation) to `utf8mb4_unicode_ci`, while values sent with a query get
+  `utf8mb4_general_ci`, so a comparison like `? = 'STUDENT'` is refused.
+- Every connection (SIS, Student Portal, LMS, Canteen, Library, Finance and the Grading System API) now starts with
+  `SET NAMES utf8mb4 COLLATE utf8mb4_unicode_ci`, the rule AcadLink's tables use. Nothing to change in `api/config.php`
+  or the database.
+- Source: `sis/app/lib/core.php`, `api/lib.php`.

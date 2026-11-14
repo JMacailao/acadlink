@@ -1,3 +1,5 @@
+**Updating to v63.19?** Upload `sis/app/lib/core.php` and `api/lib.php` (or deploy from GitHub). Fixes the 500 / blank page on Hostinger ("Illegal mix of collations").
+
 **Updating to v63.15?** Upload the files (including `pages`, `js` and `shared`) and press Ctrl+F5. Nobody is signed out for doing nothing any more. You may delete `sis/assets/idle-signout.js`, `sis/assets/idle-signout.css` and `sis/app/pages/keepalive.php` from the server.
 
 **Updating to v63.14?** Upload the files, including the new `vendor` folder, and press Ctrl+F5. Then open Settings → Backup & Restore: automatic daily backups are on; add the scheduled job shown there (Hostinger: hPanel → Advanced → Cron Jobs).

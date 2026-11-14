@@ -25,6 +25,9 @@ final class Db
             PDO::ATTR_EMULATE_PREPARES   => false,
             PDO::ATTR_STRINGIFY_FETCHES  => false,
         ]);
+        // v63.19: one text-comparison rule (collation) for the whole connection. Some hosts (e.g. Hostinger) set the server's
+        // collation_connection to utf8mb4_unicode_ci while sent values get utf8mb4_general_ci: "Illegal mix of collations".
+        self::$pdo->exec('SET NAMES utf8mb4 COLLATE utf8mb4_unicode_ci');
         self::$pdo->exec("SET SESSION sql_mode = 'STRICT_ALL_TABLES,NO_ZERO_DATE,NO_ZERO_IN_DATE,ERROR_FOR_DIVISION_BY_ZERO,NO_ENGINE_SUBSTITUTION'");
         self::$pdo->exec("SET time_zone = '" . date('P') . "'");
     }
