@@ -142,3 +142,21 @@ How the restore protects you:
   icon and "AcadLink Library". The AcadLink mark is shown until a logo is uploaded in Grading System → School settings.
 - Library fine receipts (Finance → Library fines) already print the school logo in their header.
 - Source: `sis/app/views/layout.php`, `library/assets/library.css`.
+
+## v63.7 — Settings in one place
+- **Administration** in the side menu now has just **Report Manager**, **Users and Groups**, **Settings** and
+  **Activity Log** (Help stays at the bottom).
+- **Settings** opens a page with a **Settings menu on the right** listing:
+  - Printing (the former Settings page: assessment statement and official receipt)
+  - Document Requirements
+  - Email Sending
+  - Backup & Restore (power.admin only)
+  - Bulk Accounts
+  - Data Migration
+  - Import All
+- Each person sees only the pages they may open (for example a registrar who can only use Data Migration sees just
+  that). The side menu keeps **Settings** highlighted on all of them, and the breadcrumb reads Home › Administration.
+- Screens narrower than 1400px show the Settings menu as a row of tabs above the page instead.
+- Links from other pages (Users and Groups → Bulk create accounts, Students → Import records, the admission
+  checklist) still open the same pages.
+- Source: `sis/app/views/layout.php` (`SETTINGS_HUB`), `sis/assets/settings-hub.css` (new).
