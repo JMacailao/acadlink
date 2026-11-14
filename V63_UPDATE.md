@@ -205,3 +205,20 @@ How the restore protects you:
 - The Grading System's old backup page now opens SIS Backup & Restore; its script `js/backup.js` was deleted (it can
   also be deleted from the server).
 - Source: `sis/index.php`, `sis/app/views/layout.php`, `sis/app/pages/gsframe.php`, `pages/backup.html`.
+
+## v63.12 — Sign-in security in every system; no more {"scope": …} page
+- **Sign out automatically after no activity** (Settings → System Settings → Sign-in security) now works in **every system**:
+  SIS, Student Portal, LMS, Canteen POS, Library and Finance, as it did in the Grading System. A "Still there?" warning with
+  **Stay signed in** shows shortly before; activity in any tab counts for all tabs; while someone is working (for example
+  typing a long form) the server is told now and then so nothing expires under them. The server also ends a sign-in after
+  that many minutes (plus one) without any request. When the setting is Off, the server keeps its 30 minutes as before.
+- **One device at a time asks first, everywhere.** Signing in while the account is open on another device shows
+  "Open on another device" with **Sign out the other device and continue** or **Cancel**. Nothing changes until the
+  person chooses: Cancel leaves the other device signed in. The SIS, Student Portal and Grading System ask the same way
+  (the Grading System used to sign the other device out before asking).
+- **Fixed:** after a sign-in had ended (timed out or opened on another device), signing in again could open a page that
+  showed only `{"scope":"…"}`. Background checks are no longer remembered as "the page to return to"; signing in now
+  goes to the workspaces.
+- Source: `shared/central-accounts.php`, `sis/app/lib/auth.php`, `sis/app/pages/login.php`, `sis/app/front.php`,
+  `sis/app/pages/navstate.php`, `sis/app/pages/keepalive.php` (new), `sis/assets/idle-signout.js`/`.css` (new), both
+  layouts, `api/api.php`, `api/lib.php`, `js/php-auth.js`, `js/auth.js`.

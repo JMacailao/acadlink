@@ -1,3 +1,5 @@
+**Updating to v63.12?** Upload the files (including `shared`, `api` and `js`) and press Ctrl+F5. Sign out after no activity and One device at a time now apply to every system (Settings → System Settings → Sign-in security).
+
 **Updating to v63.11?** Upload the files and press Ctrl+F5. Grading Backup was removed: use Settings → Backup & Restore, which includes the Grading System. You may delete `js/backup.js` from the server.
 
 **Updating to v63.10?** Upload the files (including `pages`, `shared` and `icons`) and press Ctrl+F5. One device at a time now applies to every system; turn it off in Settings → System Settings → Sign-in security if staff share accounts across devices.

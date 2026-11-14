@@ -115,8 +115,8 @@ export function onAuthStateChanged(a, callback) {
   return () => listeners.delete(callback);
 }
 
-export async function signInWithEmailAndPassword(a, email, password) {
-  const r = await apiPost({ action: "login", email, password });
+export async function signInWithEmailAndPassword(a, email, password, takeOver = false) {
+  const r = await apiPost({ action: "login", email, password, takeOver: takeOver === true });
   const user = makeUser(r.user);
   if (!a.secondary) {
     auth.currentUser = user;

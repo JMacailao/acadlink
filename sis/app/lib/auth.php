@@ -172,10 +172,36 @@ final class Auth
         }
     }
 
-    public static function login(string $username, string $password): array
+    /**
+     * Signs in. v63.12: when the account is open on another device and "One device at a time" is on, nothing changes
+     * yet: CentralSessionConflict is thrown and the checked sign-in waits (3 minutes) for takeOver() or cancelTakeOver().
+     */
+    public static function login(string $username, string $password, bool $takeOver = true, array $remember = []): array
     {
-        try { $a=self::central()->login($username,$password,'SIS'); }
+        try { $a=self::central()->login($username,$password,'SIS',$takeOver); }
+        catch(CentralSessionConflict $c) { $_SESSION['pending_signin']=['id'=>$c->accountId,'at'=>time(),'last_seen'=>$c->lastSeen,'remember'=>$remember]; throw $c; }
         catch(CentralAccountError $e) { throw new AppError($e->getMessage()); }
+        return self::signedIn($a);
+    }
+    /** v63.12: the sign-in waiting for "Sign out the other device and continue", or null (expired or none). */
+    public static function pendingSignin(): ?array
+    {
+        $p=$_SESSION['pending_signin'] ?? null;
+        if (!is_array($p) || (int)($p['at'] ?? 0) < time()-180) { unset($_SESSION['pending_signin']); return null; }
+        return $p;
+    }
+    /** v63.12: continue the waiting sign-in here; the account's other device is signed out. */
+    public static function takeOver(): array
+    {
+        $p=self::pendingSignin() ?? throw new AppError('That sign-in has expired. Enter your username and password again.');
+        unset($_SESSION['pending_signin']);
+        try { $a=self::central()->completeLogin((int)$p['id'],'SIS'); }
+        catch(CentralAccountError $e) { throw new AppError($e->getMessage()); }
+        return self::signedIn($a);
+    }
+    public static function cancelTakeOver(): void { unset($_SESSION['pending_signin']); }
+    private static function signedIn(array $a): array
+    {
         $_SESSION['uid']=(int)self::central()->legacyId((int)$a['id'],'SIS');
         $_SESSION['last_seen']=time();
         self::$actingAs=null;
