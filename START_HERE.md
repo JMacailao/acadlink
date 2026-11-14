@@ -1,3 +1,5 @@
+**Updating to v63.11?** Upload the files and press Ctrl+F5. Grading Backup was removed: use Settings → Backup & Restore, which includes the Grading System. You may delete `js/backup.js` from the server.
+
 **Updating to v63.10?** Upload the files (including `pages`, `shared` and `icons`) and press Ctrl+F5. One device at a time now applies to every system; turn it off in Settings → System Settings → Sign-in security if staff share accounts across devices.
 
 **Updating to v63.9 (Grading System settings in SIS)?** Upload the files (including the `pages` folder) and press Ctrl+F5. Setup and options and School settings are now in SIS → Administration → Settings (Grading Options, System Settings).

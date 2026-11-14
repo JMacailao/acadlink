@@ -198,3 +198,10 @@ How the restore protects you:
   `icon-192.png`, `icon-512.png`, `icon-maskable-512.png`).
 - Source: `shared/central-accounts.php` (`singleDevice`, `endedElsewhere`), `sis/app/pages/login.php`,
   `sis/app/pages/gsframe.php`, `sis/index.php`, `sis/app/views/layout.php`, `pages/*.html`, `icons/`.
+
+## v63.11 — Grading Backup removed
+- **Grading Backup** is gone from SIS Settings. **Backup & Restore** (power.admin) already makes a copy of all of AcadLink,
+  the Grading System's records included (its "Grading System" part), and can restore just that part.
+- The Grading System's old backup page now opens SIS Backup & Restore; its script `js/backup.js` was deleted (it can
+  also be deleted from the server).
+- Source: `sis/index.php`, `sis/app/views/layout.php`, `sis/app/pages/gsframe.php`, `pages/backup.html`.

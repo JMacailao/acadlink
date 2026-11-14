@@ -161,7 +161,6 @@ const SETTINGS_HUB = [
     ['importall', 'Import All', 'cloud-upload', 'Subjects, fees, teachers and curriculum', ['curriculum.edit']],
     ['systemsettings', 'System Settings', 'shield-lock', 'Sign-in security, database, email keys', ['settings.manage']],
     ['gradingaudit', 'Grading Audit Trail', 'journal-text', 'Who changed grades and grading records', ['settings.manage']],
-    ['gradingbackup', 'Grading Backup', 'database-down', 'Grading System backup and restore', ['settings.manage']],
 ];
 
 /** The Settings pages this person may open, in menu order. */
