@@ -8,7 +8,19 @@ Options -Indexes
   Header always set X-Content-Type-Options "nosniff"
   Header always set Referrer-Policy "same-origin"
 </IfModule>
-# After HTTPS is enabled, uncomment:
-# RewriteEngine On
-# RewriteCond %{HTTPS} off
-# RewriteRule ^ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
+# v63.13: always use the secure (https) address on a real domain. Local installs keep working without SSL:
+# localhost, an IP address, or a name ending in .local / .lan / .test are never redirected.
+# (No SSL on the domain yet? Turn SSL on in the host's panel first: Hostinger hPanel -> Security -> SSL.)
+<IfModule mod_rewrite.c>
+  RewriteEngine On
+  RewriteCond %{HTTPS} !=on
+  RewriteCond %{HTTP:X-Forwarded-Proto} !=https
+  RewriteCond %{HTTP_HOST} !^(localhost|\[::1\])(:[0-9]+)?$ [NC]
+  RewriteCond %{HTTP_HOST} !^[0-9.]+(:[0-9]+)?$
+  RewriteCond %{HTTP_HOST} !\.(local|lan|test|localhost)(:[0-9]+)?$ [NC]
+  RewriteRule ^ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
+</IfModule>
+<IfModule mod_headers.c>
+  # Browsers remember to use https for a year (only sent on https pages)
+  Header always set Strict-Transport-Security "max-age=31536000" env=HTTPS
+</IfModule>

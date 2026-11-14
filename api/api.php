@@ -17,6 +17,7 @@ if (($_SERVER["REQUEST_METHOD"] ?? "") !== "POST") {
   header("Content-Type: text/plain; charset=utf-8");
   echo "Grading System server is running.\n"; // v63.3: no PHP or app version for visitors
   if (PHP_VERSION_ID < 80100) { echo "PROBLEM: PHP 8.1 or newer is needed.\n"; exit; }
+  if (PHP_VERSION_ID < 80200) echo "WARNING: this PHP no longer receives security fixes. Switch the website to PHP 8.3 in the host's panel.\n"; // v63.13
   if (!extension_loaded("pdo_mysql")) { echo "PROBLEM: PHP's pdo_mysql extension isn't enabled.\n"; exit; }
   try {
     pdo()->query("SELECT 1 FROM docs LIMIT 1");

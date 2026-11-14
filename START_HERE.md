@@ -1,3 +1,5 @@
+**Updating to v63.13?** First turn SSL on for the domain (Hostinger: hPanel → Security → SSL) and set PHP to 8.3 (hPanel → Advanced → PHP Configuration). Then upload the files, including every `.htaccess`, and press Ctrl+F5. http:// now goes to https:// automatically.
+
 **Updating to v63.12?** Upload the files (including `shared`, `api` and `js`) and press Ctrl+F5. Sign out after no activity and One device at a time now apply to every system (Settings → System Settings → Sign-in security).
 
 **Updating to v63.11?** Upload the files and press Ctrl+F5. Grading Backup was removed: use Settings → Backup & Restore, which includes the Grading System. You may delete `js/backup.js` from the server.

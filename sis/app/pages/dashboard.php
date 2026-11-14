@@ -50,6 +50,9 @@ layout_start('Dashboard');
 $progressPercent = (int) round($pct * 100);
 ?>
 <div class="sis-dashboard">
+  <?php if (PHP_VERSION_ID < 80200 && Backup::allowed()): // v63.13: power.admin sees when the server's PHP is out of support ?>
+  <div class="alert alert-warning d-flex gap-2 align-items-start" role="alert"><i class="bi bi-exclamation-triangle-fill mt-1" aria-hidden="true"></i><div><b>This server runs PHP <?= h(PHP_MAJOR_VERSION . '.' . PHP_MINOR_VERSION) ?>, which no longer gets security fixes.</b> Switch the website to <b>PHP 8.3</b> in your host's panel (Hostinger: hPanel → Advanced → PHP Configuration → PHP version), then reload this page. AcadLink is tested on PHP 8.2 and 8.3.</div></div>
+  <?php endif; ?>
   <header class="dash-intro">
     <div>
       <p class="dash-greeting"><?= h($greet . ', ' . (trim((string) $u['full_name']) ?: $u['username'])) ?>.</p>

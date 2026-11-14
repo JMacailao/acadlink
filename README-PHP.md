@@ -4,7 +4,7 @@ SIS manages all accounts and groups. Grading uses the same centralized identity 
 
 ## Fresh installation
 
-1. Upload the project to a PHP/MySQL host. PHP 8.1+ with PDO MySQL and mbstring is required.
+1. Upload the project to a PHP/MySQL host. PHP 8.2 or newer (8.3 recommended) with PDO MySQL and mbstring is required. PHP 8.1 no longer receives security fixes. On Hostinger: hPanel → Advanced → PHP Configuration → PHP version.
 2. Create an empty MySQL/MariaDB database and select it in phpMyAdmin.
 3. Import the root **INSTALL.sql** once. It includes Grading, SIS, Accounting, centralized accounts, the first Power User, Professor X and restore staging tables. No second SQL script or account-creation wizard is needed.
 4. Set the database connection in **api/config.php**. Both systems use this file and the same database.

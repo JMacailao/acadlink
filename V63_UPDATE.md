@@ -222,3 +222,18 @@ How the restore protects you:
 - Source: `shared/central-accounts.php`, `sis/app/lib/auth.php`, `sis/app/pages/login.php`, `sis/app/front.php`,
   `sis/app/pages/navstate.php`, `sis/app/pages/keepalive.php` (new), `sis/assets/idle-signout.js`/`.css` (new), both
   layouts, `api/api.php`, `api/lib.php`, `js/php-auth.js`, `js/auth.js`.
+
+## v63.13 — Automatic tests, HTTPS everywhere, PHP 8.2+
+- **Automatic tests on GitHub** (`.github/workflows/tests.yml`): every pull request and every change to `main` is checked on
+  PHP 8.2 and 8.3 with a fresh MariaDB: the syntax of every PHP file and browser script, then all 19 maintained test
+  suites (`sis/tests/all.sh`; run it yourself with `bash sis/tests/all.sh`). The result shows on the pull request.
+  Not included yet: `run.php` (the original v1 suite, from before central accounts and permission groups; it needs
+  rewriting) and `http_test.php` (needs a running server and the school's own records).
+- **HTTPS is always used on a real domain**: the root `.htaccess` and each system folder (sis, portal, lms, canteen,
+  library, finance) send `http://` visitors to `https://`, and browsers are told to keep using https (HSTS, 1 year).
+  Local installs keep working without SSL: localhost, IP addresses and names ending in .local / .lan / .test are not
+  redirected. Turn SSL on in the host's panel before uploading (Hostinger: hPanel → Security → SSL).
+- **PHP 8.2 or newer** is now required (8.3 recommended; PHP 8.1 no longer gets security fixes). power.admin sees a
+  warning on the SIS dashboard while the server runs an older PHP. Hostinger: hPanel → Advanced → PHP Configuration.
+- Source: `.github/workflows/tests.yml`, `sis/tests/all.sh` (new), `.htaccess` (root and each system folder),
+  `sis/app/pages/dashboard.php`, `api/api.php`, `README-PHP.md`, `sis/tests/run.php` (two checks brought up to date).

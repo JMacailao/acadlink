@@ -1,0 +1,77 @@
+# AcadLink: check every pull request and every change to main.
+# PHP syntax of every file, then all maintained test suites (sis/tests/all.sh) against a fresh MariaDB.
+name: Tests
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: tests-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  tests:
+    name: PHP ${{ matrix.php }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 40
+    strategy:
+      fail-fast: false
+      matrix:
+        php: ['8.2', '8.3']
+    services:
+      mariadb:
+        image: mariadb:10.11
+        env:
+          MARIADB_ROOT_PASSWORD: ci-only-password
+        ports: ['3306:3306']
+        options: >-
+          --health-cmd="healthcheck.sh --connect --innodb_initialized"
+          --health-interval=5s --health-timeout=5s --health-retries=30
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ matrix.php }}
+          extensions: pdo_mysql, mbstring, intl, gd, curl, openssl, fileinfo, iconv, simplexml, zip
+          ini-values: memory_limit=1G
+          coverage: none
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Database connection for the tests
+        run: |
+          cat > api/config.php <<'PHP'
+          <?php
+          return [
+            "db_host" => "127.0.0.1",
+            "db_port" => 3306,
+            "db_name" => "acadlink",
+            "db_user" => "root",
+            "db_pass" => "ci-only-password",
+            "session_name" => "GSSESSION",
+            "allowed_hosts" => [],
+            "backup_dir" => "",
+          ];
+          PHP
+          mysql -h 127.0.0.1 -uroot -pci-only-password -e "CREATE DATABASE IF NOT EXISTS acadlink"
+
+      - name: PHP syntax (every file)
+        run: |
+          find . -name '*.php' -not -path './.git/*' -print0 | xargs -0 -n1 -P4 php -l > /tmp/lint.txt || { grep -v '^No syntax errors' /tmp/lint.txt; exit 1; }
+          echo "$(wc -l < /tmp/lint.txt) PHP files checked"
+
+      - name: JavaScript syntax (browser scripts)
+        run: |
+          for f in sis/assets/*.js lms/assets/*.js canteen/assets/*.js library/assets/*.js portal/assets/*.js; do
+            [ -f "$f" ] && node --check "$f"
+          done
+          echo "Browser scripts checked"
+
+      - name: Test suites
+        run: bash sis/tests/all.sh
