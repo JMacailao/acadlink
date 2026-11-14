@@ -171,3 +171,16 @@ How the restore protects you:
   System, then checked again on the server. Only people with Settings rights can open it; each save is in the Activity Log.
 - The Grading System's School settings still work; its connection, email and Google Sheets parts stay there.
 - Source: `sis/app/pages/school.php` (new), `sis/assets/school-profile.js` (new), `sis/index.php`, `sis/app/views/layout.php`.
+
+## v63.9 — The Grading System's settings move into SIS Settings
+- Two new pages in **Administration → Settings** (SIS):
+  - **Grading Options**: the Grading System's former *Setup and options* page: grading scale, final grade (GWA) and
+    conversion table, audit trail retention, combined classes, term deadlines and what happens when a student changes section.
+  - **System Settings**: the rest of the former *School settings* page: sign-in security, teacher downtime, the school's
+    database, email sending keys (EmailJS) and the Google Sheets copy. School details are in **School Profile** (v63.8).
+- The Grading System's side menu no longer has *School settings* or *Setup and options*. Opening those old addresses goes
+  to the SIS pages. Its links to them (Audit trail, Backup and restore) point to SIS Settings too.
+- Nothing about how these settings work has changed: the same Grading System page runs inside SIS (its own menus
+  hidden), saves the same records, and only Grading System administrators can change them.
+- Source: `sis/app/pages/gsframe.php` (new), `sis/assets/gs-frame.js` (new), `sis/index.php`, `sis/app/views/layout.php`,
+  `pages/options.html`, `pages/settings.html` and the side menu of every page in `pages/`.

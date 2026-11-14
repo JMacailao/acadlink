@@ -1,3 +1,5 @@
+**Updating to v63.9 (Grading System settings in SIS)?** Upload the files (including the `pages` folder) and press Ctrl+F5. Setup and options and School settings are now in SIS → Administration → Settings (Grading Options, System Settings).
+
 **Updating to v63.8 (School Profile in the SIS)?** Upload the files and press Ctrl+F5. The school's name and logo can now be set in Administration → Settings → School Profile.
 
 **Updating to v63.7 (Settings in one place)?** Upload the files and press Ctrl+F5. Backup & Restore, Email Sending, Bulk Accounts, Data Migration, Import All and Document Requirements are now under Administration → Settings, in the menu on the right.

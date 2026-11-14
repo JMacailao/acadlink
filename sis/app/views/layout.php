@@ -151,6 +151,7 @@ function app_title(): string
  */
 const SETTINGS_HUB = [
     ['school', 'School Profile', 'building', 'Name, logo, contacts, sign-in picture', ['settings.manage']],
+    ['gradingoptions', 'Grading Options', 'sliders', 'Grading scale, final grade, deadlines', ['settings.manage']],
     ['settings', 'Printing', 'printer', 'Assessment and receipt printouts', ['settings.manage']],
     ['docrequirements', 'Document Requirements', 'list-check', 'Registration document checklist', ['settings.manage']],
     ['emailsetup', 'Email Sending', 'envelope-at', 'Forgot-password emails', ['settings.manage']],
@@ -158,6 +159,7 @@ const SETTINGS_HUB = [
     ['bulkaccounts', 'Bulk Accounts', 'people-fill', 'Many teacher or student accounts', ['users.manage']],
     ['migration', 'Data Migration', 'file-earmark-arrow-up', 'Reviewed historical imports', ['registration', 'accounting', 'users.manage']],
     ['importall', 'Import All', 'cloud-upload', 'Subjects, fees, teachers and curriculum', ['curriculum.edit']],
+    ['systemsettings', 'System Settings', 'shield-lock', 'Sign-in security, database, email keys', ['settings.manage']],
 ];
 
 /** The Settings pages this person may open, in menu order. */
