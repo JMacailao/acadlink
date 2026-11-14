@@ -104,9 +104,30 @@ final class CentralAccounts
         // Ended sign-ins are kept a week (for the audit trail), then removed a few hundred at a time
         $this->q('DELETE FROM central_sessions WHERE (expires_at < NOW() - INTERVAL 7 DAY OR revoked_at < NOW() - INTERVAL 7 DAY) LIMIT 500');
         if (PHP_SAPI!=='cli' && session_status()===PHP_SESSION_ACTIVE) session_regenerate_id(true);
+        // v63.10: One device at a time (Settings → System Settings → Sign-in security) covers every system:
+        // this sign-in ends the account's sign-ins on other devices (SIS, Portal, Grading, LMS, Canteen, Library, Finance).
+        if ($this->singleDevice()) $this->q('UPDATE central_sessions SET revoked_at=NOW() WHERE account_id=? AND revoked_at IS NULL AND token_hash<>?',[$id,hash('sha256',$token)]);
         $this->cookie($token);
         $_SESSION['csrf']=bin2hex(random_bytes(32));
         return $a;
+    }
+    /** v63.10: Is "One device at a time" on? (the Grading System's settings/security; on unless turned off) */
+    public function singleDevice(): bool {
+        try {
+            if (!$this->q("SELECT 1 FROM information_schema.tables WHERE table_schema=DATABASE() AND table_name='docs'")->fetchColumn()) return false;
+            $raw=$this->q("SELECT data FROM docs WHERE col='settings' AND id='security'")->fetchColumn();
+            if ($raw===false) return true;
+            $d=json_decode((string)$raw,true);
+            return !is_array($d) || !array_key_exists('singleSession',$d) || !empty($d['singleSession']);
+        } catch (Throwable) { return false; }
+    }
+    /** v63.10: Was this browser's sign-in ended because the account signed in on another device? */
+    public function endedElsewhere(): bool {
+        $token=$this->token();
+        if (!preg_match('/^[a-f0-9]{64}$/D',$token) || !$this->installed()) return false;
+        $s=$this->one('SELECT account_id,revoked_at,created_at FROM central_sessions WHERE token_hash=?',[hash('sha256',$token)]);
+        if (!$s || $s['revoked_at']===null) return false;
+        return (bool)$this->q('SELECT 1 FROM central_sessions WHERE account_id=? AND token_hash<>? AND created_at>=? AND created_at<=? LIMIT 1',[$s['account_id'],hash('sha256',$token),$s['created_at'],$s['revoked_at']])->fetchColumn();
     }
     public function login(string $login,string $password,string $workspace): array {
         if (!$this->installed()) throw new CentralAccountError('Central accounts are not installed. Ask the administrator to follow CENTRAL_ACCOUNTS.md.');

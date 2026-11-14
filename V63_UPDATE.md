@@ -184,3 +184,17 @@ How the restore protects you:
   hidden), saves the same records, and only Grading System administrators can change them.
 - Source: `sis/app/pages/gsframe.php` (new), `sis/assets/gs-frame.js` (new), `sis/index.php`, `sis/app/views/layout.php`,
   `pages/options.html`, `pages/settings.html` and the side menu of every page in `pages/`.
+
+## v63.10 — Grading Audit trail and Backup in SIS Settings; one device at a time everywhere; the V4 logo
+- **Grading Audit Trail** and **Grading Backup** move into SIS → Administration → Settings (the Grading System's
+  former *Audit trail* and *Backup and restore* pages, unchanged). The Grading System's side menu no longer has an
+  Administration group; opening the old addresses goes to the SIS pages.
+- **One device at a time** (Settings → System Settings → Sign-in security) now covers **every system**: SIS, Student
+  Portal, Grading System, LMS, Canteen POS, Library and Finance. Signing in on a new device ends the sign-in on the
+  other device in all of them; that device shows "You were signed out because your account was opened on another
+  device." Turn the setting off to allow several devices again. (The Grading System sign-in still asks first.)
+- **The ACADLINK V4 logo** is now the AcadLink mark wherever the school has not uploaded its own logo, and the browser
+  tab icon, phone home-screen icon and app icons (`icons/acadlink-mark.png`, `favicon-32.png`, `apple-touch-icon.png`,
+  `icon-192.png`, `icon-512.png`, `icon-maskable-512.png`).
+- Source: `shared/central-accounts.php` (`singleDevice`, `endedElsewhere`), `sis/app/pages/login.php`,
+  `sis/app/pages/gsframe.php`, `sis/index.php`, `sis/app/views/layout.php`, `pages/*.html`, `icons/`.

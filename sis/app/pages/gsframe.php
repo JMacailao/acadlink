@@ -11,6 +11,8 @@ global $route;
 $pages = [
     'gradingoptions' => ['Grading Options', 'options.html', 'How the school grades students: grading scale, final grade (GWA), audit trail, combined classes, term deadlines and section changes.'],
     'systemsettings' => ['System Settings', 'settings.html', 'Sign-in security, teacher downtime, the school\'s database, email sending keys and Google Sheets.'],
+    'gradingaudit' => ['Grading Audit Trail', 'audit.html', 'Who added, edited or deleted grading records (subjects, sections, students, grades…), with the old and new values.'],
+    'gradingbackup' => ['Grading Backup', 'backup.html', 'Download a copy of the Grading System\'s records, restore one, and the Google Sheets copy.'],
 ];
 [$title, $file, $about] = $pages[(string) $route] ?? $pages['gradingoptions'];
 layout_start($title);
