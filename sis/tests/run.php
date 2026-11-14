@@ -79,7 +79,8 @@ test('subjects, curriculum and teachers in the grading system', function () use 
     foreach ([['IT101', 'Intro to Computing', '3'], ['GE1', 'Understanding the Self', '3'], ['PE1', 'Fitness', '2'], ['IT201', 'Data Structures', '3']] as [$c, $n, $u]) $SUB[$c] = GS::saveSubject(null, $c, $n, $u);
     throws(fn() => GS::saveSubject(null, 'it101', 'Other', '3'), AppError::class, 'already used');
     eq(3, doc('subjects', $SUB['IT101'])['units'], 'units stored as a number');
-    $cid = GS::saveCurriculum('bsit', '1st Year', '1st Semester', [$SUB['IT101'], $SUB['GE1'], $SUB['PE1'], 'not-a-subject']);
+    throws(fn() => GS::saveCurriculum('bsit', '1st Year', '1st Semester', [$SUB['IT101'], 'not-a-subject']), AppError::class, 'no longer exists'); // a missing subject is refused, not skipped
+    $cid = GS::saveCurriculum('bsit', '1st Year', '1st Semester', [$SUB['IT101'], $SUB['GE1'], $SUB['PE1']]);
     eq('bsit-1st-year-1st-semester', $cid, 'same id rule as the grading system');
     eq([$SUB['IT101'], $SUB['GE1'], $SUB['PE1']], doc('curriculum', $cid)['subjectIds']);
     eq('BSIT', GS::programOf('BSIT 1A'));
@@ -157,7 +158,7 @@ echo "\nTransaction: Admission → Registration → Cashier\n";
 $A = 0; $R = 0;
 test('admission: validation, no duplicate applicant, admit gives the next Student ID', function () use (&$A) {
     as_user('admission');
-    throws(fn() => Admission::validate(['applicant_type' => 'TRANSFEREE', 'address' => '12 Rizal St., Brgy. Centro, Sample City', 'last_name' => 'A', 'first_name' => 'B', 'year_level' => '1st Year', 'school_year' => '2026-2027']), AppError::class, 'previous school');
+    throws(fn() => Admission::validate(['applicant_type' => 'TRANSFEREE', 'address' => '12 Rizal St., Brgy. Centro, Sample City', 'last_name' => 'A', 'first_name' => 'B', 'birth_date' => '2008-01-02', 'year_level' => '1st Year', 'school_year' => '2026-2027']), AppError::class, 'previous school');
     $d = Admission::validate(['applicant_type' => 'NEW', 'address' => '12 Rizal St., Brgy. Centro, Sample City', 'last_name' => 'Cruz', 'first_name' => 'Ben', 'middle_name' => 'Lopez', 'birth_date' => '2008-01-02',
         'program' => 'bsit', 'year_level' => '1st Year', 'school_year' => '2026-2027', 'email' => 'ben@example.com']);
     $A = Admission::create($d);
