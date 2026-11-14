@@ -237,3 +237,23 @@ How the restore protects you:
   warning on the SIS dashboard while the server runs an older PHP. Hostinger: hPanel → Advanced → PHP Configuration.
 - Source: `.github/workflows/tests.yml`, `sis/tests/all.sh` (new), `.htaccess` (root and each system folder),
   `sis/app/pages/dashboard.php`, `api/api.php`, `README-PHP.md`, `sis/tests/run.php` (two checks brought up to date).
+
+## v63.14 — Bootstrap on the server; automatic backups
+- **Bootstrap and its icons are now part of AcadLink** (`vendor/bootstrap-5.3.8`, `vendor/bootstrap-icons-1.13.1`) instead
+  of loading from cdn.jsdelivr.net. Every system still looks and works the same when the school network blocks or slows
+  the CDN, and the CDN is no longer allowed by the security policy. Updated from Bootstrap 5.3.3 and Icons 1.11.3.
+- **Automatic backups** (Settings → Backup & Restore → Automatic backups, power.admin):
+  - every day (the default), every week, or off; keeps the newest 14 automatic backups (3–90). Your own backups and the
+    safety copies made before a restore are never deleted.
+  - **Scheduled job (recommended)**: Hostinger hPanel → Advanced → Cron Jobs → Custom, every hour:
+    `php /home/<account>/public_html/sis/bin/auto-backup.php` (the page shows the exact command). It does nothing until a
+    backup is due; `--now` makes one right away.
+  - **Without a scheduled job**, the backup is made after someone opens a page once it is due (the page is sent first,
+    so nobody waits). This needs PHP-FPM or LiteSpeed, which Hostinger has.
+  - The page shows the last automatic backup, the next one, whether a scheduled job runs it, and the last problem.
+    **Make the automatic backup now** tests it on the server.
+  - **Dashboard reminders for power.admin**: backups off, the last one failed, none for too long, or no backup
+    downloaded in 14 days ("keep a copy off this server": a USB drive or Google Drive).
+- Source: `vendor/` (new), both layouts, `pages/*.html`, `js/final-grades.js`, `sis/app/front.php`, `portal/index.php`,
+  `sis/app/lib/backup.php`, `sis/app/pages/backup.php`, `sis/app/pages/dashboard.php`, `sis/bin/auto-backup.php` (new),
+  `sis/tests/v63-backup.php`.

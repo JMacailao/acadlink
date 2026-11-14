@@ -9,7 +9,7 @@ declare(strict_types=1);
 header('X-Content-Type-Options: nosniff');
 header('X-Frame-Options: SAMEORIGIN');
 header('Referrer-Policy: same-origin');
-header("Content-Security-Policy: default-src 'self'; connect-src 'self' https://cdn.jsdelivr.net; script-src 'self' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://fonts.googleapis.com; font-src 'self' https://cdn.jsdelivr.net https://fonts.gstatic.com; img-src 'self' data:; form-action 'self'; frame-ancestors 'self'; base-uri 'self'");
+header("Content-Security-Policy: default-src 'self'; connect-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data:; form-action 'self'; frame-ancestors 'self'; base-uri 'self'");
 header('Cache-Control: no-store');
 
 require SIS_ROOT . '/app/views/layout.php';
@@ -83,3 +83,5 @@ try {
     echo '<div class="alert alert-danger">' . h($msg) . '</div>';
     layout_end();
 }
+// v63.14: automatic backup when one is due and no scheduled job makes it (runs after the page is sent; never on a form post)
+if (!$isPost && PHP_SAPI !== 'cli' && class_exists('Backup')) Backup::runAutoAfterPage();

@@ -694,7 +694,7 @@ function printReports(list) {
   w.document.write(`<!doctype html><html lang="en"><head><meta charset="utf-8">
     <title>${escapeHtml(title)}</title>
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@400;500;600;700&family=Source+Serif+4:opsz,wght@8..60,600;8..60,700&display=swap">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css">
+    <link rel="stylesheet" href="${css("../vendor/bootstrap-5.3.8/css/bootstrap.min.css")}">
     <link rel="stylesheet" href="${css("../css/style.css")}">
     <style>
       /* A4 portrait, two reports per sheet: one on each half (210 × 148.5 mm), cut on the dashed line */

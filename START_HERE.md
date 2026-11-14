@@ -1,3 +1,5 @@
+**Updating to v63.14?** Upload the files, including the new `vendor` folder, and press Ctrl+F5. Then open Settings → Backup & Restore: automatic daily backups are on; add the scheduled job shown there (Hostinger: hPanel → Advanced → Cron Jobs).
+
 **Updating to v63.13?** First turn SSL on for the domain (Hostinger: hPanel → Security → SSL) and set PHP to 8.3 (hPanel → Advanced → PHP Configuration). Then upload the files, including every `.htaccess`, and press Ctrl+F5. http:// now goes to https:// automatically.
 
 **Updating to v63.12?** Upload the files (including `shared`, `api` and `js`) and press Ctrl+F5. Sign out after no activity and One device at a time now apply to every system (Settings → System Settings → Sign-in security).

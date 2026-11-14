@@ -37,8 +37,8 @@ function portal_layout_start(string $title, bool $bare = false): void
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@400;500;600;700&amp;display=swap">
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" crossorigin="anonymous">
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" crossorigin="anonymous">
+<link rel="stylesheet" href="../vendor/bootstrap-5.3.8/css/bootstrap.min.css">
+<link rel="stylesheet" href="../vendor/bootstrap-icons-1.13.1/font/bootstrap-icons.min.css">
 <link rel="stylesheet" href="../sis/assets/app.css?v=56b">
 <link rel="stylesheet" href="../sis/assets/reference-ui.css?v=20261021portal">
 <link rel="stylesheet" href="assets/portal.css?v=53">
@@ -126,7 +126,7 @@ function portal_layout_end(bool $bare = false): void
     ?>
 </main>
 <?php if (!$bare): ?><footer class="portal-foot d-print-none"><?= h(School::brand()) ?> · Student Portal</footer><?php endif; ?>
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" crossorigin="anonymous"></script>
+<script src="../vendor/bootstrap-5.3.8/js/bootstrap.bundle.min.js"></script>
 <script src="../sis/assets/navigation.js?v=49"></script>
 <script src="../sis/assets/app.js?v=62.2"></script>
 <script src="../sis/assets/success-sound.js?v=56"></script>

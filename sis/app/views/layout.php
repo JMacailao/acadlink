@@ -247,8 +247,8 @@ function layout_start(string $title, bool $bare = false): void
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@400;500;600;700&amp;family=Source+Serif+4:opsz,wght@8..60,600;8..60,700&amp;display=swap">
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" crossorigin="anonymous">
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" crossorigin="anonymous">
+<link rel="stylesheet" href="../vendor/bootstrap-5.3.8/css/bootstrap.min.css">
+<link rel="stylesheet" href="../vendor/bootstrap-icons-1.13.1/font/bootstrap-icons.min.css">
 <link rel="stylesheet" href="../css/style.css?v=63.1b"><!-- the grading system's own theme: both systems look the same -->
 <link rel="stylesheet" href="<?= sis_web() ?>assets/app.css?v=56b">
 <link rel="stylesheet" href="<?= sis_web() ?>assets/activity.css?v=31">
@@ -384,7 +384,7 @@ function layout_end(bool $bare = false): void
   </div></div>
 </div>
 <?php endif; ?>
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" crossorigin="anonymous"></script>
+<script src="../vendor/bootstrap-5.3.8/js/bootstrap.bundle.min.js"></script>
 <script src="<?= sis_web() ?>assets/navigation.js?v=61"></script>
 <?php if (app_system() === 'LMS'): ?><script src="assets/lms.js?v=61.1" defer></script><?php endif; ?>
 <script src="<?= sis_web() ?>assets/activity.js?v=31"></script>
