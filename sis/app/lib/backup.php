@@ -112,6 +112,7 @@ final class Backup
     public static function dir(): string
     {
         $cfg = (string) (sis_config()['backup_dir'] ?? '');
+        if (PHP_SAPI === 'cli' && (string) getenv('ACADLINK_BACKUP_DIR') !== '') $cfg = (string) getenv('ACADLINK_BACKUP_DIR'); // tests: their own folder (command line only)
         $d = $cfg !== '' ? rtrim($cfg, '/\\') : dirname(SIS_ROOT) . '/backups';
         if (!is_dir($d)) @mkdir($d, 0770, true);
         if (!is_file($d . '/.htaccess')) @file_put_contents($d . '/.htaccess', "Require all denied\nDeny from all\nOptions -Indexes\n");
@@ -156,6 +157,12 @@ final class Backup
     public static function create(array $parts, string $kind = 'manual', string $note = ''): string
     {
         self::require();
+        return self::write($parts, $kind, $note, (string) (Auth::user()['username'] ?? ''));
+    }
+
+    /** Writes the backup file (create() checks who may; the automatic backups run as the system). */
+    private static function write(array $parts, string $kind, string $note, string $madeBy): string
+    {
         $parts = array_values(array_intersect(array_keys(self::PARTS), $parts));
         if (!$parts) throw new AppError('Tick at least one part to back up.');
         @set_time_limit(0);
@@ -166,7 +173,7 @@ final class Backup
         $counts = [];
         try {
             $head = ['acadlink_backup' => self::FORMAT, 'kind' => $kind, 'note' => mb_substr($note, 0, 200), 'created_at' => date('c'), 'school' => School::brand(),
-                'database' => (string) Db::val('SELECT DATABASE()'), 'made_by' => (string) (Auth::user()['username'] ?? ''), 'parts' => array_fill_keys($parts, true), 'tables' => $tables];
+                'database' => (string) Db::val('SELECT DATABASE()'), 'made_by' => $madeBy, 'parts' => array_fill_keys($parts, true), 'tables' => $tables];
             gzwrite($gz, json_encode($head, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) . "\n");
             $pdo = Db::pdo();
             foreach ($tables as $t => $part) {
@@ -196,6 +203,115 @@ final class Backup
         Audit::log('backup_created', 'backup', 0, ['file' => $name, 'kind' => $kind, 'parts' => $parts, 'rows' => array_sum($counts)]);
         return $name;
     }
+
+    // ------------------------------------------------------------------ automatic backups (v63.14)
+
+    /** Settings and status of the automatic backups, kept in sis_settings (not part of Settings::DEFAULTS, which the printing form rewrites). */
+    public const AUTO_DEFAULTS = ['autobackup_every' => 'daily', 'autobackup_keep' => '14', 'autobackup_last_ok' => '', 'autobackup_last_error' => '',
+        'autobackup_last_error_at' => '', 'autobackup_cron_seen' => '', 'autobackup_last_download' => ''];
+    public const AUTO_EVERY = ['off' => 'Off', 'daily' => 'Every day', 'weekly' => 'Every week'];
+
+    public static function auto(): array
+    {
+        $out = self::AUTO_DEFAULTS;
+        try { foreach (Db::all("SELECT skey, svalue FROM sis_settings WHERE skey LIKE 'autobackup\\_%'") as $r) if (array_key_exists($r['skey'], $out)) $out[$r['skey']] = (string) $r['svalue']; }
+        catch (Throwable) {}
+        if (!isset(self::AUTO_EVERY[$out['autobackup_every']])) $out['autobackup_every'] = 'daily';
+        return $out;
+    }
+
+    private static function autoPut(string $key, string $value): void
+    {
+        Db::q('INSERT INTO sis_settings (skey, svalue) VALUES (?, ?) ON DUPLICATE KEY UPDATE svalue = VALUES(svalue)', [$key, $value]);
+    }
+
+    /** power.admin: how often, and how many automatic backups to keep. */
+    public static function saveAuto(string $every, int $keep): void
+    {
+        self::require();
+        if (!isset(self::AUTO_EVERY[$every])) throw new AppError('Choose how often to back up.');
+        if ($keep < 3 || $keep > 90) throw new AppError('Keep between 3 and 90 automatic backups.');
+        self::autoPut('autobackup_every', $every); self::autoPut('autobackup_keep', (string) $keep);
+        Audit::log('backup_schedule_saved', 'backup', 0, ['every' => $every, 'keep' => $keep]);
+    }
+
+    /** Hours between automatic backups (0 = off). A little under a day / week, so a job that runs at the same hour always qualifies. */
+    public static function autoHours(): int { return ['daily' => 23, 'weekly' => 24 * 7 - 1][self::auto()['autobackup_every']] ?? 0; }
+
+    /** Is an automatic backup due now? */
+    public static function autoDue(): bool
+    {
+        $h = self::autoHours();
+        if (!$h) return false;
+        $a = self::auto();
+        $last = $a['autobackup_last_ok'] !== '' ? strtotime($a['autobackup_last_ok']) : 0;
+        // after a failure, wait an hour before trying again
+        $err = $a['autobackup_last_error_at'] !== '' ? strtotime($a['autobackup_last_error_at']) : 0;
+        return time() - (int) $last >= $h * 3600 && time() - (int) $err >= 3600;
+    }
+
+    /** Has a scheduled job (cron) run this in the last two days? Then the backups don't also run after page views. */
+    public static function cronActive(): bool
+    {
+        $seen = self::auto()['autobackup_cron_seen'];
+        return $seen !== '' && time() - (int) strtotime($seen) < 2 * 86400;
+    }
+
+    /**
+     * Makes the automatic backup when it is due (all parts), then keeps only the newest N automatic ones
+     * (manual and safety backups are never removed). $via: 'cron' or 'page'. Returns the file name, or null when not due / busy.
+     */
+    public static function runAuto(string $via, bool $force = false): ?string
+    {
+        if ($via === 'cron') self::autoPut('autobackup_cron_seen', date('c'));
+        if (!$force && !self::autoDue()) return null;
+        if ((int) Db::val("SELECT GET_LOCK('acadlink_autobackup', 0)") !== 1) return null; // another one is running
+        try {
+            $name = self::write(array_keys(self::PARTS), 'auto', $via === 'cron' ? 'Automatic (scheduled job)' : 'Automatic', 'automatic');
+            self::autoPut('autobackup_last_ok', date('c')); self::autoPut('autobackup_last_error', ''); self::autoPut('autobackup_last_error_at', '');
+            $keep = max(3, (int) self::auto()['autobackup_keep']);
+            $autos = array_values(array_filter(self::stored(), fn($b) => ($b['kind'] ?? '') === 'auto'));
+            foreach (array_slice($autos, $keep) as $old) @unlink(self::dir() . '/' . $old['file']);
+            return $name;
+        } catch (Throwable $e) {
+            self::autoPut('autobackup_last_error', mb_substr($e->getMessage(), 0, 300)); self::autoPut('autobackup_last_error_at', date('c'));
+            Audit::log('backup_auto_failed', 'backup', 0, ['error' => mb_substr($e->getMessage(), 0, 300)]);
+            if ($via === 'cron') throw $e;
+            return null;
+        } finally {
+            Db::val("SELECT RELEASE_LOCK('acadlink_autobackup')");
+        }
+    }
+
+    /** After a page has been sent: make the automatic backup if it is due and no scheduled job does it. Never slows the page. */
+    public static function runAutoAfterPage(): void
+    {
+        try {
+            if (!self::autoDue() || self::cronActive()) return;
+            if (session_status() === PHP_SESSION_ACTIVE) session_write_close(); // don't hold up the person's next page
+            if (function_exists('fastcgi_finish_request')) fastcgi_finish_request();
+            elseif (function_exists('litespeed_finish_request')) litespeed_finish_request();
+            else return; // this server can't finish the page first: leave it to the scheduled job
+            ignore_user_abort(true);
+            self::runAuto('page');
+        } catch (Throwable $e) { error_log('AcadLink automatic backup: ' . $e->getMessage()); }
+    }
+
+    /** power.admin's reminder on the dashboard: [level, message] or null. */
+    public static function reminder(): ?array
+    {
+        $a = self::auto();
+        if ($a['autobackup_last_error'] !== '') return ['danger', 'The last automatic backup failed: ' . $a['autobackup_last_error']];
+        $h = self::autoHours();
+        if (!$h) return ['warning', 'Automatic backups are off. Turn them on in Settings → Backup & Restore.'];
+        $last = $a['autobackup_last_ok'] !== '' ? (int) strtotime($a['autobackup_last_ok']) : 0;
+        if ($last && time() - $last > 2 * $h * 3600 + 3600) return ['warning', 'No automatic backup since ' . date('M j, Y', $last) . '. Check Settings → Backup & Restore.'];
+        $dl = $a['autobackup_last_download'] !== '' ? (int) strtotime($a['autobackup_last_download']) : 0;
+        if ($last && time() - $dl > 14 * 86400) return ['info', 'Keep a copy off this server: download the latest backup (Settings → Backup & Restore) to a USB drive or Google Drive. ' . ($dl ? 'Last downloaded ' . date('M j, Y', $dl) . '.' : 'No backup has been downloaded yet.')];
+        return null;
+    }
+
+    public static function noteDownload(): void { self::autoPut('autobackup_last_download', date('c')); }
 
     /** The first line of a backup file, or [] when it is not an AcadLink backup. */
     public static function header(string $path): array

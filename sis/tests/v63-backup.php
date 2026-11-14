@@ -122,5 +122,30 @@ test('backups are kept in a folder the web cannot open; file names cannot leave 
     ok((int) Db::val("SELECT COUNT(*) FROM sis_audit_logs WHERE action IN ('backup_created','backup_restored')") >= 2, 'logged');
 });
 foreach (array_unique($made) as $f) @unlink(Backup::dir() . '/' . $f);
+test('automatic backups: made when due, not again until the next one, only the newest are kept, own backups never removed', function () use ($admin, $reg) {
+    $dir = sys_get_temp_dir() . '/acadlink-autobackup-test-' . bin2hex(random_bytes(4)); putenv('ACADLINK_BACKUP_DIR=' . $dir);
+    try {
+        Db::q("DELETE FROM sis_settings WHERE skey LIKE 'autobackup%'");
+        ok(Backup::auto()['autobackup_every'] === 'daily' && Backup::autoDue(), 'on by default (daily) and due on a new install');
+        as_user($reg); denied(fn() => Backup::saveAuto('weekly', 10), 'Only power.admin');
+        as_user($admin); denied(fn() => Backup::saveAuto('hourly', 10), 'how often'); denied(fn() => Backup::saveAuto('daily', 500), 'between 3 and 90');
+        Backup::saveAuto('daily', 3);
+        Auth::actAs(null); Auth::central()->logout(); // the scheduled job: nobody signed in
+        $first = Backup::runAuto('cron'); ok($first !== null && is_file($dir . '/' . $first), 'scheduled job made a backup');
+        ok(Backup::header($dir . '/' . $first)['kind'] === 'auto' && count(Backup::header($dir . '/' . $first)['parts']) === count(Backup::PARTS), 'automatic, every part');
+        ok(Backup::runAuto('cron') === null && !Backup::autoDue() && Backup::cronActive(), 'not again until it is due; the scheduled job is noticed');
+        as_user($admin); $own = Backup::create(['accounts'], 'manual', 'own'); Auth::central()->logout();
+        for ($i = 0; $i < 4; $i++) Backup::runAuto('cron', true);
+        $kinds = array_count_values(array_column(Backup::stored(), 'kind'));
+        ok(($kinds['auto'] ?? 0) === 3 && ($kinds['manual'] ?? 0) === 1 && is_file($dir . '/' . $own), 'only the newest 3 automatic backups kept; own backup kept');
+        Db::q("REPLACE INTO sis_settings (skey, svalue) VALUES ('autobackup_every', 'off')"); ok(!Backup::autoDue() && Backup::runAuto('cron') === null, 'off: nothing is made');
+        ok((Backup::reminder()[0] ?? '') === 'warning', 'off: power.admin is reminded');
+        Db::q("REPLACE INTO sis_settings (skey, svalue) VALUES ('autobackup_every', 'daily'), ('autobackup_last_error', 'disk full'), ('autobackup_last_error_at', ?)", [date('c')]);
+        ok((Backup::reminder()[0] ?? '') === 'danger' && !Backup::autoDue(), 'a failure is shown, and retried only after an hour');
+    } finally {
+        foreach (glob($dir . '/*') ?: [] as $f) @unlink($f); foreach (['.htaccess'] as $f) @unlink($dir . '/' . $f); @rmdir($dir); putenv('ACADLINK_BACKUP_DIR');
+        Db::q("DELETE FROM sis_settings WHERE skey LIKE 'autobackup%'");
+    }
+});
 $c->logout(); $server->exec("DROP DATABASE IF EXISTS `$name`");
 echo "$pass passed, $fail failed\n"; exit($fail ? 1 : 0);

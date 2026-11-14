@@ -1,5 +1,7 @@
 # Grading backup and restore
 
+> **Since v63.11** the Grading System has no backup page of its own: use **SIS → Administration → Settings → Backup & Restore**, which backs up all of AcadLink (the Grading System included). Since v63.14 it also makes **automatic backups** (see `V63_UPDATE.md`, v63.14). The notes below describe the older Grading System backup.
+
 Power Users open **Grading → Backup and restore**. Download a **grading backup** before making changes. The Excel file includes grading records and school settings. It does not contain centralized accounts, passwords, SIS registrations, receipts or accounting tables. Use a full MySQL backup for the complete shared database.
 
 ## Merge and Replace

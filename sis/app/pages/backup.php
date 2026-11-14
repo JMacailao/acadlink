@@ -18,11 +18,22 @@ if ($isPost) {
             . ($r['skipped'] ? ' Not restored (not in this version): ' . implode(', ', $r['skipped']) . '.' : '') . (isset($r['signin']) ? ' ' . $r['signin'] : ''));
         redirect('backup');
     }
+    if ($a === 'auto') { // v63.14: automatic backups
+        Backup::saveAuto((string) ($_POST['every'] ?? ''), (int) ($_POST['keep'] ?? 0));
+        flash('success', ($_POST['every'] ?? '') === 'off' ? 'Automatic backups are off.' : 'Automatic backups saved.');
+        redirect('backup');
+    }
+    if ($a === 'auto_now') { // v63.14: make the automatic backup right away (also tests that it works on this server)
+        $name = Backup::runAuto('page', true);
+        flash($name ? 'success' : 'warning', $name ? 'Automatic backup made: ' . $name . '.' : 'Another backup is running. Try again in a minute.');
+        redirect('backup', $name ? ['ready' => $name] : []);
+    }
     throw new AppError('Unknown action.');
 }
 if (isset($_GET['download'])) {
     $path = Backup::path((string) $_GET['download']);
     Audit::log('backup_downloaded', 'backup', 0, ['file' => basename($path)]);
+    Backup::noteDownload(); // v63.14: for the "keep a copy off this server" reminder
     while (ob_get_level()) ob_end_clean();
     header('Content-Type: application/gzip');
     header('Content-Length: ' . filesize($path));
@@ -80,10 +91,39 @@ page_title('Backup & Restore', '', 'A copy of all of AcadLink — every workspac
   </section>
 </div>
 </div>
+<?php $auto = Backup::auto(); $hours = Backup::autoHours(); $lastOk = $auto['autobackup_last_ok'] !== '' ? strtotime($auto['autobackup_last_ok']) : 0;
+  $cron = Backup::cronActive(); $cmd = 'php ' . (realpath(SIS_ROOT . '/bin/auto-backup.php') ?: SIS_ROOT . '/bin/auto-backup.php'); ?>
+<section class="form-section" id="auto">
+  <h2 class="h6"><i class="bi bi-clock-history me-1" aria-hidden="true"></i>Automatic backups</h2>
+  <form method="post" class="row g-2 align-items-end mb-3"><?= csrf_field() ?><input type="hidden" name="action" value="auto">
+    <div class="col-sm-5"><label class="form-label" for="abEvery">Back up everything</label>
+      <select class="form-select" id="abEvery" name="every"><?php foreach (Backup::AUTO_EVERY as $k => $label): ?><option value="<?= h($k) ?>"<?= $auto['autobackup_every'] === $k ? ' selected' : '' ?>><?= h($label) ?></option><?php endforeach; ?></select></div>
+    <div class="col-sm-4"><label class="form-label" for="abKeep">Keep the newest</label>
+      <div class="input-group"><input class="form-control" id="abKeep" name="keep" type="number" min="3" max="90" value="<?= (int) $auto['autobackup_keep'] ?>"><span class="input-group-text">backups</span></div></div>
+    <div class="col-sm-3"><button class="btn btn-primary w-100">Save</button></div>
+    <div class="col-12 form-text">Older automatic backups are deleted. Your own backups and the safety copies made before a restore are never deleted.</div>
+  </form>
+  <dl class="row small mb-2">
+    <dt class="col-5">Last automatic backup</dt><dd class="col-7"><?= $lastOk ? h(date('D, M j, Y g:i A', $lastOk)) : '<span class="text-muted">none yet</span>' ?></dd>
+    <dt class="col-5">Next one</dt><dd class="col-7"><?= !$hours ? '<span class="text-muted">off</span>' : ($lastOk && $lastOk + $hours * 3600 > time() ? h('after ' . date('D, M j g:i A', $lastOk + $hours * 3600)) : 'due now') ?></dd>
+    <dt class="col-5">Runs by</dt><dd class="col-7"><?= $cron ? '<span class="text-success"><i class="bi bi-check-circle me-1" aria-hidden="true"></i>scheduled job (last checked ' . h(date('M j, g:i A', strtotime($auto['autobackup_cron_seen']))) . ')</span>' : 'after someone opens a page (no scheduled job yet)' ?></dd>
+    <?php if ($auto['autobackup_last_error'] !== ''): ?><dt class="col-5 text-danger">Last problem</dt><dd class="col-7 text-danger"><?= h($auto['autobackup_last_error']) ?> <small class="text-muted">(<?= h(date('M j, g:i A', strtotime($auto['autobackup_last_error_at']))) ?>)</small></dd><?php endif; ?>
+  </dl>
+  <form method="post" class="mb-2"><?= csrf_field() ?><input type="hidden" name="action" value="auto_now"><button class="btn btn-sm btn-outline-primary"><i class="bi bi-play-circle me-1" aria-hidden="true"></i>Make the automatic backup now</button></form>
+  <?php if (!$cron): ?>
+  <details class="small"><summary class="fw-semibold">Set up a scheduled job (recommended)</summary>
+    <p class="mt-2 mb-1">Without one, the backup is made after someone opens a page once it is due, so it can be late on quiet days. A scheduled job makes it on time:</p>
+    <ol class="mb-2 ps-3"><li>Hostinger: <b>hPanel → Advanced → Cron Jobs</b> (cPanel: <b>Cron Jobs</b>).</li><li>Choose <b>Custom</b>, paste this command, and run it <b>every hour</b> (it does nothing until a backup is due):</li></ol>
+    <code class="d-block p-2 bg-light border rounded user-select-all text-break"><?= h($cmd) ?></code>
+    <p class="mt-2 mb-0">This page shows "scheduled job" above once it has run.</p>
+  </details>
+  <?php endif; ?>
+  <p class="small text-muted mt-2 mb-0">Backups stay on this server. Download one now and then and keep it somewhere else (a USB drive or Google Drive): if the server is lost, so are the backups on it.</p>
+</section>
 <section class="form-section"><h2 class="h6">Backups on this server</h2>
   <div class="table-responsive"><table class="table table-sm align-middle mb-0"><thead><tr><th>Made</th><th>Kind</th><th>Parts</th><th class="text-end">Size</th><th></th></tr></thead><tbody>
   <?php foreach ($stored as $b): ?><tr<?= ($_GET['ready'] ?? '') === $b['file'] ? ' class="table-success"' : '' ?>><td><?= h(date('D, M j, Y g:i A', strtotime($b['created']))) ?><?= $b['note'] !== '' ? '<small class="d-block text-muted">' . h($b['note']) . '</small>' : '' ?></td>
-    <td><?= ['manual' => 'Backup', 'safety' => 'Safety copy (before a restore)', 'uploaded' => 'Uploaded'][$b['kind']] ?? h($b['kind']) ?></td>
+    <td><?= ['manual' => 'Backup', 'auto' => 'Automatic', 'safety' => 'Safety copy (before a restore)', 'uploaded' => 'Uploaded'][$b['kind']] ?? h($b['kind']) ?></td>
     <td class="small"><?= count($b['parts']) === count(Backup::PARTS) ? 'Everything' : h(implode(', ', array_map(fn($p) => Backup::PARTS[$p][0] ?? $p, $b['parts']))) ?></td><td class="text-end"><?= $mb((int) $b['size']) ?></td>
     <td class="text-end text-nowrap"><a class="btn btn-sm btn-outline-primary" href="<?= url('backup', ['download' => $b['file']]) ?>" data-native>Download</a>
       <a class="btn btn-sm btn-outline-secondary" href="<?= url('backup', ['pick' => $b['file']]) ?>">Restore…</a>
