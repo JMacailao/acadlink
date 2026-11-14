@@ -126,3 +126,13 @@ How the restore protects you:
   - colours print as they are on screen.
 - Source: `sis/app/lib/schedules.php` (`Schedules::grid`), `sis/assets/schedule-grid.css` (new), both layouts, and
   the pages above.
+
+## v63.5 — The school's logo in the LMS and Canteen POS
+- The school's logo (Grading System → School settings) now shows wherever the LMS and Canteen POS showed a
+  generic icon:
+  - **LMS** side menu on computers: the logo in a white circle, instead of the book icon;
+  - **Canteen POS** top bar on computers: the logo next to "Canteen POS", instead of the shop icon;
+  - **Canteen receipt**: the logo on top of the receipt, on screen and when printed (only when a logo is uploaded).
+- Until a school uploads its logo, the AcadLink mark is shown, as everywhere else. Phones already showed the logo in
+  the top bar.
+- Source: `sis/app/views/layout.php`, `canteen/pages/receipt.php`, `lms/assets/lms.css`, `canteen/assets/canteen.css`.

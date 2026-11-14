@@ -13,6 +13,7 @@ layout_start('Receipt ' . $sale['receipt_no']);
   <a class="btn btn-outline-secondary" href="<?= url('sale', ['id' => $sale['id']]) ?>"><i class="bi bi-receipt me-1"></i>Sale details</a>
 </div>
 <article class="creceipt" aria-label="Receipt">
+  <?php if (School::logo() !== ''): ?><img class="creceipt-logo" src="<?= h(School::logo()) ?>" alt=""><?php endif; ?>
   <h1><?= h($name) ?></h1>
   <?php if (!in_array(School::name(), ['School Information System', 'AcadLink', $name], true)): ?><div class="c"><?= h(School::name()) ?></div><?php endif; ?>
   <hr>

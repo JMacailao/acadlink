@@ -253,3 +253,7 @@ html[data-app="lms"] .lms-stat .lms-stat-label { color: var(--lms-ink) !importan
 @media (max-width: 991.98px) { html[data-app="lms"] #sidebar .lms-rail-brand { display: none !important; } }
 .lms-quota { margin: 4px 0 10px; } .lms-quota > div { height: 6px; border-radius: 3px; background: var(--lms-line); overflow: hidden; } .lms-quota span { display: block; height: 100%; background: var(--lms); }
 .lms-quota small { color: var(--lms-muted); font-size: .78rem; }
+
+/* v63.5: the school's logo in the side menu */
+.lms-rail-mark.has-logo { border: 0; border-radius: 50%; background: #fff; padding: 3px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,.18); }
+.lms-rail-mark.has-logo img { width: 100%; height: 100%; object-fit: contain; border-radius: 50%; display: block; }

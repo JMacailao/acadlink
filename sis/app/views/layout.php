@@ -220,9 +220,9 @@ function layout_start(string $title, bool $bare = false): void
 <link rel="stylesheet" href="../css/standard-toolbar.css?v=57">
 <link rel="stylesheet" href="<?= sis_web() ?>assets/registration-fees.css?v=4">
 <link rel="stylesheet" href="<?= sis_web() ?>assets/assessment-fee-templates.css?v=1">
-<?php if (app_system() === 'CANTEEN'): ?><link rel="stylesheet" href="assets/canteen.css?v=59b"><?php endif; ?>
+<?php if (app_system() === 'CANTEEN'): ?><link rel="stylesheet" href="assets/canteen.css?v=63.5"><?php endif; ?>
 <?php if (app_system() === 'LIBRARY'): ?><link rel="stylesheet" href="assets/library.css?v=61c"><?php endif; ?>
-<?php if (app_system() === 'LMS'): ?><link rel="stylesheet" href="assets/lms.css?v=61.2"><?php endif; ?>
+<?php if (app_system() === 'LMS'): ?><link rel="stylesheet" href="assets/lms.css?v=63.5"><?php endif; ?>
 <?php if (in_array(app_system(), ['LMS', 'CANTEEN', 'LIBRARY'], true)): ?><link rel="stylesheet" href="<?= sis_web() ?>assets/bottom-nav.css?v=63.2"><?php endif; ?>
 <?php if ($route === 'assessment' && ($_GET['tab'] ?? '') === 'names'): ?><script src="<?= sis_web() ?>assets/fee-templates.js?v=1" defer></script><?php endif; ?>
 <?php if ($route === 'documents' && ($_GET['tab'] ?? '') === 'settings'): ?><script src="<?= sis_web() ?>assets/documents-template-preview.js?v=1" defer></script><?php endif; ?>
@@ -242,7 +242,7 @@ function layout_start(string $title, bool $bare = false): void
 <header class="sis-appbar d-print-none" aria-label="School workspace">
   <button class="sis-appbar-menu d-lg-none" type="button" data-bs-toggle="offcanvas" data-bs-target="#sidebar" aria-controls="sidebar" aria-label="Open menu"><i class="bi bi-list" aria-hidden="true"></i></button>
   <a href="<?= url('dashboard') ?>" class="sis-appbar-brand"><img src="<?= h($logo ?: '../icons/acadlink-mark.png') ?>" alt=""><span class="sis-brand-text"><span class="sis-brand-name"><?= h(School::brand()) ?></span><span class="sis-brand-sub"><?= $system === 'portal' ? 'Student Portal' : h(app_title()) ?></span></span></a>
-  <?php if (app_system() === 'CANTEEN'): ?><div class="cpos-appbar-title d-none d-md-flex"><i class="bi bi-shop" aria-hidden="true"></i>Canteen POS</div><?php endif; ?>
+  <?php if (app_system() === 'CANTEEN'): ?><div class="cpos-appbar-title d-none d-md-flex"><img class="cpos-appbar-logo" src="<?= h($logo ?: '../icons/acadlink-mark.png') ?>" alt="">Canteen POS</div><?php endif; ?>
   <?php if (app_system() === 'LMS'): ?><div class="lms-appbar-title d-none d-md-flex"><?= h(School::brand()) ?> LMS</div><?php endif; ?>
   <?php if (app_system() === 'LIBRARY'): ?><div class="lib-appbar-title d-none d-md-flex"><i class="bi bi-book-half" aria-hidden="true"></i>Library</div><?php endif; ?>
   <?php if ($system === 'sis'): ?><div class="sis-appbar-tools" id="sisAppbarTools" hidden></div><?php endif; ?>
@@ -274,7 +274,7 @@ function layout_start(string $title, bool $bare = false): void
 <div class="app-shell">
   <aside class="offcanvas-lg offcanvas-start sidebar d-print-none" tabindex="-1" id="sidebar" aria-label="Main navigation">
     <div class="sidebar-inner">
-      <?php if (app_system() === 'LMS'): ?><a class="sis-rail-brand lms-rail-brand" href="<?= url('dashboard') ?>"><span class="lms-rail-mark" aria-hidden="true"><i class="bi bi-book-half"></i></span><span><strong><?= h(School::brand()) ?></strong><small>LMS</small></span></a>
+      <?php if (app_system() === 'LMS'): ?><a class="sis-rail-brand lms-rail-brand" href="<?= url('dashboard') ?>"><span class="lms-rail-mark has-logo" aria-hidden="true"><img src="<?= h($logo ?: '../icons/acadlink-mark.png') ?>" alt=""></span><span><strong><?= h(School::brand()) ?></strong><small>LMS</small></span></a>
       <?php elseif (app_system() === 'LIBRARY'): ?><a class="sis-rail-brand lib-rail-brand" href="<?= url('dashboard') ?>"><i class="bi bi-book-half" aria-hidden="true"></i><span><strong>AcadLink</strong><strong>Library</strong></span></a>
       <?php elseif ($system === 'sis'): ?><a class="sis-rail-brand" href="<?= url('dashboard') ?>"><img src="<?= h($logo ?: '../icons/acadlink-mark.png') ?>" alt=""><span><strong><?= h(School::brand()) ?></strong><small><?= h(app_title()) ?></small></span></a><?php endif; ?>
       <div class="sis-sidebar-head d-lg-none"><span><?= h(School::brand()) ?> <?= $system === 'portal' ? 'Portal' : (['FINANCE' => 'Finance', 'CANTEEN' => 'Canteen', 'LIBRARY' => 'Library', 'LMS' => 'LMS'][app_system()] ?? 'SIS') ?></span><button type="button" class="btn-close" data-bs-dismiss="offcanvas" data-bs-target="#sidebar" aria-label="Close menu"></button></div>
