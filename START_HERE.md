@@ -1,3 +1,5 @@
+**Updating to v63.10?** Upload the files (including `pages`, `shared` and `icons`) and press Ctrl+F5. One device at a time now applies to every system; turn it off in Settings → System Settings → Sign-in security if staff share accounts across devices.
+
 **Updating to v63.9 (Grading System settings in SIS)?** Upload the files (including the `pages` folder) and press Ctrl+F5. Setup and options and School settings are now in SIS → Administration → Settings (Grading Options, System Settings).
 
 **Updating to v63.8 (School Profile in the SIS)?** Upload the files and press Ctrl+F5. The school's name and logo can now be set in Administration → Settings → School Profile.
