@@ -3,8 +3,8 @@
 -- In phpMyAdmin: CREATE/SELECT your empty database, Import THIS FILE once.
 -- It creates Grading, SIS, accounting, eligibility, notifications and central accounts.
 -- Do not import other schema/seed files afterwards.
--- FIRST LOGIN (SIS): username power.admin | temporary password Start-32f32c74-A1
--- The password must be changed before using either workspace.
+-- FIRST LOGIN (SIS): open sis/index.php → First-time setup, type the database password from
+-- api/config.php and choose the password of power.admin (v63.3: no starting password is published).
 -- Reimporting this file does NOT reset passwords, users or existing settings.
 -- For an existing production installation use CENTRAL_ACCOUNTS.md migration guidance;
 -- this installer does not infer identities, transfer historical journals or grant old users access.
@@ -1147,6 +1147,8 @@ INSERT IGNORE INTO central_schema_migrations(migration_key) VALUES('central_acco
 
 
 -- 8. FIRST POWER USER — NO CLI SETUP REQUIRED
+-- v63.3: power.admin has NO usable password ('!setup'): the installer sets it on SIS → First-time setup
+-- (proving they installed the site with the database password from api/config.php). No password is published.
 -- Account seeding is transactional and serialized. It runs ONLY if there are no
 -- central accounts and no legacy identity already using this initial username.
 START TRANSACTION;
@@ -1159,7 +1161,7 @@ INSERT INTO central_accounts(display_name,account_kind,status,must_change_passwo
 SELECT 'Power User / Super Admin','STAFF','ACTIVE',1 WHERE @acadlink_new_power=1;
 SET @acadlink_power_id=IF(@acadlink_new_power=1,LAST_INSERT_ID(),NULL);
 INSERT INTO central_credentials(account_id,password_hash)
-SELECT @acadlink_power_id,'$2y$10$oDyl2ZdCLm8.Yt.ReE8vfezGmaIHz7OabjsDqNGfH0ZfIKG0tae0C' WHERE @acadlink_new_power=1;
+SELECT @acadlink_power_id,'!setup' WHERE @acadlink_new_power=1;
 INSERT INTO central_login_identifiers(account_id,identifier,identifier_kind,is_primary,verified_at)
 SELECT @acadlink_power_id,'power.admin','USERNAME',1,NOW() WHERE @acadlink_new_power=1;
 INSERT INTO central_person_links(account_id,verified_at)
@@ -1167,7 +1169,7 @@ SELECT @acadlink_power_id,NOW() WHERE @acadlink_new_power=1;
 INSERT INTO central_user_groups(account_id,group_id)
 SELECT @acadlink_power_id,id FROM central_groups WHERE code='POWER_USER' AND @acadlink_new_power=1;
 INSERT INTO sis_users(username,full_name,password_hash,role,is_active,must_change_password)
-SELECT 'power.admin','Power User / Super Admin','$2y$10$N7.jypICMLfUEX9EYbEvwuyxDvbqTHr8RNcb./KVdHjxLGwXNRfs6','ADMIN',1,1
+SELECT 'power.admin','Power User / Super Admin','!setup','ADMIN',1,1
 WHERE @acadlink_new_power=1;
 SET @acadlink_sis_id=IF(@acadlink_new_power=1,LAST_INSERT_ID(),NULL);
 SET @acadlink_grading_uid=REPLACE(UUID(),'-','');

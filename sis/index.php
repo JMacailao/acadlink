@@ -18,6 +18,7 @@ const ROUTES = [
     'login'        => ['login', null],
     'forgot'       => ['forgot', null],
     'signinpic'    => ['signinpic', null],
+    'setup'        => ['setup', null], // v63.3: first-time setup of power.admin (only while it has no password)
     'logout'       => ['logout', []],
     'password'     => ['password', []],
     'workspaces'   => ['workspaces', []],

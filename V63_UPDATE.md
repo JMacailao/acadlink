@@ -90,3 +90,24 @@ How the restore protects you:
   download (`connect-src`) from the same Bootstrap site. Nothing else is loosened.
 - Source: `sis/app/views/layout.php`, `portal/views/layout.php`, `sis/assets/bottom-nav.css`, `sis/app/front.php`,
   `portal/index.php`.
+
+## v63.3 — Security fixes
+- **No published first password.** A new installation's power.admin has no usable password until **First-time
+  setup**. The sign-in page links to it while it is needed.
+  - The installer types the **database password from `api/config.php`** (visitors can't read that file), then chooses
+    power.admin's password.
+  - If the database has no password (local XAMPP/Laragon), setup works only from that computer (`localhost`).
+  - Wrong tries are limited (5 per 15 minutes). Setup closes for good once done.
+  - `INSTALL.sql` and `START_HERE.md` no longer contain a password.
+  - Existing schools: if power.admin still used the old published starting password, it is switched off
+    automatically, so nobody can sign in with it; set a new one on First-time setup. A password the school already
+    chose is not touched.
+- **Direct web access blocked** (Apache): the code and data folders of the LMS, Canteen, Library, Student Portal and
+  `shared/` refuse direct opening; only each system's `index.php` and `assets/` are public, as in SIS and Finance.
+  Everywhere in AcadLink, `.sql`, `.md`, `.log`, `.bak`, `.gz`, `.zip`, `.ini`, `.sh` and hidden files (`.git`,
+  `.env`) are refused.
+- **API**: visitors no longer see the PHP or AcadLink version, and the list of administrator IDs needs sign-in.
+- Source: `sis/app/lib/first-setup.php`, `sis/app/pages/setup.php` (new); `INSTALL.sql`, `START_HERE.md`, `.htaccess`
+  plus new `.htaccess` files in `lms/`, `canteen/`, `library/`, `portal/` (and their `lib`, `pages`, `views`
+  folders) and `shared/`; `api/api.php`, `sis/index.php`, `sis/app/bootstrap.php`, `sis/app/pages/login.php`.
+  Tests: `sis/tests/v63-security.php` (4 checks); `curriculum-teachers.php` sets its own power.admin password.

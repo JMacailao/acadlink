@@ -16,3 +16,8 @@ Options -Indexes
 <FilesMatch "^(INSTALL\.sql|START_HERE\.md)$">
   Require all denied
 </FilesMatch>
+# v63.3: no SQL files, notes, logs, backups or hidden files (.git, .env…) from the web, anywhere in AcadLink
+<FilesMatch "\.(sql|md|log|bak|gz|zip|ini|sh)$|^\.">
+  Require all denied
+</FilesMatch>
+RedirectMatch 404 /\.git(/|$)

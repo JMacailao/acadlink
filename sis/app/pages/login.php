@@ -87,6 +87,7 @@ layout_start('Sign in', true);
       <p class="sl-intro">Sign in once. You will then see the systems your account can open.</p>
       <?php $why = ['disabled' => 'This account is disabled. Ask an administrator to turn it back on.', 'noprofile' => 'This account has been removed. Ask an administrator for access.', 'elsewhere' => 'You were signed out because your account was opened on another device.', 'idle' => 'You were signed out because there was no activity for a while.'][(string) ($_GET['reason'] ?? '')] ?? null;
       if ($why): ?><div class="alert alert-warning py-2"><?= h($why) ?></div><?php endif; ?>
+      <?php if (FirstSetup::needed()): ?><div class="alert alert-info py-2"><b>New installation:</b> set the power.admin password first. <a href="<?= url('setup') ?>">First-time setup</a></div><?php endif; ?>
       <?php foreach (take_flashes() as [$type, $msg]): ?><div class="alert alert-<?= h($type) ?> py-2"><?= h($msg) ?></div><?php endforeach; ?>
       <form method="post" autocomplete="on" class="sl-form" data-signin="<?= $student ? 'student' : 'staff' ?>">
         <?= csrf_field() ?><input type="hidden" name="next" value="<?= h(preg_match('/^[a-z-]+\.html$/', (string) ($_GET['next'] ?? '')) ? (string) $_GET['next'] : '') ?>">

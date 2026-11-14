@@ -1,3 +1,5 @@
+**Updating to v63.3 (security fixes)?** Read the v63.3 part of `V63_UPDATE.md`. Upload the files (keep `api/config.php`) and press Ctrl+F5. If power.admin still used the old starting password, set a new one on First-time setup.
+
 **Updating to v63 (Backup & Restore)?** Read `V63_UPDATE.md`. Upload the files, sign in as power.admin and press Ctrl+F5. No SQL import is needed.
 
 **Updating to v62 (notifications, Data Privacy, parents, student photos)?** Read `V62_UPDATE.md`. Upload the files, sign in to SIS once and press Ctrl+F5. No SQL import is needed.
@@ -30,12 +32,14 @@
 2. Import **INSTALL.sql** from the project root. This is the only SQL file you need to import. It installs Grading, SIS, existing Accounting, eligibility, notifications, settings, five default groups and the first Power User together.
 3. Copy **api/config.sample.php** to **api/config.php**, put that database's name, host, username and password there, then open **sis/index.php** through your PHP web server.
 
-First sign-in:
+First sign-in (v63.3 — no password is published):
 
-- **Username:** `power.admin`
-- **Temporary password:** `Start-32f32c74-A1`
+1. Open **sis/index.php**. The sign-in page shows **New installation: set the power.admin password first → First-time setup**.
+2. On **First-time setup**, type the **database password** from your `api/config.php` (this proves you installed the site), then choose power.admin's password twice.
+   If the database has no password (a local XAMPP/Laragon install), open the page on that computer (`http://localhost/…`) instead.
+3. Sign in with the username **power.admin** and the password you chose.
 
-Choose your own password when prompted. Then open **Users and Groups** in SIS to create Accounting, Registrar, Teacher and Student accounts. For teachers, you can also use **Teachers → ⋯ → Create account** to generate and link an account automatically. Use **My workspaces** to open Grading with the same identity.
+Then open **Users and Groups** in SIS to create Accounting, Registrar, Teacher and Student accounts. For teachers, you can also use **Teachers → ⋯ → Create account** to generate and link an account automatically. Use **My workspaces** to open Grading with the same identity.
 
 **No CLI command, separate central-account installation, additional seed import or first-user setup command is needed.** The SQL file already creates both compatibility links for the initial Power User.
 
@@ -46,7 +50,7 @@ Choose your own password when prompted. Then open **Users and Groups** in SIS to
 - Seeds fee categories, receipt numbering, accounting accounts and mappings, and 32 default settings.
 - Seeds the five groups and their permissions.
 - Creates exactly one active central Power User, with its SIS ID and Grading UID linked.
-- Stores a PHP-compatible password hash and requires a password change before either system can be used.
+- Leaves power.admin without a usable password until First-time setup is done (v63.3), so nobody can sign in with a published password.
 
 Importing the same file again preserves existing users, changed passwords, group activation settings, existing settings and transaction records. It does not create another default administrator. It does not match or merge existing users by name.
 

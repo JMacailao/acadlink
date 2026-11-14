@@ -15,7 +15,7 @@ header("Referrer-Policy: same-origin");
 // ---------------------------------------------------------- the request
 if (($_SERVER["REQUEST_METHOD"] ?? "") !== "POST") {
   header("Content-Type: text/plain; charset=utf-8");
-  echo "Grading System server is running (PHP " . PHP_VERSION . ", version " . VERSION . ").\n";
+  echo "Grading System server is running.\n"; // v63.3: no PHP or app version for visitors
   if (PHP_VERSION_ID < 80100) { echo "PROBLEM: PHP 8.1 or newer is needed.\n"; exit; }
   if (!extension_loaded("pdo_mysql")) { echo "PROBLEM: PHP's pdo_mysql extension isn't enabled.\n"; exit; }
   try {
@@ -70,6 +70,7 @@ try {
     case "query": reply(["ok" => true, "docs" => runQuery($ctx, str(g($body, "collection")), listOf(g($body, "where")), listOf(g($body, "orderBy")), g($body, "limit"))]);
     case "count": reply(["ok" => true, "count" => count(runQuery($ctx, str(g($body, "collection")), listOf(g($body, "where")), [], null))]);
     case "adminUids":
+      if (!$ctx->uid) fail("unauthenticated", "Sign in first."); // v63.3: not for visitors
       $uids = [];
       foreach (loadCol($ctx, "users") as $id => $u) if (eq(g($u, "role"), "admin") && g($u, "active") === true) $uids[] = $id;
       reply(["ok" => true, "uids" => $uids]);
