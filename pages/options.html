@@ -2,6 +2,26 @@
 <html lang="en">
 <head>
   <meta charset="utf-8">
+  <!-- v63.9: this page is part of the SIS (Administration > Settings). Shown there inside a frame (?embed=sis);
+       opened anywhere else, it goes to the SIS page instead. -->
+  <script>
+  (function () {
+    var embedded = /[?&]embed=sis(&|$)/.test(location.search);
+    if (!embedded) {
+      var sis = location.pathname.replace(/\/pages\/[^/]*$/, "/sis/index.php") + "?r=gradingoptions";
+      try { window.top.location.replace(sis); } catch (e) { location.replace(sis); }
+      return;
+    }
+    document.documentElement.classList.add("gs-embed");
+  })();
+  </script>
+  <style>
+    html.gs-embed #sidebar, html.gs-embed .topbar, html.gs-embed .page-head, html.gs-embed .gs-school-details { display: none !important; }
+    html.gs-embed .app-shell { display: block !important; min-height: 0 !important; }
+    html.gs-embed .app-main { margin: 0 !important; width: 100% !important; }
+    html.gs-embed .app-content { padding: 4px 2px 24px !important; max-width: none !important; }
+    html.gs-embed body { background: transparent !important; }
+  </style>
   <!-- Opened directly (not inside the main page)? Go to the main address and show this page there -->
   <script>
   (function () {
@@ -87,8 +107,6 @@
           <div class="nav-group-label" data-roles="admin registrar teacher">School Information System</div>
           <a class="side-link" href="sis.html" data-roles="admin registrar teacher"><i class="bi bi-buildings" aria-hidden="true"></i><span>Enrollment and fees (SIS)</span></a>
           <div class="nav-group-label" data-roles="admin">Administration</div>
-          <a class="side-link" href="settings.html" data-roles="admin"><i class="bi bi-building" aria-hidden="true"></i><span>School settings</span></a>
-          <a class="side-link active" aria-current="page" href="options.html" data-roles="admin"><i class="bi bi-sliders" aria-hidden="true"></i><span>Setup and options</span></a>
           <a class="side-link" href="audit.html" data-roles="admin"><i class="bi bi-clock-history" aria-hidden="true"></i><span>Audit trail</span></a>
           <a class="side-link" href="backup.html" data-roles="admin"><i class="bi bi-database-down" aria-hidden="true"></i><span>Backup and restore</span></a>
         </nav>
