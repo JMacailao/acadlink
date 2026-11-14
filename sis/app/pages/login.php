@@ -30,7 +30,7 @@ if ($isPost && $u) {
     if (!$u['must_change_password'] && preg_match('/^[a-z-]+\.html$/', $next) && $next !== 'login.html' && $next !== 'dashboard.html' && Auth::central()->can((int) Auth::centralId(), 'grading.workspace.view')) { header('Location: ../pages/' . $next); exit; }
     $back = $_SESSION['return_to'] ?? null;
     unset($_SESSION['return_to']);
-    if (is_array($back) && in_array($back['r'] ?? '', ['navstate', 'keepalive'], true)) $back = null; // v63.12: background checks are not pages
+    if (is_array($back) && ($back['r'] ?? '') === 'navstate') $back = null; // v63.12: background checks are not pages
     // v58: back to the Finance page that asked for the sign-in (finance/index.php checks the route and access again)
     if (!$u['must_change_password'] && is_array($back) && in_array($back['app'] ?? '', ['FINANCE', 'CANTEEN', 'LIBRARY', 'LMS'], true) && preg_match('/^[a-z]+$/', (string) ($back['r'] ?? ''))) { header('Location: ../' . strtolower((string) $back['app']) . '/index.php?' . http_build_query(['r' => $back['r']] + array_filter((array) ($back['params'] ?? []), 'is_scalar'))); exit; }
     if (!$u['must_change_password'] && is_array($back) && (isset(ROUTES[$back['r'] ?? '']) || in_array($back['r'] ?? '', ['my', 'myenrollment', 'myadmission'], true)) && !in_array($back['r'], ['login', 'logout'], true)) redirect($back['r'], (array) ($back['params'] ?? []));

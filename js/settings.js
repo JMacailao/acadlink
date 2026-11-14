@@ -18,7 +18,7 @@ import { SHEETS_SETTINGS, loadSheetsSettings, testSheets, isAppsScriptUrl } from
 import { supabaseKeyProblem, supabaseRequest, cleanSupabaseUrl } from "./supabase-db.js";
 import {
   initLayout, toast, setBusy, errorMessage, clearErrors, fieldError, isValidEmail, logout, confirmDialog,
-  getSecurity, rememberSecurity, AUTO_LOGOUT_CHOICES, autoLogoutLabel,
+  getSecurity, rememberSecurity,
   getSchool, rememberSchool, letterheadHtml, signatureHtml, DEFAULT_SCHOOL, timeAgo,
   getDowntime, downtimeActive, downtimeText, toDate,
 } from "./app.js";
@@ -806,7 +806,6 @@ async function saveSheets(e, me) {
 const secu = {
   form: document.getElementById("securityForm"),
   single: document.getElementById("secSingle"),
-  idle: document.getElementById("secIdle"),
   status: document.getElementById("securityStatus"),
   saved: document.getElementById("securitySaved"),
   btn: document.getElementById("btnSaveSecurity"),
@@ -815,20 +814,18 @@ const secu = {
 function securityStatus(cfg) {
   const parts = [];
   if (cfg.singleSession) parts.push("One device");
-  if (cfg.autoLogoutMinutes) parts.push(`Auto sign-out: ${autoLogoutLabel(cfg.autoLogoutMinutes)}`);
   secu.status.className = `badge ${parts.length ? "badge-pass" : "badge-none"}`;
   secu.status.textContent = parts.length ? parts.join(" · ") : "Off";
 }
 
 async function initSecurity(me) {
-  secu.idle.innerHTML = AUTO_LOGOUT_CHOICES.map(([m, label]) => `<option value="${m}">${label}</option>`).join("");
   const cfg = await getSecurity(true);
   secu.single.checked = !!cfg.singleSession;
-  secu.idle.value = String(cfg.autoLogoutMinutes || 0);
   securityStatus(cfg);
   secu.form.addEventListener("submit", async (e) => {
     e.preventDefault();
-    const data = { singleSession: secu.single.checked, autoLogoutMinutes: Number(secu.idle.value) || 0 };
+    // v63.15: there is no automatic sign-out after no activity any more (0 also clears a value saved before)
+    const data = { singleSession: secu.single.checked, autoLogoutMinutes: 0 };
     setBusy(secu.btn, true);
     try {
       await setDoc(doc(db, "settings", "security"), { ...data, updatedAt: serverTimestamp(), updatedByName: me.displayName || me.username });

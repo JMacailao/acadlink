@@ -1,9 +1,0 @@
-/* v63.12: the "Still there?" warning before signing out after no activity */
-.idle-warn { position: fixed; inset: auto 0 24px 0; display: flex; justify-content: center; z-index: 2000; pointer-events: none; padding: 0 12px; }
-.idle-warn-card { pointer-events: auto; display: flex; align-items: center; gap: 12px; max-width: 520px; background: #fff; color: #1d2a24; border: 1px solid #f0c36d; border-left: 5px solid #e8a20c; border-radius: 14px; padding: 12px 14px; box-shadow: 0 16px 40px rgba(0,0,0,.18); }
-.idle-warn-card > i { font-size: 1.5rem; color: #c27c00; }
-.idle-warn-card b { display: block; }
-.idle-warn-card span { font-size: .9rem; }
-.idle-warn-card span b { display: inline; }
-.idle-warn-card .btn { white-space: nowrap; }
-@media (max-width: 575.98px) { .idle-warn { bottom: 84px; } .idle-warn-card { flex-wrap: wrap; } }

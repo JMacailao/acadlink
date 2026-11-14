@@ -122,23 +122,27 @@ final class CentralAccounts
     /** v63.10: Is "One device at a time" on? (the Grading System's settings/security; on unless turned off) */
     public function singleDevice(): bool { return $this->securityPolicy()['single']; }
     /**
-     * v63.12: Sign-in security (Settings → System Settings), shared by every system: ['single' => One device at a time,
-     * 'idle' => minutes without activity before signing out, 0 = off]. Missing settings use the Grading System's defaults.
+     * v63.12: Sign-in security (Settings → System Settings), shared by every system: ['single' => One device at a time].
+     * A missing setting uses the Grading System's default (on). v63.15: no automatic sign-out after no activity.
      */
     public function securityPolicy(): array {
         if ($this->policyCache!==null) return $this->policyCache;
-        $out=['single'=>true,'idle'=>0];
+        $out=['single'=>true];
         try {
-            if (!$this->q("SELECT 1 FROM information_schema.tables WHERE table_schema=DATABASE() AND table_name='docs'")->fetchColumn()) return $this->policyCache=['single'=>false,'idle'=>0];
+            if (!$this->q("SELECT 1 FROM information_schema.tables WHERE table_schema=DATABASE() AND table_name='docs'")->fetchColumn()) return $this->policyCache=['single'=>false];
             $raw=$this->q("SELECT data FROM docs WHERE col='settings' AND id='security'")->fetchColumn();
             $d=$raw===false ? [] : (json_decode((string)$raw,true) ?: []);
             if (array_key_exists('singleSession',$d)) $out['single']=!empty($d['singleSession']);
-            $out['idle']=max(0,min(1440,(int)($d['autoLogoutMinutes'] ?? 0)));
-        } catch (Throwable) { $out=['single'=>false,'idle'=>0]; }
+        } catch (Throwable) { $out=['single'=>false]; }
         return $this->policyCache=$out;
     }
     /** Minutes without a request before the server ends a sign-in: the school's setting (plus a minute), else 30. */
-    public function idleWindow(): int { $m=$this->securityPolicy()['idle']; return $m>0 ? $m+1 : 30; }
+    /**
+     * v63.15: minutes without a request before the server ends a sign-in. There is no automatic sign-out after no activity
+     * any more, so this is the whole length of a sign-in (8 hours, see establish()): a sign-in ends at Sign out, after
+     * 8 hours, or when the account signs in on another device (One device at a time).
+     */
+    public function idleWindow(): int { return 8 * 60; }
     /** v63.10: Was this browser's sign-in ended because the account signed in on another device? */
     public function endedElsewhere(): bool {
         $token=$this->token();

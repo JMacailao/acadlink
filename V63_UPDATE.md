@@ -257,3 +257,13 @@ How the restore protects you:
 - Source: `vendor/` (new), both layouts, `pages/*.html`, `js/final-grades.js`, `sis/app/front.php`, `portal/index.php`,
   `sis/app/lib/backup.php`, `sis/app/pages/backup.php`, `sis/app/pages/dashboard.php`, `sis/bin/auto-backup.php` (new),
   `sis/tests/v63-backup.php`.
+
+## v63.15 — No automatic sign-out when doing nothing
+- **Removed** "Sign out automatically after no activity" from Settings → System Settings → Sign-in security, together
+  with the idle timer and its "Still there?" warning in every system (SIS, Student Portal, Grading System, LMS,
+  Canteen POS, Library, Finance). A value saved before is ignored and cleared the next time Sign-in security is saved.
+- The server no longer ends a sign-in after 30 minutes without activity either. A sign-in now ends only when the person
+  presses **Sign out**, after **8 hours**, or when the account signs in on another device (if **One device at a time** is on).
+- Source: `pages/settings.html`, `js/settings.js`, `js/app.js`, `shared/central-accounts.php`, both layouts, `sis/index.php`,
+  `sis/app/front.php`, `sis/app/pages/login.php`; removed `sis/assets/idle-signout.js`, `idle-signout.css` and
+  `sis/app/pages/keepalive.php` (they can be deleted from the server too).
