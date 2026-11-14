@@ -300,3 +300,16 @@ How the restore protects you:
 - Source: `shared/two-step.php` (new), `shared/central-accounts.php`, `sis/app/lib/auth.php`, `sis/app/pages/login.php`,
   `sis/app/pages/profile.php`, `sis/assets/two-step.js` (new), `vendor/qrcode-generator-2.0.4` (new, MIT), `api/lib.php`,
   `sis/app/lib/system-check.php`, `sis/bin/reset-two-step.php` (new), `sis/tests/v63-security.php`.
+
+## v63.18 — Browser checks in the automatic tests
+- Every pull request and change to `main` now also builds a throwaway AcadLink on GitHub (`sis/tests/ci-seed.php`:
+  INSTALL.sql, every module, the sample data, and one account per role) and opens it in a real browser
+  (`sis/tests/browser-smoke.mjs`, Playwright/Chromium): power.admin (SIS pages, every Settings page including the
+  Grading System pages inside them, Finance, Canteen POS, Library, LMS, the Grading System), a registrar, a cashier,
+  canteen staff, a librarian, a teacher and a student (Student Portal) — 47 pages. A page fails on a server error, a
+  JavaScript error, a security-policy refusal, PHP error text, being signed out, or landing on another page.
+  Screenshots of failing pages are attached to the run.
+- `ci-seed.php` refuses to run unless `ACADLINK_CI=1` and the database is empty, so it cannot touch real data.
+- Known: the sample data (`php sis/bin/install.php --sample`) stops at the first payment, because payment plans became
+  required after it was written; registrations and students are still created.
+- Source: `.github/workflows/tests.yml` (new browser job), `sis/tests/ci-seed.php` and `sis/tests/browser-smoke.mjs` (new).
