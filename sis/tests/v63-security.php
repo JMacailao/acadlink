@@ -64,5 +64,28 @@ test('system folders refuse direct web access (Apache .htaccess); only index.php
     foreach (['lms', 'canteen', 'library', 'portal'] as $d) ok(str_contains((string) file_get_contents("$root/$d/.htaccess"), 'Require all denied') && !is_file("$root/$d/assets/.htaccess"), "$d root rules");
     ok(str_contains((string) file_get_contents("$root/.htaccess"), '\.(sql|md|log|bak|gz|zip|ini|sh)$'), 'root blocks sql/md/backups');
 });
+test('two-step sign-in: RFC codes; on with the first code; codes and recovery codes work once; the password alone is not enough', function () use ($c, $id) {
+    $rfc = '12345678901234567890';
+    ok(TwoStep::code($rfc, intdiv(59, 30)) === '287082' && TwoStep::code($rfc, intdiv(1111111109, 30)) === '081804' && TwoStep::code($rfc, intdiv(1234567890, 30)) === '005924', 'RFC 6238 test values');
+    ok(TwoStep::unbase32(TwoStep::base32($rfc)) === $rfc, 'base32 round trip');
+    $ts = $c->twoStep(); $ts->disable($id);
+    Db::q('UPDATE central_credentials SET password_hash = ? WHERE account_id = ?', [password_hash('TwoStepPass2026', PASSWORD_DEFAULT), $id]);
+    Db::q('UPDATE central_accounts SET failed_logins = 0, locked_until = NULL WHERE id = ?', [$id]); Db::q('DELETE FROM login_attempts');
+    [$key, $uri] = $ts->begin($id, 'power.admin', 'AcadLink'); $secret = TwoStep::unbase32($key);
+    ok(str_starts_with($uri, 'otpauth://totp/') && str_contains($uri, 'secret=' . $key), 'setup link for the app');
+    ok(!$ts->enabled($id), 'not on until the first code is confirmed');
+    $raw = (string) Db::val('SELECT secret_enc FROM central_two_step WHERE account_id = ?', [$id]); ok(!str_contains($raw, $key) && base64_decode($raw, true) !== false, 'secret is stored encrypted');
+    $step = intdiv(time(), 30);
+    $codes = $ts->confirm($id, TwoStep::code($secret, $step)); ok($ts->enabled($id) && count($codes) === 10, 'on, with 10 recovery codes');
+    ok(!$ts->verify($id, TwoStep::code($secret, $step)), 'the same code does not work twice');
+    ok(!$ts->verify($id, '000000') || TwoStep::code($secret, $step + 1) === '000000', 'a wrong code is refused');
+    ok($ts->verify($id, TwoStep::code($secret, $step + 1)), 'the next code (clock a little ahead) works');
+    ok($ts->verify($id, $codes[0]) && !$ts->verify($id, $codes[0]) && $ts->recoveryLeft($id) === 9, 'a recovery code works once');
+    ok($ts->verify($id, strtoupper(str_replace('-', '', $codes[1]))), 'recovery code typed without the dash, in capitals');
+    try { $c->login('power.admin', 'TwoStepPass2026', 'SIS'); ok(false, 'signed in without the code'); } catch (CentralTwoStepRequired $t) { ok($t->accountId === $id, 'the password alone asks for the code'); }
+    ok($c->current() === null, 'nothing is signed in before the code');
+    $a = $c->afterPassword($id, 'SIS', true); ok((int) $a['id'] === $id && $c->current() !== null, 'signed in after the code');
+    $c->logout(); $ts->disable($id); ok(!$ts->enabled($id), 'turned off');
+});
 $c->logout(); $server->exec("DROP DATABASE IF EXISTS `$name`");
 echo "$pass passed, $fail failed\n"; exit($fail ? 1 : 0);

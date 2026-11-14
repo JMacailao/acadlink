@@ -2,6 +2,7 @@
 /** Authoritative identity service used by SIS and Grading. No legacy login fallback. */
 declare(strict_types=1);
 require_once __DIR__.'/module-access.php';
+require_once __DIR__.'/two-step.php'; // v63.17
 class CentralAccountError extends RuntimeException {}
 /** v63.12: the account is signed in on another device and "One device at a time" is on: ask before continuing. */
 final class CentralSessionConflict extends RuntimeException {
@@ -170,11 +171,32 @@ final class CentralAccounts
         }
         if ($this->temporaryExpired((int)$r['id'])) throw new CentralAccountError('Your temporary password has expired. Ask the Power User to reset it in SIS.');
         if ($workspace==='GRADING' && !$this->can((int)$r['id'],'grading.workspace.view')) throw new CentralAccountError('Use SIS or the Student Portal for this account.');
-        // v63.12: open on another device and "One device at a time" is on: nothing changes until the person agrees
-        if (!$takeOver && ($other=$this->otherSession((int)$r['id']))) throw new CentralSessionConflict((int)$r['id'],$other);
-        $this->q('DELETE FROM login_attempts WHERE email=?',[$login]);
         if (!$usedTemporary && password_needs_rehash($r['password_hash'],PASSWORD_DEFAULT)) $this->q('UPDATE central_credentials SET password_hash=? WHERE account_id=?',[password_hash($password,PASSWORD_DEFAULT),$r['id']]);
-        return $this->completeLogin((int)$r['id'],$workspace);
+        // v63.17: two-step sign-in: the password was right; the code from the app comes next (nothing has changed yet)
+        if ($this->twoStep()->enabled((int)$r['id'])) throw new CentralTwoStepRequired((int)$r['id']);
+        $this->q('DELETE FROM login_attempts WHERE email=?',[$login]);
+        return $this->afterPassword((int)$r['id'],$workspace,$takeOver);
+    }
+    /** v63.17: the rest of a sign-in once the password (and the two-step code, if any) are right. */
+    public function afterPassword(int $id,string $workspace,bool $takeOver): array {
+        // v63.12: open on another device and "One device at a time" is on: nothing changes until the person agrees
+        if (!$takeOver && ($other=$this->otherSession($id))) throw new CentralSessionConflict($id,$other);
+        return $this->completeLogin($id,$workspace);
+    }
+    /** v63.17: two-step sign-in (codes from an authenticator app). The secret is sealed with a key from api/config.php. */
+    public function twoStep(): TwoStep {
+        static $ts=null, $for=null;
+        if ($ts===null || $for!==$this->db) {
+            $cfgFile=dirname(__DIR__).'/api/config.php'; $c=is_file($cfgFile) ? (require $cfgFile) : [];
+            $seed=implode('|',[(string)($c['app_key']??''),(string)($c['db_name']??''),(string)($c['db_user']??''),(string)($c['db_pass']??'')]);
+            $ts=new TwoStep($this->db,$seed); $for=$this->db;
+        }
+        return $ts;
+    }
+    /** v63.17: a wrong two-step code counts like a wrong password (the same limits). */
+    public function noteFailedCode(int $id): void {
+        $u=(string)$this->q('SELECT identifier_key FROM central_login_identifiers WHERE account_id=? ORDER BY is_primary DESC LIMIT 1',[$id])->fetchColumn();
+        $this->q('INSERT INTO login_attempts(ip,email) VALUES(?,?)',[substr((string)($_SERVER['REMOTE_ADDR'] ?? 'cli'),0,64),mb_substr(strtolower($u),0,191)]);
     }
     /** Finishes a sign-in whose password was already checked (also after "Sign out the other device and continue"). */
     public function completeLogin(int $id,string $workspace): array {

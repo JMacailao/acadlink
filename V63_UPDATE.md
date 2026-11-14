@@ -283,3 +283,20 @@ How the restore protects you:
 - Email setup messages now point to Settings → System Settings / Email Sending.
 - Source: `sis/app/lib/system-check.php` (new), `sis/app/pages/syscheck.php` (new), `sis/index.php`, `sis/app/views/layout.php`,
   `sis/app/bootstrap.php`, `sis/app/pages/dashboard.php`, `sis/app/lib/account-email.php`, `sis/app/pages/emailsetup.php`.
+
+## v63.17 — Two-step sign-in
+- **My profile → Two-step sign-in**: after the password, AcadLink asks for the 6-digit code from an authenticator app
+  (Google Authenticator, Microsoft Authenticator, Authy…). Turn it on by scanning the QR code (or typing the key) and
+  typing the first code; **10 recovery codes** are shown once, for a lost phone (each works once). New recovery codes and
+  Turn off need the password and a current code.
+- Works for every system (SIS, Student Portal, Grading System, LMS, Canteen POS, Library, Finance): the code is asked on
+  the AcadLink sign-in page, right after the password and before anything changes (the "another device" question comes
+  after it). 5 wrong codes start the sign-in again; wrong codes count toward the usual sign-in limits; each code works once.
+- **power.admin**: System Check marks it a Problem until it is on (and warns when fewer than 3 recovery codes are left).
+- **Lost phone**: a Power User can turn it off for someone (Users and Groups → the person → profile). For power.admin, use
+  a recovery code, or on the server: `php sis/bin/reset-two-step.php power.admin`.
+- The secret is stored encrypted (AES-256-GCM with a key from `api/config.php`); recovery codes are stored as hashes.
+  If the database password in `api/config.php` changes, turn two-step sign-in on again (recovery codes still work).
+- Source: `shared/two-step.php` (new), `shared/central-accounts.php`, `sis/app/lib/auth.php`, `sis/app/pages/login.php`,
+  `sis/app/pages/profile.php`, `sis/assets/two-step.js` (new), `vendor/qrcode-generator-2.0.4` (new, MIT), `api/lib.php`,
+  `sis/app/lib/system-check.php`, `sis/bin/reset-two-step.php` (new), `sis/tests/v63-security.php`.

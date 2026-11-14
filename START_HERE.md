@@ -1,3 +1,5 @@
+**Updating to v63.17?** Upload the files (including `shared`, `api` and `vendor`), press Ctrl+F5, then as power.admin open **My profile → Two-step sign-in** and turn it on. Keep the recovery codes somewhere safe.
+
 **Updating to v63.16?** Upload the files, press Ctrl+F5, then open **Settings → System Check** and fix anything marked Problem. Its checklist covers every upload from now on.
 
 **Updating to v63.15?** Upload the files (including `pages`, `js` and `shared`) and press Ctrl+F5. Nobody is signed out for doing nothing any more. You may delete `sis/assets/idle-signout.js`, `sis/assets/idle-signout.css` and `sis/app/pages/keepalive.php` from the server.
