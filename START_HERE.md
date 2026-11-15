@@ -1,4 +1,4 @@
-**Updating to v65.1?** Hostinger deploys from GitHub; press Ctrl+F5 once. New filter design on Cashier, Admission and Registration (one row, From/To date boxes); no database step.
+**Updating to v65.2?** Hostinger deploys from GitHub; press Ctrl+F5 once. New Add / Edit curriculum page with Select subjects and Select teacher windows; optional curriculum name; no database step.
 
 **Updating to v63.24?** Deploy or upload the changed files (see V63_UPDATE.md) and press Ctrl+F5 once. No database change.
 

@@ -78,11 +78,11 @@ test('v64.6: dashboard numbers are kept a minute and dropped when this person sa
 
 test('v64.6: Curriculum does not write every teacher into every subject (froze the browser at 1,000 × 1,000)', function () {
     $page = (string) file_get_contents(SIS_ROOT . '/app/pages/curriculum.php');
-    ok(str_contains($page, 'data-teacher-pick') && str_contains($page, '<template id="teacherOptions">'), 'shared teacher list missing');
+    ok(str_contains($page, 'data-cur-tpicker') && substr_count($page, 'name="curTeacherPick"') === 1, 'shared teacher list missing (v65.2: one Select teacher window)');
     ok(substr_count($page, 'foreach ($teachers as $t)') === 2, 'a teacher loop is back inside the subject rows');
     $js = (string) file_get_contents(dirname(SIS_ROOT) . '/js/curriculum.js');
     ok(str_contains($js, 'shortTeacherOption(s.id)') && !preg_match('/renderSubjects[\s\S]{0,1500}teachers\.filter\([^)]*\)\.map/', $js), 'Grading curriculum still lists every teacher per subject');
-    ok(str_contains((string) file_get_contents(SIS_ROOT . '/assets/curriculum-picker.js'), 's.disabled=true'), 'unticked subjects would still be sent (input limit)');
+    ok(str_contains((string) file_get_contents(SIS_ROOT . '/assets/curriculum-picker.js'), 'inp.disabled=!(b&&b.checked)'), 'unticked subjects would still be sent (input limit)');
 });
 
 test('v64.6: "Inspect" is restricted on every kind of page (SIS family, Portal, Grading System)', function () {
@@ -179,6 +179,20 @@ test('v65.1: Cashier, Admission and Registration filters are one plain row with 
     $css = (string) file_get_contents(SIS_ROOT . '/assets/blue-theme.css');
     ok(str_contains($css, '.or-filters.al-filters .fp-row:has(.al-date-box) { grid-column: span 2; }'), 'the date range takes two columns');
     ok(str_contains((string) file_get_contents(SIS_ROOT . '/app/pages/cashier.php'), "'All cashiers'"), 'Cashier shows All cashiers');
+});
+
+test('v65.2: Add / Edit curriculum is its own page with the designed windows', function () {
+    $page = (string) file_get_contents(SIS_ROOT . '/app/pages/curriculum.php');
+    foreach (['Back to curricula', 'Curriculum details', 'name="curriculumName"', 'data-cur-tab="curPaneSubjects"', 'data-cur-tab="curPaneTeachers"', 'Selected subjects', 'Assign teachers in the Teachers tab.',
+              'Select subjects', 'Available subjects', 'Confirm selection', 'Assign teachers', 'Select teacher', 'Teacher ID', 'data-cur-dirty', "['new' => 1]"] as $needle)
+        ok(str_contains($page, $needle), "missing: $needle");
+    ok(!str_contains($page, 'id="addCurriculum"'), 'the old pop-up form id would be turned into a dialog by friendly-ui.js');
+    ok(preg_match('/<dialog class="cur-picker cur-tpicker"[\s\S]*<\/dialog>/', $page) && strpos($page, 'data-cur-tpicker') > strpos($page, '</form>'), 'teacher radio buttons must be outside the saved form');
+    $g = (string) file_get_contents(SIS_ROOT . '/app/lib/grading.php');
+    ok(str_contains($g, '?string $name=null') && str_contains($g, "\$data['name']=\$name"), 'the curriculum name is not saved');
+    $js = (string) file_get_contents(SIS_ROOT . '/assets/curriculum-picker.js');
+    ok(str_contains($js, 'pending=new Set(chosen()') && str_contains($js, '[data-cur-confirm-picker]'), 'Select subjects must work on a copy until Confirm selection');
+    ok(str_contains($js, "'beforeunload'"), 'leaving with unsaved changes is not warned');
 });
 
 $server->exec("DROP DATABASE IF EXISTS `$name`");
