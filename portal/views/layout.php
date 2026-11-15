@@ -41,7 +41,7 @@ function portal_layout_start(string $title, bool $bare = false): void
 <link rel="stylesheet" href="../vendor/bootstrap-icons-1.13.1/font/bootstrap-icons.min.css">
 <link rel="stylesheet" href="../sis/assets/app.css?v=56b">
 <link rel="stylesheet" href="../sis/assets/reference-ui.css?v=20261021portal">
-<link rel="stylesheet" href="assets/portal.css?v=64">
+<link rel="stylesheet" href="assets/portal.css?v=65">
 <link rel="stylesheet" href="../sis/assets/bottom-nav.css?v=63.2">
 <link rel="stylesheet" href="../sis/assets/people.css?v=63">
 <link rel="stylesheet" href="../sis/assets/schedule-grid.css?v=63.4">
