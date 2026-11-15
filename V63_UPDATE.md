@@ -455,3 +455,11 @@ Files: `sis/app/views/layout.php`, `js/standard-toolbar-core.js`, `js/record-too
 - Flat bottom menu: Home · Admissions · Enrollment · Cashier · More (the first four pages each person may open; More opens the full menu). Finance: Home · Cashier · Review · Reports · More.
 
 Files: `sis/app/views/layout.php`, `sis/assets/blue-theme.css`, `sis/assets/theme.js`. Press Ctrl+F5 once.
+
+## v64.3 — Library and LMS in the mockup layout; new loading spinner
+
+- **Library and LMS:** page title in the header (desktop and phone), flat bottom menu with an orange line over the selected item, no second big title on phones. LMS welcome is a deep-blue banner. Library lists show as cards on phones, and Library pages keep a side margin on phones (they touched the screen edge before).
+- **Phone cards everywhere:** number and money columns show their column name ("Copies 2", "Balance 5,275.00") so a bare number is never unclear (`sis/assets/card-labels.js`).
+- **Loading spinner:** only a spinning circle in the middle of the screen, coloured blue, green and orange, in every system (SIS family and Grading). The words are kept for screen readers. The thin progress line at the top uses the same colours.
+
+Files: `sis/app/views/layout.php`, `sis/assets/blue-theme.css`, `sis/assets/card-labels.js` (new), `sis/assets/activity.css`, `sis/assets/navigation.css`, `css/style.css`, `pages/*.html`. Press Ctrl+F5 once.

@@ -9,3 +9,6 @@
 @keyframes sis-network-progress{from{transform:translateX(-110%)}to{transform:translateX(390%)}}
 @media(prefers-reduced-motion:reduce){.sis-network-progress::after{animation:none;width:100%}}
 @media print{.sis-navigation-error,.sis-network-progress{display:none!important}}
+/* v64.3: the top progress line uses the AcadLink colours */
+.sis-network-progress{background:#DCE3EC99}
+.sis-network-progress::after{background:linear-gradient(90deg,#235FD6,#22A447,#EF7D24)}
