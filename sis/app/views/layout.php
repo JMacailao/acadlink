@@ -295,7 +295,7 @@ function layout_start(string $title, bool $bare = false): void
 <link rel="stylesheet" href="<?= sis_web() ?>assets/unified-toolbar.css?v=60">
 <link rel="stylesheet" href="../css/standard-toolbar.css?v=64.8">
 <link rel="stylesheet" href="<?= sis_web() ?>assets/registration-fees.css?v=4">
-<link rel="stylesheet" href="<?= sis_web() ?>assets/assessment-fee-templates.css?v=1">
+<link rel="stylesheet" href="<?= sis_web() ?>assets/assessment-fee-templates.css?v=65.3b">
 <?php if (app_system() === 'CANTEEN'): ?><link rel="stylesheet" href="assets/canteen.css?v=63.5"><?php endif; ?>
 <?php if (app_system() === 'LIBRARY'): ?><link rel="stylesheet" href="assets/library.css?v=63.6"><?php endif; ?>
 <?php if (app_system() === 'LMS'): ?><link rel="stylesheet" href="assets/lms.css?v=63.5"><?php endif; ?>
@@ -426,7 +426,7 @@ function layout_end(bool $bare = false): void
 <script src="<?= sis_web() ?>assets/app.js?v=65.1"></script>
 <script src="<?= sis_web() ?>assets/friendly-ui.js?v=48"></script>
 <script src="<?= sis_web() ?>assets/sis-actions.js?v=64.8"></script>
-<script src="<?= sis_web() ?>assets/theme.js?v=64.9"></script>
+<script src="<?= sis_web() ?>assets/theme.js?v=65.3"></script>
 <script src="../js/standard-toolbar-core.js?v=65"></script>
 <script src="<?= sis_web() ?>assets/standard-toolbar.js?v=69"></script>
 <script src="<?= sis_web() ?>assets/card-labels.js?v=64.6"></script>

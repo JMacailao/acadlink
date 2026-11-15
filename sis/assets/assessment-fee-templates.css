@@ -628,3 +628,17 @@ html[data-system="sis"] body[data-route="assessment"] .fee-template-editor-foote
     scroll-behavior: auto !important;
   }
 }
+
+/* v65.3: the templates list on its own; a clicked template shows only its fees (General fees, Subject fees) */
+html[data-system="sis"] body[data-route="assessment"] .fee-template-workspace.is-single { grid-template-columns: minmax(0, 1fr); }
+html[data-system="sis"] body[data-route="assessment"] .fee-template-workspace.is-single .fee-template-list-card { max-width: none; }
+html[data-system="sis"] body[data-route="assessment"] .fee-template-back { display: inline-flex; align-items: center; gap: 6px; margin: 0 0 10px; font-size: 14px; font-weight: 600; color: #235FD6; text-decoration: none; }
+html[data-system="sis"] body[data-route="assessment"] .fee-template-back:hover { text-decoration: underline; }
+html[data-system="sis"] body[data-route="assessment"] .fee-template-add { margin-left: 12px; display: inline-flex; align-items: center; gap: 6px; height: 32px; padding: 0 12px; border-radius: 8px; border: 1px solid #235FD6; background: #fff; color: #235FD6; font-size: 13.5px; font-weight: 600; white-space: nowrap; }
+html[data-system="sis"] body[data-route="assessment"] .fee-template-add:hover { background: #EEF4FF; }
+html[data-system="sis"] body[data-route="assessment"] .fee-template-add:focus-visible { outline: 3px solid rgba(35, 95, 214, .35); outline-offset: 2px; }
+html[data-system="sis"] body[data-route="assessment"] .fee-template-name { cursor: pointer; }
+html[data-system="sis"] body[data-route="assessment"] .fee-template-section-head:has(.fee-template-add) { align-items: center; }
+html[data-system="sis"] body[data-route="assessment"] .fee-template-section-head:has(.fee-template-add) > span { margin-left: auto; }
+/* the list filters belong to the templates list, not to one template's page */
+html[data-system="sis"] body[data-route="assessment"]:has(.fee-template-detail) .sis-list-dock .record-list-controls { display: none !important; }

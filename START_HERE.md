@@ -1,4 +1,4 @@
-**Updating to v65.2?** Hostinger deploys from GitHub; press Ctrl+F5 once. New Add / Edit curriculum page with Select subjects and Select teacher windows; optional curriculum name; no database step.
+**Updating to v65.3?** Hostinger deploys from GitHub; press Ctrl+F5 once. Fee templates: list only, View opens a template with its fees and Add fee buttons; no database step.
 
 **Updating to v63.24?** Deploy or upload the changed files (see V63_UPDATE.md) and press Ctrl+F5 once. No database change.
 
