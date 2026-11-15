@@ -38,11 +38,11 @@ page_title('Subject Fees', $canEdit ? '<a class="btn btn-primary" href="' . h(ur
 <div class="row g-3">
   <div class="col-12">
     <div class="d-flex flex-wrap gap-2 align-items-center mb-2">
-      <form method="get" class="d-flex gap-2" role="search"><input type="hidden" name="r" value="subjectfees"><input class="form-control form-control-sm" style="max-width:320px" type="search" name="q" value="<?= h($fq) ?>" placeholder="Search subject code, name or fee" aria-label="Search subject prices"><button class="btn btn-sm btn-outline-primary">Search</button><?php if ($fq !== ''): ?><a class="btn btn-sm btn-link" href="<?= url('subjectfees') ?>">Clear</a><?php endif; ?></form>
+      <form method="get" class="d-flex gap-2 d-print-none" role="search"><input type="hidden" name="r" value="subjectfees"><input class="form-control form-control-sm" style="max-width:320px" type="search" name="q" value="<?= h($fq) ?>" placeholder="Search subject code, name or fee" aria-label="Search subject prices"><button class="btn btn-sm btn-outline-primary">Search</button><?php if ($fq !== ''): ?><a class="btn btn-sm btn-link" href="<?= url('subjectfees') ?>">Clear</a><?php endif; ?></form>
       <span class="small text-muted"><?= count($rows) ?> row(s) · <?= $priced ?> priced · <?= count($rows) - $priced ?> at ₱0.00</span>
     </div>
     <div class="table-responsive bg-white border rounded"><table class="table table-sm align-middle mb-0" id="subjectPrices">
-    <thead class="table-light"><tr><th>Subject</th><th class="text-end"><?= $split ? 'Lec / Lab / Units' : 'Units' ?></th><th>Fee</th><?php if ($split): ?><th>Charged per</th><?php endif; ?><th class="text-end">Price per unit</th><th class="text-end">Total</th><th>Charged in templates</th><th class="text-end">Actions</th></tr></thead><tbody>
+    <thead class="table-light"><tr><th>Subject</th><th class="text-end"><?= $split ? 'Lec / Lab / Units' : 'Units' ?></th><th>Fee</th><?php if ($split): ?><th>Charged per</th><?php endif; ?><th class="text-end">Price per unit</th><th class="text-end">Total</th><th>Charged in templates</th><th class="text-end d-print-none">Actions</th></tr></thead><tbody>
     <?php foreach ($pageRows as $r): $f = $r['fee']; ?><tr<?= $f && $editFee && (int) $f['id'] === (int) $editFee['id'] ? ' class="table-primary"' : '' ?>>
       <td><span class="font-monospace"><?= h($r['subject_code'] ?: '—') ?></span><div class="small text-muted"><?= h($r['subject_name']) ?></div></td>
       <td class="text-end text-nowrap"><?= $split ? h(LecLab::text($r['lec']) . ' / ' . LecLab::text($r['lab']) . ' / ') : '' ?><?= h($r['units']) ?></td>
@@ -51,7 +51,7 @@ page_title('Subject Fees', $canEdit ? '<a class="btn btn-primary" href="' . h(ur
       <td class="text-end">₱<?= Money::fmt($r['rate_cents']) ?></td>
       <td class="text-end fw-semibold">₱<?= Money::fmt($r['total_cents']) ?></td>
       <td class="small"><?php if (!$f): ?><span class="text-muted">—</span><?php elseif (!$f['templates']): ?><span class="text-warning-emphasis">None ticked</span> <span class="text-muted">(charged only without a template)</span><?php else: ?><?= h(implode(', ', array_column($f['templates'], 'name'))) ?><?php endif; ?></td>
-      <td class="text-end text-nowrap"><?php if ($canEdit): ?>
+      <td class="text-end text-nowrap d-print-none"><?php if ($canEdit): ?>
         <?php if ($f): ?><a class="btn btn-sm btn-outline-secondary" href="<?= h(url('subjectfees', ['edit' => $f['id']]) . '#subjectPrice') ?>"><i class="bi bi-pencil me-1"></i>Edit</a>
           <form method="post" class="d-inline" data-confirm="Remove the <?= h($f['label_name']) ?> price of <?= h($r['subject_code'] ?: $r['subject_name']) ?>? The subject goes back to ₱0.00."><?= csrf_field() ?><input type="hidden" name="action" value="delete"><input type="hidden" name="id" value="<?= (int) $f['id'] ?>"><button class="btn btn-sm btn-outline-danger" aria-label="Remove price"><i class="bi bi-x-lg"></i></button></form>
         <?php else: ?><a class="btn btn-sm btn-outline-primary" href="<?= h(url('subjectfees', ['subject' => $r['subject_doc_id']]) . '#subjectPrice') ?>"><i class="bi bi-pencil me-1"></i>Edit</a><?php endif; ?>
@@ -62,7 +62,7 @@ page_title('Subject Fees', $canEdit ? '<a class="btn btn-primary" href="' . h(ur
     <p class="small text-muted mt-2">Confirmed enrollments keep the assessment they were confirmed with. Open assessments without payments are recalculated when a price changes; the rest are recalculated when the registrar saves them.</p>
   </div>
   <?php if ($canEdit): ?>
-  <div class="col-lg-7">
+  <div class="col-lg-7 d-print-none">
     <form method="post" class="form-section" id="subjectPrice" data-price-form><?= csrf_field() ?><input type="hidden" name="action" value="save">
       <?php if ($editFee): ?><input type="hidden" name="id" value="<?= (int) $editFee['id'] ?>"><?php endif; ?>
       <h2 class="h6"><?= $editFee ? 'Edit subject price' : 'Set a subject price' ?></h2>
@@ -88,7 +88,7 @@ page_title('Subject Fees', $canEdit ? '<a class="btn btn-primary" href="' . h(ur
       <button class="btn btn-primary">Save price</button><?php if ($editFee || $editSubject): ?> <a class="btn btn-link" href="<?= url('subjectfees') ?>">Cancel</a><?php endif; ?>
     </form>
   </div>
-  <div class="col-lg-5">
+  <div class="col-lg-5 d-print-none">
     <form method="post" class="form-section"><?= csrf_field() ?><input type="hidden" name="action" value="default_label">
       <h2 class="h6">Default fee for subject prices</h2>
       <select class="form-select form-select-sm mb-2" name="label_id" aria-label="Default fee"><?php foreach ($labels as $l): ?><option value="<?= (int) $l['id'] ?>"<?= (int) $defaultLabel === (int) $l['id'] ? ' selected' : '' ?>><?= h($l['category_name'] . ' · ' . $l['name']) ?></option><?php endforeach; ?></select>

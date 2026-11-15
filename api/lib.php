@@ -100,15 +100,20 @@ function pdo(): PDO {
   $c = config();
   $dsn = "mysql:host=" . ($c["db_host"] ?? "localhost") . ";port=" . ($c["db_port"] ?? 3306) . ";dbname=" . $c["db_name"] . ";charset=utf8mb4";
   if (!empty($c["db_socket"])) $dsn = "mysql:unix_socket=" . $c["db_socket"] . ";dbname=" . $c["db_name"] . ";charset=utf8mb4";
-  try {
+  $started = microtime(true);
+  for ($try = 1; ; $try++) try {
     $pdo = new PDO($dsn, $c["db_user"], $c["db_pass"], [
       PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
       PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
       PDO::ATTR_EMULATE_PREPARES => false,
     ]);
+    break;
   } catch (PDOException $e) {
     $n = (int) ($e->errorInfo[1] ?? 0); if (!$n && preg_match('/\[(\d{4})\]/', $e->getMessage(), $m)) $n = (int) $m[1];
-    if (in_array($n, [1040, 1203, 1226], true)) fail("unavailable", "The school's server is busy right now. Nothing was saved. Wait a few seconds and try again.");
+    $settings = in_array($n, [1044, 1045, 1049, 1698, 2005], true);
+    // v65: the host's limit on connections at once (or another passing problem): wait a moment and try again, up to ~6 s
+    if (!$settings && microtime(true) - $started <= 6.0) { usleep(random_int(120000, 350000) + min(4, $try) * 50000); continue; }
+    if (!$settings) fail("unavailable", "The school's server is busy right now. Nothing was saved. Wait a few seconds and try again.");
     fail("unavailable", "Can't connect to the MySQL database: " . dbConnectProblem($e) . " Check the details in api/config.php.");
   }
   // v63.19: one text-comparison rule (collation) for the connection, as in the SIS (sis/app/lib/core.php)

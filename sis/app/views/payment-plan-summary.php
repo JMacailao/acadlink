@@ -2,7 +2,7 @@
 /** Caller must already have authorized access to $r. No writes are performed here. */
 $planSummary=PaymentPlans::schedule($r);
 if($planSummary): $terms=$planSummary['saved']['terms']; ?>
-<section class="form-section payment-plan-summary" aria-label="Payment plan">
+<section class="form-section payment-plan-summary d-print-none" aria-label="Payment plan"><?php /* v65: on screen only; the printed statement has its own payment plan box */ ?>
 <h2 class="h6">Payment plan · <?= h($terms['name']) ?></h2>
 <p class="small">Amount due now: <strong>₱<?= Money::fmt($planSummary['due']) ?></strong><?= $planSummary['overdue'] ? ' · <span class="text-danger">Overdue: ₱' . Money::fmt($planSummary['overdue']) . '</span>' : ' · Nothing overdue' ?> · Next unpaid due date: <?= h($planSummary['next']??'Fully paid') ?></p><?php /* v63.24: "Overdue: ₱0.00" read as "overdue" */ ?>
 <?php if($terms['kind']==='FULL'&&$planSummary['offer']): ?>

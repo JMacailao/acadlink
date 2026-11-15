@@ -2041,13 +2041,13 @@ html[data-system] .nav-tabs .nav-link.active { color: var(--ui-primary); }
 
 /* ==========================================================================================================
    v64 AcadLink design: one palette for every system. White #FFFFFF, light blue-gray #F3F6FA, deep blue #123D70,
-   royal blue #235FD6, orange #EF7D24. This block: the Grading System (pages without data-system) and the
+   royal blue #235FD6, orange #B85309. This block: the Grading System (pages without data-system) and the
    sign-in page. The SIS family loads sis/assets/blue-theme.css; the Student Portal has its own block.
    ========================================================================================================== */
 html:not([data-system]) {
   --ink: #1F2D40; --ink-soft: #5F6E82; --paper: #F3F6FA; --surface: #ffffff; --line: #DCE3EC;
-  --navy: #123D70; --navy-raised: #1B4F8C; --gold: #EF7D24; --green: #235FD6; --green-tint: #E8F0FD;
-  --ui-primary: #EF7D24; --ui-primary-hover: #D9660F; --bs-link-color-rgb: 35, 95, 214; --bs-focus-ring-color: rgba(35, 95, 214, 0.3);
+  --navy: #123D70; --navy-raised: #1B4F8C; --gold: #B85309; --green: #235FD6; --green-tint: #E8F0FD;
+  --ui-primary: #B85309; --ui-primary-hover: #A84E0A; --bs-link-color-rgb: 35, 95, 214; --bs-focus-ring-color: rgba(35, 95, 214, 0.3);
 }
 html:not([data-system]) .sidebar { --bs-offcanvas-bg: #fff; --bs-offcanvas-color: #1F2D40; border-right: 1px solid #DCE3EC; }
 html:not([data-system]) .sidebar-inner { background: #fff; color: #1F2D40; border-top: 0; }
@@ -2056,17 +2056,17 @@ html:not([data-system]) .sidebar-brand small, html:not([data-system]) .sidebar-i
 html:not([data-system]) .side-link { color: #1F2D40; border-left: 0; border-radius: 7px; margin: 1px 10px; padding: 0.5rem 0.75rem; }
 html:not([data-system]) .side-link i { color: #3D5370; opacity: 1; }
 html:not([data-system]) .side-link:hover { color: #123D70; background: #F3F6FA; }
-html:not([data-system]) .side-link.active { color: #fff; background: #EF7D24; font-weight: 600; }
+html:not([data-system]) .side-link.active { color: #fff; background: #B85309; font-weight: 600; }
 html:not([data-system]) .side-link.active i { color: #fff; }
 html:not([data-system]) .sidebar-foot, html:not([data-system]) .sidebar-user, html:not([data-system]) .sidebar-user * { color: #1F2D40; border-color: #DCE3EC; }
 html:not([data-system]) .sidebar-user small, html:not([data-system]) .sidebar-foot { color: #5F6E82; }
 html:not([data-system]) .sidebar .btn { color: #123D70; border-color: #B9C5D4; background: #fff; }
 html:not([data-system]) .sidebar .btn:hover { background: #F3F6FA; }
-html:not([data-system]) .topbar { background: #fff; color: #123D70; border-top: 0; border-bottom: 2px solid #EF7D24; }
+html:not([data-system]) .topbar { background: #fff; color: #123D70; border-top: 0; border-bottom: 2px solid #B85309; }
 html:not([data-system]) .topbar .btn { color: #123D70; border-color: #B9C5D4; }
 html:not([data-system]) :is(h1,h2,h3,.page-title) { color: #123D70; }
-html:not([data-system]) .btn-success { --bs-btn-bg: #EF7D24; --bs-btn-border-color: #EF7D24; --bs-btn-hover-bg: #D9660F; --bs-btn-hover-border-color: #D9660F; --bs-btn-active-bg: #C25A0C; --bs-btn-disabled-bg: #F2B98A; --bs-btn-disabled-border-color: #F2B98A; }
-html:not([data-system]) .btn-primary { --bs-btn-bg: #EF7D24; --bs-btn-border-color: #EF7D24; --bs-btn-hover-bg: #D9660F; --bs-btn-hover-border-color: #D9660F; --bs-btn-active-bg: #C25A0C; --bs-btn-active-border-color: #C25A0C; --bs-btn-disabled-bg: #F2B98A; --bs-btn-disabled-border-color: #F2B98A; }
+html:not([data-system]) .btn-success { --bs-btn-bg: #B85309; --bs-btn-border-color: #B85309; --bs-btn-hover-bg: #A84E0A; --bs-btn-hover-border-color: #A84E0A; --bs-btn-active-bg: #93400A; --bs-btn-disabled-bg: #F2B98A; --bs-btn-disabled-border-color: #F2B98A; }
+html:not([data-system]) .btn-primary { --bs-btn-bg: #B85309; --bs-btn-border-color: #B85309; --bs-btn-hover-bg: #A84E0A; --bs-btn-hover-border-color: #A84E0A; --bs-btn-active-bg: #93400A; --bs-btn-active-border-color: #93400A; --bs-btn-disabled-bg: #F2B98A; --bs-btn-disabled-border-color: #F2B98A; }
 html:not([data-system]) a:not(.btn):not(.side-link):not(.sidebar-brand):not(.nav-link) { color: #235FD6; }
 
 /* sign-in page: deep-blue side, orange button (same for staff and students) */
@@ -2075,26 +2075,26 @@ html:root .sl, html:root[data-system] .sl {
   --sl-glow-rgb: 80, 130, 255; --sl-light: #9CC0FF; --sl-accent: #235FD6; --sl-accent-rgb: 35, 95, 214; --sl-accent-2: #5B8CFF;
   --sl-ink: #123D70; --sl-focus: #8BB0FF; --sl-tint: #E8F0FD;
   --sl-corner: linear-gradient(135deg, #1B4F8C 0%, #123D70 60%, #0C2B52 100%);
-  --sl-btn: linear-gradient(90deg, #EF7D24 0%, #EF7D24 100%);
+  --sl-btn: linear-gradient(90deg, #B85309 0%, #B85309 100%);
   --m-green: #123D70; --m-deep: #0C2B52; --m-mint: #9CC0FF; --m-ink: #1F2D40; --m-muted: #5F6E82; --m-line: #B9C5D4; --m-sheet: #F3F6FA;
 }
-html:not([data-system]) .btn-success { --bs-btn-hover-color: #fff; --bs-btn-active-border-color: #C25A0C; }
+html:not([data-system]) .btn-success { --bs-btn-hover-color: #fff; --bs-btn-active-border-color: #93400A; }
 html:not([data-system]) .btn-outline-success { --bs-btn-color: #235FD6; --bs-btn-border-color: #9DB9EE; --bs-btn-hover-bg: #235FD6; --bs-btn-hover-border-color: #235FD6; --bs-btn-hover-color: #fff; --bs-btn-active-bg: #235FD6; --bs-btn-active-border-color: #235FD6; --bs-btn-active-color: #fff; }
 html:not([data-system]) .btn-outline-primary { --bs-btn-color: #235FD6; --bs-btn-border-color: #9DB9EE; --bs-btn-hover-bg: #235FD6; --bs-btn-hover-border-color: #235FD6; --bs-btn-hover-color: #fff; --bs-btn-active-bg: #235FD6; --bs-btn-active-border-color: #235FD6; }
-html:not([data-system]) :is(.btn-success,.btn-primary):not(.btn-outline-success):not(.btn-outline-primary) { background-color: #EF7D24; border-color: #EF7D24; color: #fff; }
-html:not([data-system]) :is(.btn-success,.btn-primary):is(:hover,:focus-visible) { background-color: #D9660F; border-color: #D9660F; }
+html:not([data-system]) :is(.btn-success,.btn-primary):not(.btn-outline-success):not(.btn-outline-primary) { background-color: #B85309; border-color: #B85309; color: #fff; }
+html:not([data-system]) :is(.btn-success,.btn-primary):is(:hover,:focus-visible) { background-color: #A84E0A; border-color: #A84E0A; }
 html:not([data-system]) .btn-outline-success.active, html:not([data-system]) .btn-outline-success:hover { background-color: #235FD6; border-color: #235FD6; color: #fff; }
 html:not([data-system]) .std-tb { --std-green: #235FD6; --std-green-soft: #E8F0FD; --std-line: #DCE3EC; --std-ink: #1F2D40; --std-muted: #5F6E82; }
-html:not([data-system]) .std-tb-primary:not(:disabled) { background: #EF7D24; border-color: #EF7D24; color: #fff; }
-html:not([data-system]) .std-tb-primary:hover:not(:disabled) { background: #D9660F; border-color: #D9660F; }
+html:not([data-system]) .std-tb-primary:not(:disabled) { background: #B85309; border-color: #B85309; color: #fff; }
+html:not([data-system]) .std-tb-primary:hover:not(:disabled) { background: #A84E0A; border-color: #A84E0A; }
 html:not([data-system]) .std-tb-apply:not(:disabled) { border-color: #9DB9EE; }
 html:not([data-system]) .std-tb-host { border-color: #DCE3EC; box-shadow: none; }
 
 /* v64.3: loading spinner in the middle of the screen with a blue, green and orange ring (all systems) */
 .load-spinner{top:50%;left:50%;bottom:auto;right:auto;flex-direction:column;min-width:11rem;max-width:min(20rem,calc(100vw - 3rem));padding:1.25rem 1.5rem 1.1rem;text-align:center;border-radius:16px;border-color:#DCE3EC;color:#123D70;transform:translate(-50%,-50%) scale(.92)}
 .load-spinner.is-on{transform:translate(-50%,-50%) scale(1)}
-.load-ring,.load-spinner .load-ring{width:46px;height:46px;background:conic-gradient(from 0deg,#235FD600 0deg,#235FD6 90deg,#22A447 200deg,#EF7D24 330deg,#EF7D24 360deg);-webkit-mask:radial-gradient(farthest-side,transparent calc(100% - 6px),#000 calc(100% - 5.5px));mask:radial-gradient(farthest-side,transparent calc(100% - 6px),#000 calc(100% - 5.5px))}
-.acadlink-page-progress::after{background:linear-gradient(90deg,#235FD6,#22A447,#EF7D24)}
+.load-ring,.load-spinner .load-ring{width:46px;height:46px;background:conic-gradient(from 0deg,#235FD600 0deg,#235FD6 90deg,#22A447 200deg,#B85309 330deg,#B85309 360deg);-webkit-mask:radial-gradient(farthest-side,transparent calc(100% - 6px),#000 calc(100% - 5.5px));mask:radial-gradient(farthest-side,transparent calc(100% - 6px),#000 calc(100% - 5.5px))}
+.acadlink-page-progress::after{background:linear-gradient(90deg,#235FD6,#22A447,#B85309)}
 /* only the spinning circle shows; the words stay for screen readers */
 .load-spinner{padding:0;min-width:0;background:transparent;border:0;box-shadow:none}
 .load-spinner .load-text{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
@@ -2102,3 +2102,5 @@ html:not([data-system]) .std-tb-host { border-color: #DCE3EC; box-shadow: none; 
 /* v64.6: after 8 seconds the words come back under the circle (slow connection) */
 .load-spinner.is-slow{padding:1rem 1.25rem;background:#fff;border:1px solid #DCE3EC;box-shadow:0 12px 36px #12305a2e;max-width:min(18rem,calc(100vw - 3rem))}
 .load-spinner.is-slow .load-text{position:static;width:auto;height:auto;overflow:visible;clip:auto;white-space:normal}
+/* v65: a clearly visible focus ring on the sign-in boxes (keyboard users see where they are) */
+.sl .sl-field:focus-within { border-color: #235FD6 !important; box-shadow: 0 0 0 3px rgba(35, 95, 214, 0.35) !important; }

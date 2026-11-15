@@ -94,6 +94,9 @@
 
 /* v64: one palette on the workspace chooser: blue tiles, orange Open button */
 #portalChooser .al-card, #portalChooser .al-card:is(.orange,.coral,.violet,.teal,.blue,.green) { --tone: #235FD6; --soft: #E8F0FD; --dark: #123D70; border-color: #DCE3EC; }
-#portalChooser .al-open:not(.al-soon) { background: #EF7D24; color: #fff; }
-#portalChooser .al-open:not(.al-soon):is(:hover,:focus-visible) { background: #D9660F; }
+#portalChooser .al-open:not(.al-soon) { background: #B85309; color: #fff; }
+#portalChooser .al-open:not(.al-soon):is(:hover,:focus-visible) { background: #A84E0A; }
 #portalChooser :is(h1,h2,h3) { color: #123D70; }
+/* v65: readable grey text on the workspace cards (contrast at least 4.5:1) */
+#portalChooser .al-features span, #portalChooser .al-description, #portalChooser .al-product, #portalChooser .al-d-text, #portalChooser .al-footer span { color: #56657A; }
+#portalChooser .al-card h2 { color: #123D70; }

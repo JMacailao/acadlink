@@ -145,7 +145,7 @@ final class Mailer
     {
         if (function_exists('curl_init')) {
             $ch = curl_init($url);
-            curl_setopt_array($ch, [CURLOPT_POST => true, CURLOPT_POSTFIELDS => $body, CURLOPT_RETURNTRANSFER => true, CURLOPT_TIMEOUT => 20, CURLOPT_CONNECTTIMEOUT => 10,
+            curl_setopt_array($ch, [CURLOPT_POST => true, CURLOPT_POSTFIELDS => $body, CURLOPT_RETURNTRANSFER => true, CURLOPT_TIMEOUT => 8, CURLOPT_CONNECTTIMEOUT => 4, // v65: shorter, so a slow mail service never ties up the server
                 CURLOPT_HTTPHEADER => ['Content-Type: application/json', 'Origin: https://' . ($_SERVER['HTTP_HOST'] ?? 'localhost')]]);
             $reply = curl_exec($ch);
             $status = (int) curl_getinfo($ch, CURLINFO_HTTP_CODE);
@@ -153,7 +153,7 @@ final class Mailer
             curl_close($ch);
             return [$status, $reply === false ? $err : (string) $reply];
         }
-        $ctx = stream_context_create(['http' => ['method' => 'POST', 'header' => "Content-Type: application/json\r\n", 'content' => $body, 'timeout' => 20, 'ignore_errors' => true]]);
+        $ctx = stream_context_create(['http' => ['method' => 'POST', 'header' => "Content-Type: application/json\r\n", 'content' => $body, 'timeout' => 8, 'ignore_errors' => true]]);
         $reply = @file_get_contents($url, false, $ctx);
         $status = preg_match('#^HTTP/\S+ (\d{3})#', (string) ($http_response_header[0] ?? ''), $m) ? (int) $m[1] : 0;
         return [$status, (string) $reply];

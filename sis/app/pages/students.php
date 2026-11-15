@@ -57,6 +57,7 @@ if ($canManageAccounts) foreach (Db::all("SELECT p.student_doc_id, p.student_num
 }
 $created = $_SESSION['student_account_created'] ?? null; unset($_SESSION['student_account_created']);
 if (!$canManageAccounts || !$created || (int) $created['actor_id'] !== (int) Auth::centralId() || (int) $created['expires_at'] < time()) $created = null;
+$pageRows = RecordList::slice($rows, $win); // v65: only this page of students is drawn (was up to 500)
 layout_start('Students');
 page_title('Students', $canEdit ? '<a class="btn btn-primary" href="#addStudent"><i class="bi bi-plus-lg me-1"></i>Add student</a>' : '', 'Manage student records and enrollment details.');
 ?>
@@ -80,7 +81,7 @@ page_title('Students', $canEdit ? '<a class="btn btn-primary" href="#addStudent"
 <div class="row g-3">
 <div class="col-12">
 <?php $tabQ = array_filter(['r' => 'students', 'apply' => '1', 'sy' => $sy, 'term' => $termF, 'section' => $sec, 'year' => $year, 'program' => $program, 'status' => $status, 'q' => (string) ($_GET['q'] ?? '')], fn($v) => $v !== ''); $pendingN = count(array_filter($enrollOf, fn($v) => $v === 'pending')); ?>
-  <ul class="nav nav-pills mb-2" role="tablist" aria-label="Enrollment">
+  <ul class="nav nav-pills mb-2" aria-label="Enrollment">
     <?php foreach (['confirmed' => 'Enrolled', 'pending' => 'Pending confirmation', 'all' => 'All records'] as $tk => $tl): ?><li class="nav-item"><a class="nav-link<?= $enrollF === $tk ? ' active' : '' ?>" href="?<?= h(http_build_query($tabQ + ['enrollment' => $tk])) ?>"<?= $enrollF === $tk ? ' aria-current="page"' : '' ?>><?= h($tl) ?><?= $tk === 'pending' && $pendingN ? ' <span class="badge text-bg-warning">' . $pendingN . '</span>' : '' ?></a></li><?php endforeach; ?>
   </ul>
   <p class="small text-muted mb-2"><?= $enrollF === 'confirmed' ? 'Students with a confirmed enrollment' . ($sy ? ' in ' . h($sy) : '') . ($termF ? ' · ' . h($termF) : '') . '. This is the official list.' : ($enrollF === 'pending' ? 'Registered but not confirmed yet. They appear in Enrolled once the registrar confirms the enrollment.' : 'Every student record, enrolled or not (for corrections and history).') ?></p>
@@ -96,15 +97,15 @@ page_title('Students', $canEdit ? '<a class="btn btn-primary" href="#addStudent"
     <div class="col-lg-2"><label class="visually-hidden" for="studentTerm">Semester</label><select class="form-select" id="studentTerm" name="term"><?= list_options(TERMS, $termF, 'Any semester') ?></select></div>
     <div class="col-lg-2"><a class="btn btn-outline-secondary w-100" href="<?= url('students', ['sy' => '']) ?>">Reset</a></div>
   </form>
-  <div class="table-responsive bg-white border rounded"><table class="table table-sm table-hover mb-0">
+  <div class="table-responsive bg-white border rounded"><table class="table table-sm table-hover mb-0"<?= RecordList::pagesAttr($win) ?>>
     <thead class="table-light"><tr><th>Student ID</th><th>Student Name</th><th>Program</th><th>Year Level</th><th>Section</th><th>School Year</th><th>Status</th><th>Enrollment</th><th class="text-end">Actions</th></tr></thead><tbody>
-    <?php foreach (array_slice($rows, 0, 500) as $s): ?><tr><td class="font-monospace"><?= h($s['studentId'] ?? '') ?></td><td><?= h($s['studentName'] ?? '') ?></td><td><?= h((string) GS::programOf((string) ($s['sectionName'] ?? ''))) ?></td>
+    <?php foreach ($pageRows as $s): ?><tr><td class="font-monospace"><?= h($s['studentId'] ?? '') ?></td><td><?= h($s['studentName'] ?? '') ?></td><td><?= h((string) GS::programOf((string) ($s['sectionName'] ?? ''))) ?></td>
       <td><?= h($s['yearLevel'] ?? '') ?></td><td><?= h($s['sectionName'] ?? '') ?></td><td><?= h($s['schoolYear'] ?? '') ?></td><td data-status><?= h($STATUS[$statusKey($s)]) ?></td>
       <td><?= ['confirmed' => '<span class="badge text-bg-success">Enrolled</span>', 'pending' => '<span class="badge text-bg-warning">Pending</span>'][$enrollOf[$s['id']] ?? ''] ?? '<span class="text-muted small">—</span>' ?></td>
       <td class="text-end"><a class="btn btn-sm btn-outline-primary" href="<?= url('student', ['id' => $s['id']]) ?>" data-icon="eye">View</a><?php if ($canEdit): ?> <a class="btn btn-sm btn-outline-primary" href="<?= url('student', ['id' => $s['id']]) ?>#studentEdit" data-icon="pencil-square">Edit Student</a><?php endif; ?><?php if ($canGrades): ?> <a class="btn btn-sm btn-outline-primary" href="<?= url('history', ['id' => $s['id'], 'tab' => 'grades']) ?>" data-icon="journal-text">History of Grades</a><?php endif; ?><?php if ($canAssessments): ?> <a class="btn btn-sm btn-outline-primary" href="<?= url('history', ['id' => $s['id'], 'tab' => 'assessments']) ?>" data-icon="receipt">History of Assessments</a><?php endif; ?><?php if ($canManageAccounts): $acct = $studentAccounts['d:' . $s['id']] ?? $studentAccounts['n:' . ($s['studentId'] ?? '')] ?? null; ?><?php if ($acct): ?> <a class="btn btn-sm btn-outline-primary" href="<?= url('users', ['edit' => $acct['id']]) ?>" data-icon="person-gear">Manage account</a><?php elseif (($s['studentId'] ?? '') !== ''): ?> <form method="post" action="<?= url('students') ?>" class="d-inline" data-confirm="<?= h('Create a Student sign-in for ' . ($s['studentName'] ?? '') . ' with username ' . strtolower((string) $s['studentId']) . '? It is linked to this student at once. A temporary password is shown once; the student changes it at first sign-in.') ?>"><?= csrf_field() ?><input type="hidden" name="action" value="create_account"><input type="hidden" name="student_doc_id" value="<?= h($s['id']) ?>"><button class="btn btn-sm btn-outline-primary" data-icon="person-plus">Create account</button></form><?php endif; ?><?php endif; ?></td></tr>
     <?php endforeach; if (!$rows): ?><tr><td colspan="9" class="text-center text-muted py-4"><?= $enrollF === 'confirmed' ? 'No confirmed enrollments match. Students still being processed are under Pending confirmation; every record is under All records.' : ($enrollF === 'pending' ? 'No students are waiting for enrollment confirmation.' : 'No students found. Adjust your filters or choose Add student.') ?></td></tr><?php endif; ?>
   </tbody></table></div>
-  <?php if (count($rows) > 500): ?><p class="small text-muted mt-3"><?= count($rows) ?> students match; the first 500 are shown. Narrow the filters to see the rest.</p><?php endif; ?>
+  <?php /* v65: every matching student is reachable with the pager (no 500 limit) */ ?>
 </div>
 <?php if ($canEdit): $all = GS::sections(); ?>
 <div class="col-12 student-add-panel" id="addStudent"><form method="post" class="form-section"><?= csrf_field() ?>

@@ -58,7 +58,13 @@ document.querySelectorAll('select[data-curricula]').forEach(function (cur) {
 });
 
 // Print buttons
-document.querySelectorAll('[data-print]').forEach(function (b) { b.addEventListener('click', function () { window.print(); }); });
+document.querySelectorAll('[data-print]').forEach(function (b) { b.addEventListener('click', function () {
+  // v65: a list the server pages shows one page; "Print List" prints every row (the list reloads with all rows, then prints)
+  var paged = b.hasAttribute('data-list-print') && document.querySelector('table[data-server-pages]:not([data-server-pages*=",0,"])');
+  if (paged) { var u = new URL(location.href); u.searchParams.set('per', 'all'); u.searchParams.set('pg', '1'); u.searchParams.set('print', '1'); u.searchParams.set('apply', '1'); location.assign(u.href); return; }
+  window.print();
+}); });
+if (new URLSearchParams(location.search).get('print') === '1' && document.querySelector('table[data-server-pages]')) setTimeout(function () { window.print(); }, 400);
 
 // Benefit type: hide value when FULL_WAIVER
 document.querySelectorAll('select[name=benefit_type]').forEach(function (s) {

@@ -8,3 +8,8 @@
 .sis-actions-toggle, .sis-actions-drawer { display:none!important; }
 .sis-actions-panel { display:none!important; }
 .sis-actions-layout, .sis-actions-layout.actions-collapsed { grid-template-columns:minmax(0,1fr)!important; }
+/* v65: the keyboard "Skip to content" link never prints */
+@media print { .sis-skip-link { display:none!important; } }
+/* v65: on phones nothing in the page may make it wider than the screen (a few pixels of margin made pages slide sideways);
+   tables that are wider still scroll inside their own box */
+@media (max-width: 991.98px) { .app-shell #main, .app-shell .app-main { overflow-x: clip; } }

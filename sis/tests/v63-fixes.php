@@ -147,6 +147,30 @@ test('v64.11: a list reopens on page 1 (filters are remembered, the page number 
     [$_GET, $_SESSION['record_lists'], $_SERVER['REQUEST_METHOD']] = $save;
 });
 
+test('v65: a busy database (host connection limit) is waited for; only settings errors fail at once', function () {
+    $e = fn(string $m) => new PDOException($m);
+    ok(Db::connectErrorCode($e("SQLSTATE[HY000] [1226] User 'u' has exceeded the 'max_user_connections' resource")) === 1226, 'error number');
+    foreach (['[1226] max_user_connections', '[1040] Too many connections', '[1203] max_user_connections', '[2002] Resource temporarily unavailable', '[2006] MySQL server has gone away', 'no number at all'] as $m)
+        ok(Db::connectRetryable($e('SQLSTATE[HY000] ' . $m)), "should wait and retry: $m");
+    foreach (['[1045] Access denied', '[1049] Unknown database', '[1044] Access denied for user to database'] as $m)
+        ok(!Db::connectRetryable($e('SQLSTATE[HY000] ' . $m)), "settings error must fail at once: $m");
+    ok(str_contains((string) file_get_contents(dirname(SIS_ROOT) . '/api/lib.php'), 'microtime(true) - $started <= 6.0'), 'the Grading System API does not wait either');
+});
+
+test('v65: printouts, readable colours, labels and the Students pager', function () {
+    $root = dirname(SIS_ROOT);
+    ok(str_contains((string) file_get_contents(SIS_ROOT . '/app/views/payment-plan-summary.php'), 'payment-plan-summary d-print-none'), 'on-screen plan box prints above the statement');
+    ok(str_contains((string) file_get_contents(SIS_ROOT . '/assets/sis-actions.css'), '.sis-skip-link { display:none!important; }'), 'Skip to content prints');
+    ok(str_contains((string) file_get_contents(SIS_ROOT . '/assets/app.js'), "u.searchParams.set('per', 'all')"), 'Print List prints only the page shown');
+    foreach (['sis/assets/blue-theme.css', 'css/style.css', 'css/workspace-selector.css', 'portal/assets/portal.css'] as $f)
+        ok(stripos((string) file_get_contents("$root/$f"), '#EF7D24') === false, "$f still has the orange that white text cannot be read on (2.75:1)");
+    $h = (string) file_get_contents(SIS_ROOT . '/app/pages/history.php');
+    ok(str_contains($h, 'for="hSy"') && str_contains($h, 'for="hYear"') && str_contains($h, 'for="hTerm"'), 'history filters have no labels');
+    ok(str_contains((string) file_get_contents("$root/js/standard-toolbar-core.js"), "more.setAttribute('aria-label', 'More actions')"), 'More actions has no name for screen readers');
+    $st = (string) file_get_contents(SIS_ROOT . '/app/pages/students.php');
+    ok(str_contains($st, '$pageRows = RecordList::slice($rows, $win)') && !str_contains($st, 'array_slice($rows, 0, 500)'), 'Students is not paged');
+});
+
 $server->exec("DROP DATABASE IF EXISTS `$name`");
 echo "$pass passed, $fail failed\n";
 exit($fail ? 1 : 0);

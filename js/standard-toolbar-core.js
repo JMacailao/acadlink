@@ -55,7 +55,7 @@
     const refresh = button('refresh', 'Refresh', 'arrow-clockwise', ''); slots.refresh = refresh;
     const more = button('more', 'More Actions', 'three-dots', ''); more.classList.add('std-tb-more'); slots.more = more;
     more.insertAdjacentHTML('beforeend', '<i class="bi bi-chevron-down std-tb-caret" aria-hidden="true"></i>');
-    more.setAttribute('aria-haspopup', 'menu'); more.setAttribute('aria-expanded', 'false');
+    more.setAttribute('aria-haspopup', 'menu'); more.setAttribute('aria-expanded', 'false'); more.setAttribute('aria-label', 'More actions'); // v65: its word is hidden on narrow toolbars
     groups[2].append(box, refresh, more);
     el.append(...groups);
     const runs = {};
