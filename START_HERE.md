@@ -1,4 +1,4 @@
-**Updating to v64.5?** Deploy or upload `sis/assets/blue-theme.css` and `sis/app/views/layout.php`, then press Ctrl+F5. The page title is no longer shown in the desktop header; nothing else changes.
+**Updating to v64.6?** Deploy (Hostinger does it from GitHub), then press Ctrl+F5. Readable recent activity, a 7-day enrollment chart, phone fixes (Canteen Cashier width), faster dashboards; no database step.
 
 **Updating to v63.24?** Deploy or upload the changed files (see V63_UPDATE.md) and press Ctrl+F5 once. No database change.
 

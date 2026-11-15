@@ -30,6 +30,7 @@ function message() {
   if (!spinner) return;
   const values=[...tasks.values()];
   const label=values[values.length-1] || 'Loading…';
+  spinner.classList.toggle('is-slow', slow);
   spinner.querySelector('.load-text').textContent=label+(slow?' This is taking longer than usual. Please wait; check the result before repeating a save.':'');
 }
 function start(label) {

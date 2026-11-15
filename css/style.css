@@ -1940,7 +1940,7 @@ html[data-system] .nav-tabs .nav-link.active { color: var(--ui-primary); }
 
 /* Native cross-document view transitions keep the Grading shell visually steady.
    SIS uses its persistent-shell navigator; Grading retains its existing module lifecycle. */
-@view-transition{navigation:auto}
+/* v64.6: no page-change animation here; bottom-nav.css turns it on for phone pages with the bottom menu */
 #sidebar{view-transition-name:acadlink-sidebar}
 ::view-transition-group(acadlink-sidebar){animation-duration:.12s}
 ::view-transition-old(root){animation:acadlink-leave .12s ease-out both}
@@ -2099,3 +2099,6 @@ html:not([data-system]) .std-tb-host { border-color: #DCE3EC; box-shadow: none; 
 .load-spinner{padding:0;min-width:0;background:transparent;border:0;box-shadow:none}
 .load-spinner .load-text{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
 .load-ring,.load-spinner .load-ring{width:52px;height:52px;filter:drop-shadow(0 2px 6px #12305a33)}
+/* v64.6: after 8 seconds the words come back under the circle (slow connection) */
+.load-spinner.is-slow{padding:1rem 1.25rem;background:#fff;border:1px solid #DCE3EC;box-shadow:0 12px 36px #12305a2e;max-width:min(18rem,calc(100vw - 3rem))}
+.load-spinner.is-slow .load-text{position:static;width:auto;height:auto;overflow:visible;clip:auto;white-space:normal}

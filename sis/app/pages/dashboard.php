@@ -23,15 +23,16 @@ if (Auth::can('assessment.edit')) $actions[] = $act('Set up fees', 'Categories, 
 if (Auth::can('users.manage')) $actions[] = $act('Accounts', 'Add staff and student sign-ins', 'people', url('users'), 'teal');
 
 // ---- At a glance
-$students = Auth::can('students') ? (int) Db::val("SELECT COUNT(*) FROM docs WHERE col = 'students' AND f_schoolYear = ?", [$sy]) : 0;
-$registered = (int) Db::val("SELECT COUNT(DISTINCT student_number) FROM sis_registrations WHERE record_origin='ENROLLMENT' AND school_year = ? AND status <> 'CANCELLED'", [$sy]);
+$keep = fn(string $k, callable $f) => ShortCache::get('dash|' . $sy . '|' . $k, 60, $f); // v64.6: kept for a minute
+$students = Auth::can('students') ? $keep('students', fn() => (int) Db::val("SELECT COUNT(*) FROM docs WHERE col = 'students' AND f_schoolYear = ?", [$sy])) : 0;
+$registered = $keep('registered', fn() => (int) Db::val("SELECT COUNT(DISTINCT student_number) FROM sis_registrations WHERE record_origin='ENROLLMENT' AND school_year = ? AND status <> 'CANCELLED'", [$sy]));
 $cards = [];
 $c = fn(string $label, string $value, string $icon, string $href, string $color) => compact('label', 'value', 'icon', 'href', 'color');
 if (Auth::can('students')) $cards[] = $c('Students', number_format($students), 'people', url('students'), 'blue');
 if (Auth::can('registration', 'payments.view')) $cards[] = $c('Registered', number_format($registered), 'clipboard-check', url('registration', ['sy' => $sy]), 'green');
 if (Auth::can('payments.view')) {
-    $cards[] = $c('Collected today', '₱' . Money::fmt(Money::cents((string) Db::val("SELECT COALESCE(SUM(amount),0) FROM sis_payments WHERE status = 'POSTED' AND DATE(paid_at) = CURDATE()"))), 'cash-stack', url('cashier'), 'purple');
-    $cards[] = $c('Outstanding balances', '₱' . Money::fmt(Money::cents((string) Db::val("SELECT COALESCE(SUM(total_amount - amount_paid),0) FROM sis_registrations WHERE school_year = ? AND status = 'REGISTERED'", [$sy]))), 'exclamation-circle', url('cashier'), 'pink');
+    $cards[] = $c('Collected today', '₱' . Money::fmt(Money::cents((string) $keep('today', fn() => Db::val("SELECT COALESCE(SUM(amount),0) FROM sis_payments WHERE status = 'POSTED' AND DATE(paid_at) = CURDATE()")))), 'cash-stack', url('cashier'), 'purple');
+    $cards[] = $c('Outstanding balances', '₱' . Money::fmt(Money::cents((string) $keep('outstanding', fn() => Db::val("SELECT COALESCE(SUM(total_amount - amount_paid),0) FROM sis_registrations WHERE school_year = ? AND status = 'REGISTERED'", [$sy])))), 'exclamation-circle', url('cashier'), 'pink');
 }
 
 // ---- Recent activity: everyone's for the registrar and administrator, your own for other staff
@@ -39,11 +40,19 @@ $mineOnly = !Auth::can('activity');
 $activity = Activity::recent(5, false, 0, $mineOnly ? Auth::id() : null);
 
 // ---- Enrollment progress for the school year
-$pending = (int) Db::val("SELECT COUNT(*) FROM sis_admissions WHERE status = 'PENDING' AND school_year = ?", [$sy]);
-$onHold = (int) Db::val("SELECT COUNT(*) FROM sis_admissions a WHERE a.status = 'ADMITTED' AND a.school_year = ? AND NOT EXISTS (SELECT 1 FROM sis_registrations r WHERE r.student_number = a.student_number AND r.record_origin='ENROLLMENT' AND r.status <> 'CANCELLED')", [$sy]);
+$pending = $keep('pending', fn() => (int) Db::val("SELECT COUNT(*) FROM sis_admissions WHERE status = 'PENDING' AND school_year = ?", [$sy]));
+$onHold = $keep('onhold', fn() => (int) Db::val("SELECT COUNT(*) FROM sis_admissions a WHERE a.status = 'ADMITTED' AND a.school_year = ? AND NOT EXISTS (SELECT 1 FROM sis_registrations r WHERE r.student_number = a.student_number AND r.record_origin='ENROLLMENT' AND r.status <> 'CANCELLED')", [$sy]));
 $base = max($students, $registered);
 $notEnrolled = max(0, $base - $registered);
 $pct = $base > 0 ? $registered / $base : 0;
+// ---- v64.6: applications in the last 7 days and the newest applications (people who work on admissions)
+$seeAdmissions = Auth::can('admission', 'admission.view');
+$week = []; $recentApps = [];
+if ($seeAdmissions) {
+    $byDay = []; foreach ($keep('week', fn() => Db::all("SELECT DATE(created_at) d, COUNT(*) n FROM sis_admissions WHERE created_at >= CURDATE() - INTERVAL 6 DAY AND status <> 'CANCELLED' GROUP BY DATE(created_at)")) as $row) $byDay[$row['d']] = (int) $row['n'];
+    for ($i = 6; $i >= 0; $i--) { $d = date('Y-m-d', strtotime("-$i day")); $week[] = ['day' => date('D', strtotime($d)), 'date' => date('M j', strtotime($d)), 'n' => $byDay[$d] ?? 0]; }
+    $recentApps = Db::all("SELECT id, last_name, first_name, middle_name, program, year_level, applicant_type, status FROM sis_admissions WHERE school_year = ? AND status <> 'CANCELLED' ORDER BY id DESC LIMIT 5", [$sy]);
+}
 $noFees = Auth::can('assessment.edit') && !(int) Db::val('SELECT COUNT(*) FROM sis_assessment_names WHERE is_active = 1');
 
 layout_start('Dashboard');
@@ -105,6 +114,40 @@ $progressPercent = (int) round($pct * 100);
       <?php endforeach; ?>
     </nav>
   </section>
+  <?php endif; ?>
+
+  <?php if ($seeAdmissions): // v64.6: enrollment activity and recent applications, as in the design mockup
+    $max = max(1, ...array_column($week, 'n')); $top = (int) (ceil($max / 4) * 4) ?: 4; $W = 700; $H = 180; $px = fn(int $i) => 24 + $i * (($W - 48) / 6); $py = fn(int $n) => 10 + ($H - 20) * (1 - $n / $top);
+    $pts = []; foreach ($week as $i => $w) $pts[] = round($px($i), 1) . ',' . round($py($w['n']), 1);
+    $typeName = ['NEW' => 'New', 'CONTINUING' => 'Continuing', 'TRANSFEREE' => 'Transferee', 'UNIT_EARNER' => 'Unit earner', 'RETURNEE' => 'Returnee']; ?>
+  <div class="dash-panels dash-admit">
+    <section class="dash-panel dash-week" aria-labelledby="dashboardWeek">
+      <header class="dash-panel-heading"><div><h2 id="dashboardWeek">Enrollment activity, last 7 days</h2><p>Applications received: <?= array_sum(array_column($week, 'n')) ?></p></div></header>
+      <div class="dash-chart">
+        <svg viewBox="0 0 <?= $W ?> <?= $H ?>" role="img" aria-labelledby="dashboardWeek" preserveAspectRatio="none" class="dash-chart-svg">
+          <?php for ($g = 0; $g <= 4; $g++): $gy = 10 + ($H - 20) * $g / 4; ?><line x1="0" x2="<?= $W ?>" y1="<?= $gy ?>" y2="<?= $gy ?>" class="dash-grid"/><?php endfor; ?>
+          <polygon class="dash-area" points="<?= round($px(0), 1) ?>,<?= $H - 10 ?> <?= implode(' ', $pts) ?> <?= round($px(6), 1) ?>,<?= $H - 10 ?>"/>
+          <polyline class="dash-line" points="<?= implode(' ', $pts) ?>"/>
+          <?php foreach ($week as $i => $w): ?>
+          <g class="dash-point" tabindex="0"><title><?= h($w['date']) ?>: <?= $w['n'] ?> application<?= $w['n'] === 1 ? '' : 's' ?></title>
+            <rect x="<?= round($px($i) - ($W - 48) / 12, 1) ?>" y="0" width="<?= round(($W - 48) / 6, 1) ?>" height="<?= $H ?>" class="dash-hit"/>
+            <circle cx="<?= round($px($i), 1) ?>" cy="<?= round($py($w['n']), 1) ?>" r="4.5" class="dash-dot"/>
+          </g>
+          <?php endforeach; ?>
+        </svg>
+        <div class="dash-days" aria-hidden="true"><?php foreach ($week as $w): ?><span><?= h($w['day']) ?></span><?php endforeach; ?></div>
+        <table class="visually-hidden"><caption>Applications per day</caption><tr><th>Day</th><th>Applications</th></tr><?php foreach ($week as $w): ?><tr><td><?= h($w['date']) ?></td><td><?= $w['n'] ?></td></tr><?php endforeach; ?></table>
+      </div>
+    </section>
+    <section class="dash-panel dash-apps" aria-labelledby="dashboardApps">
+      <header class="dash-panel-heading"><div><h2 id="dashboardApps">Recent applications</h2><p>Newest submissions, <?= h($sy) ?></p></div><a href="<?= url('admission', ['sy' => $sy]) ?>">View all</a></header>
+      <ul class="dash-app-list">
+        <?php foreach ($recentApps as $ap): $t = (string) $ap['applicant_type']; ?>
+        <li><a href="<?= url('admission', ['id' => $ap['id']]) ?>"><span class="dash-app-name"><?= h($ap['last_name'] . ', ' . $ap['first_name'] . ($ap['middle_name'] ? ' ' . mb_substr($ap['middle_name'], 0, 1) . '.' : '')) ?></span><span class="dash-app-sub"><?= h(trim(($ap['program'] ? $ap['program'] . ' – ' : '') . $ap['year_level'])) ?></span></a><span class="dash-app-type dash-type-<?= h(strtolower($t)) ?>"><?= h($typeName[$t] ?? $t) ?></span></li>
+        <?php endforeach; if (!$recentApps): ?><li class="dash-app-empty">No applications yet for <?= h($sy) ?>.</li><?php endif; ?>
+      </ul>
+    </section>
+  </div>
   <?php endif; ?>
 
   <div class="dash-panels">

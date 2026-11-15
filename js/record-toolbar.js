@@ -130,6 +130,10 @@
     } else tb.set('filters', { enabled: false, title: 'This list has no filters' });
     tb.set('apply', watched.length ? { enabled: true, title: 'Apply Filter', run: apply } : { enabled: false, title: 'This list has no filters' });
     tb.set('refresh', { enabled: true, title: 'Reload the list with the same filters', run: () => { store.set(Object.fromEntries(watched.map((el) => [el.id, el.value]))); location.reload(); } });
+    // v64.6: show only the buttons this page can use (as in the SIS); Edit and Delete stay while the list has editable rows
+    const show = { view: false, void: false, post: false, new: !!newBtn, edit: !!document.querySelector('[data-edit]'), delete: !!document.querySelector('[data-delete]'),
+      selectAll: !!all, filters: !!(filterBox && filters.length), apply: !!watched.length };
+    Object.entries(show).forEach(([k, v]) => { const b = tb.el.querySelector('[data-std-slot="' + k + '"]'); if (b) b.hidden = !v; });
     tb.el.classList.toggle('std-tb-dirty', dirty);
     note.classList.toggle('is-dirty', dirty);
     note.textContent = dirty ? 'Filters changed — click Apply Filter.' : tr ? '1 selected · ' + (tr.cells[1]?.textContent.trim() || '') : '';

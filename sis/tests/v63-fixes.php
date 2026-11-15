@@ -58,6 +58,24 @@ test('wording: Subjects counter, one Actions column on Teachers, "Nothing overdu
     $v = (string) file_get_contents(SIS_ROOT . '/app/views/payment-plan-summary.php'); ok(str_contains($v, 'Nothing overdue') && !str_contains($v, '· Overdue: ₱<?= Money::fmt'), 'Overdue: ₱0.00 still shown');
 });
 
+test('v64.6: recent activity never shows an internal record id, and names books and LMS work', function () {
+    $row = fn(string $type, $id, array $d, string $action = 'x_done') => Activity::describe(['created_at' => '2026-11-15 10:00:00', 'action' => $action, 'details' => json_encode($d), 'entity_type' => $type, 'entity_id' => $id, 'username' => 'u', 'role' => '']);
+    $a = $row('lms_class', 'cur_8166e0d1fbe942b2d7ca61bde8fa3096', ['message' => 8], 'lms_message_sent');
+    ok(!str_contains($a['name'] . $a['detail'], 'cur_') && !str_contains($a['name'] . $a['detail'], '#'), 'internal id shown: ' . $a['name'] . ' / ' . $a['detail']);
+    ok($a['action'] === 'LMS message sent', 'action wording: ' . $a['action']);
+    $b = $row('library_title', 999, ['title' => 'Noli Me Tangere']); ok($b['name'] === 'Noli Me Tangere', 'book title missing');
+    $c = $row('mystery_thing', 'abc123', []); ok($c['detail'] === 'Mystery thing' && !str_contains($c['detail'], 'abc123'), 'fallback shows the id: ' . $c['detail']);
+    $t = $row('grading_assignment', 'x', ['subject' => 'WEB101', 'teacher' => 'Tomas Teacher', 'section' => 'BSIT 2A'], 'teacher_assigned');
+    ok($t['name'] === 'Tomas Teacher' && str_contains($t['detail'], 'WEB101'), 'teacher assignment unreadable');
+});
+
+test('v64.6: dashboard numbers are kept a minute and dropped when this person saves', function () {
+    ok(ShortCache::get('k', 60, fn() => 1) === 1, 'CLI: loads directly');
+    $src = (string) file_get_contents(SIS_ROOT . '/app/pages/dashboard.php');
+    ok(substr_count($src, '$keep(') >= 7 && str_contains((string) file_get_contents(dirname(SIS_ROOT) . '/finance/pages/overview.php'), 'ShortCache::get'), 'dashboards not cached');
+    ok(!str_contains((string) file_get_contents(SIS_ROOT . '/app/pages/reports.php'), 'ShortCache'), 'reports must stay live');
+});
+
 $server->exec("DROP DATABASE IF EXISTS `$name`");
 echo "$pass passed, $fail failed\n";
 exit($fail ? 1 : 0);
