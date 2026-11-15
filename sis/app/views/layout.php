@@ -429,6 +429,7 @@ function layout_end(bool $bare = false): void
 <script src="../js/standard-toolbar-core.js?v=64.1"></script>
 <script src="<?= sis_web() ?>assets/standard-toolbar.js?v=68"></script>
 <script src="<?= sis_web() ?>assets/card-labels.js?v=64.6"></script>
+<script src="<?= sis_web() ?>assets/curriculum-picker.js?v=64.6"></script>
 <?php if ($route === 'admission'): ?><script src="<?= sis_web() ?>assets/admission-form.js?v=1" defer></script><?php endif; ?>
 <script src="<?= sis_web() ?>assets/eligibility.js?v=31"></script>
 <script src="<?= sis_web() ?>assets/workspaces.js?v=31"></script>

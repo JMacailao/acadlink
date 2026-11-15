@@ -76,6 +76,15 @@ test('v64.6: dashboard numbers are kept a minute and dropped when this person sa
     ok(!str_contains((string) file_get_contents(SIS_ROOT . '/app/pages/reports.php'), 'ShortCache'), 'reports must stay live');
 });
 
+test('v64.6: Curriculum does not write every teacher into every subject (froze the browser at 1,000 × 1,000)', function () {
+    $page = (string) file_get_contents(SIS_ROOT . '/app/pages/curriculum.php');
+    ok(str_contains($page, 'data-teacher-pick') && str_contains($page, '<template id="teacherOptions">'), 'shared teacher list missing');
+    ok(substr_count($page, 'foreach ($teachers as $t)') === 2, 'a teacher loop is back inside the subject rows');
+    $js = (string) file_get_contents(dirname(SIS_ROOT) . '/js/curriculum.js');
+    ok(str_contains($js, 'shortTeacherOption(s.id)') && !preg_match('/renderSubjects[\s\S]{0,1500}teachers\.filter\([^)]*\)\.map/', $js), 'Grading curriculum still lists every teacher per subject');
+    ok(str_contains((string) file_get_contents(SIS_ROOT . '/assets/curriculum-picker.js'), 's.disabled=true'), 'unticked subjects would still be sent (input limit)');
+});
+
 $server->exec("DROP DATABASE IF EXISTS `$name`");
 echo "$pass passed, $fail failed\n";
 exit($fail ? 1 : 0);

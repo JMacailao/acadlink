@@ -490,3 +490,11 @@ File: `sis/assets/blue-theme.css`. Press Ctrl+F5 once.
 - **Faster dashboards:** SIS and Finance dashboard numbers are kept for one minute per person and dropped as soon as that person saves something. Reports are never cached.
 
 Files: `sis/app/lib/sis.php`, `sis/app/lib/core.php`, `sis/app/pages/dashboard.php`, `finance/pages/overview.php`, `sis/app/views/layout.php`, `sis/assets/{blue-theme.css,activity.css,activity.js,card-labels.js,bottom-nav.css}`, `css/{style.css,standard-toolbar.css}`, `js/{loading.js,record-toolbar.js}`, `pages/*.html`, `sis/tests/v63-fixes.php`. Press Ctrl+F5 once.
+
+### v64.6 — Bug fixed: Curriculum page "unresponsive"
+
+With about 1,000 subjects and 1,000 teachers, the Curriculum form wrote the full teacher list into every subject row: 1,013,061 dropdown entries and 54 MB of HTML, about 2½ minutes to load, and the browser said the page was unresponsive. Now each row starts with Professor X and the chosen teacher, and the full list (written once) is added when that row's list is opened: 522 KB, under 1 second. The Grading System's Curriculum page had the same problem and is fixed the same way (0.6 seconds).
+
+Saving also sends only the ticked subjects' teachers. Before, a large form sent over 2,000 values, and PHP's default limit is 1,000, so teacher choices could be silently lost.
+
+Files: `sis/app/pages/curriculum.php`, `sis/assets/curriculum-picker.js` (new), `js/curriculum.js`, `pages/curriculum.html`.

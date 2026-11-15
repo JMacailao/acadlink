@@ -29,6 +29,9 @@ $subjects = GS::subjects();
 $teachers = GS::teachers();
 $byId = [];
 foreach ($subjects as $s) $byId[$s['id']] = $s;
+// v64.6: a teacher's name by id. Each subject row starts with a short list; the full teacher list is written once (see the
+// <template> below) and copied into a row's dropdown when it is opened. 1,000 subjects × 1,000 teachers froze the browser.
+$teacherNames = []; foreach ($teachers as $t) $teacherNames[(string) $t['id']] = (string) ($t['teacherName'] ?? '');
 layout_start('Curriculum');
 page_title('Curriculum', $canEdit ? '<a class="btn btn-primary" href="#' . ($tab === 'subjects' ? 'addSubject' : 'addCurriculum') . '"><i class="bi bi-plus-lg me-1"></i>Add ' . ($tab === 'subjects' ? 'subject' : 'curriculum') . '</a>' : '', "Manage subjects and curriculum by program, year level and term.");
 ?>
@@ -57,8 +60,9 @@ page_title('Curriculum', $canEdit ? '<a class="btn btn-primary" href="#' . ($tab
     <input class="form-control form-control-sm mb-2" data-filter="#subjpick" placeholder="Filter subjects">
     <div style="max-height:360px;overflow:auto" class="border rounded p-2 mb-2"><table class="table table-sm mb-0" id="subjpick"><thead><tr><th>Select</th><th>Code</th><th>Subject</th><th>Units</th><th>Teacher</th></tr></thead><tbody>
     <?php $chosen = (array) ($open['subjectIds'] ?? []); foreach ($subjects as $s): ?><tr><td><input class="form-check-input" type="checkbox" name="subjectIds[]" value="<?= h($s['id']) ?>"<?= in_array($s['id'], $chosen, true) ? ' checked' : '' ?> <?= $canEdit ? '' : 'disabled' ?>></td>
-      <td class="small font-monospace"><?= h($s['subjectCode'] ?? '') ?></td><td class="small"><?= h($s['subjectName'] ?? '') ?></td><td class="small"><?= h($s['units'] ?? '') ?></td><td><select class="form-select form-select-sm" name="subjectTeachers[<?= h($s['id']) ?>]" aria-label="<?= h('Teacher for '.($s['subjectName']??'')) ?>" <?= $canEdit?'':'disabled' ?>><option value="_acadlink_professor_x">Professor X · Needs teacher</option><?php foreach($teachers as $t): if($t['id']==='_acadlink_professor_x') continue; ?><option value="<?= h($t['id']) ?>" <?= ($open['subjectTeachers'][$s['id']]??'')===$t['id']?'selected':'' ?>><?= h($t['teacherName']) ?></option><?php endforeach; ?></select></td></tr><?php endforeach; ?>
+      <td class="small font-monospace"><?= h($s['subjectCode'] ?? '') ?></td><td class="small"><?= h($s['subjectName'] ?? '') ?></td><td class="small"><?= h($s['units'] ?? '') ?></td><td><?php $tid = (string) ($open['subjectTeachers'][$s['id']] ?? ''); $tName = $tid !== '' && $tid !== '_acadlink_professor_x' ? ($teacherNames[$tid] ?? '') : ''; ?><select class="form-select form-select-sm" name="subjectTeachers[<?= h($s['id']) ?>]" data-teacher-pick aria-label="<?= h('Teacher for '.($s['subjectName']??'')) ?>" <?= $canEdit?'':'disabled' ?>><option value="_acadlink_professor_x">Professor X · Needs teacher</option><?php if ($tName !== ''): ?><option value="<?= h($tid) ?>" selected><?= h($tName) ?></option><?php endif; ?></select></td></tr><?php endforeach; ?>
     </tbody></table></div>
+    <template id="teacherOptions"><?php foreach ($teachers as $t): if ($t['id'] === '_acadlink_professor_x') continue; ?><option value="<?= h($t['id']) ?>"><?= h($t['teacherName']) ?></option><?php endforeach; ?></template>
     <?php if ($canEdit): ?><button class="btn btn-sm btn-primary">Save curriculum</button><?php if ($open): ?> <a class="btn btn-sm btn-link" href="<?= url('curriculum') ?>">New instead</a><?php endif; ?><?php endif; ?>
     <div class="form-text">The program is the text before the year number in section names (BSIT 1A → BSIT). Blank teachers default to Professor X. Saving creates missing classes for matching sections; if there are no sections yet, classes are created when a matching section is saved. Changing a teacher here also changes the active classes (current school year, this semester) that still have the previous teacher; classes whose grades were already submitted keep their teacher. Saved grades are never changed.</div>
   </form>
