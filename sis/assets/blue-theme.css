@@ -217,34 +217,34 @@ html:is([data-app="sis"],[data-app="finance"]) { --bn-accent: #EF7D24; --bn-ink:
    v64.3: the mockup layout in the Library and the LMS too: page title in the header, flat bottom menu with an
    orange line over the selected item, deep-blue welcome banner, lists as cards on phones.
    ========================================================================================================== */
-html:is([data-app="library"],[data-app="lms"]) { --bn-accent: #EF7D24; --bn-ink: #3D5370; --bn-muted: #3D5370; --bn-h: 64px; }
-html[data-system="sis"]:is([data-app="library"],[data-app="lms"]) body.sis-easy :is(.lib-appbar-title,.lms-appbar-title) { display: none !important; }
+html:is([data-app="library"],[data-app="lms"],[data-app="canteen"]) { --bn-accent: #EF7D24; --bn-ink: #3D5370; --bn-muted: #3D5370; --bn-h: 64px; }
+html[data-system="sis"]:is([data-app="library"],[data-app="lms"],[data-app="canteen"]) body.sis-easy :is(.lib-appbar-title,.lms-appbar-title,.cpos-appbar-title) { display: none !important; }
 @media (max-width: 991.98px) {
-  html[data-system="sis"]:is([data-app="library"],[data-app="lms"]) .al-bnav { border-top: 1px solid #DCE3EC; box-shadow: 0 -2px 10px #12305a12; }
-  html[data-system="sis"]:is([data-app="library"],[data-app="lms"]) .al-bnav-ind { display: none; }
-  html[data-system="sis"]:is([data-app="library"],[data-app="lms"]) .al-bnav-item { padding-top: 11px; }
-  html[data-system="sis"]:is([data-app="library"],[data-app="lms"]) .al-bnav-item.is-up :is(.al-bnav-icon,.al-bnav-label) { transform: none; }
-  html[data-system="sis"]:is([data-app="library"],[data-app="lms"]) .al-bnav-item.is-up .al-bnav-icon,
-  html[data-system="sis"]:is([data-app="library"],[data-app="lms"]) .al-bnav-item.is-up .al-bnav-label { color: var(--bn-ink); font-weight: 500; }
-  html[data-system="sis"]:is([data-app="library"],[data-app="lms"]) .al-bnav-item.active :is(.al-bnav-icon,.al-bnav-label) { color: #EF7D24 !important; }
-  html[data-system="sis"]:is([data-app="library"],[data-app="lms"]) .al-bnav-item.active .al-bnav-label { font-weight: 600; }
-  html[data-system="sis"]:is([data-app="library"],[data-app="lms"]) .al-bnav-item.active::before { content: ""; position: absolute; top: -1px; left: 50%; width: 46px; height: 4px; transform: translateX(-50%); border-radius: 0 0 4px 4px; background: #EF7D24; }
-  html[data-system="sis"]:is([data-app="library"],[data-app="lms"]) .al-bnav-label { font-size: .76rem; }
+  html[data-system="sis"]:is([data-app="library"],[data-app="lms"],[data-app="canteen"]) .al-bnav { border-top: 1px solid #DCE3EC; box-shadow: 0 -2px 10px #12305a12; }
+  html[data-system="sis"]:is([data-app="library"],[data-app="lms"],[data-app="canteen"]) .al-bnav-ind { display: none; }
+  html[data-system="sis"]:is([data-app="library"],[data-app="lms"],[data-app="canteen"]) .al-bnav-item { padding-top: 11px; }
+  html[data-system="sis"]:is([data-app="library"],[data-app="lms"],[data-app="canteen"]) .al-bnav-item.is-up :is(.al-bnav-icon,.al-bnav-label) { transform: none; }
+  html[data-system="sis"]:is([data-app="library"],[data-app="lms"],[data-app="canteen"]) .al-bnav-item.is-up .al-bnav-icon,
+  html[data-system="sis"]:is([data-app="library"],[data-app="lms"],[data-app="canteen"]) .al-bnav-item.is-up .al-bnav-label { color: var(--bn-ink); font-weight: 500; }
+  html[data-system="sis"]:is([data-app="library"],[data-app="lms"],[data-app="canteen"]) .al-bnav-item.active :is(.al-bnav-icon,.al-bnav-label) { color: #EF7D24 !important; }
+  html[data-system="sis"]:is([data-app="library"],[data-app="lms"],[data-app="canteen"]) .al-bnav-item.active .al-bnav-label { font-weight: 600; }
+  html[data-system="sis"]:is([data-app="library"],[data-app="lms"],[data-app="canteen"]) .al-bnav-item.active::before { content: ""; position: absolute; top: -1px; left: 50%; width: 46px; height: 4px; transform: translateX(-50%); border-radius: 0 0 4px 4px; background: #EF7D24; }
+  html[data-system="sis"]:is([data-app="library"],[data-app="lms"],[data-app="canteen"]) .al-bnav-label { font-size: .76rem; }
   /* the title is in the header: no second big title on the page */
   html[data-system="sis"][data-app="library"] body.sis-easy .lib-head :is(h1,.lib-head-icon,.lib-head-ico) { display: none; }
   html[data-system="sis"][data-app="library"] body.sis-easy .lib-head { margin-top: 12px; }
   html[data-system="sis"][data-app="lms"] body.sis-easy .lms-head:not(.lms-welcome) .lms-h1,
   html[data-system="sis"][data-app="lms"] body.sis-easy .lms-home-head .lms-h1 { display: none; }
   /* Library lists as cards: title in bold, the other columns under it */
-  html[data-system="sis"][data-app="library"] body.sis-easy #main table:not(.lms-tt) { display: block; width: 100% !important; min-width: 0 !important; }
-  html[data-system="sis"][data-app="library"] body.sis-easy #main table:not(.lms-tt) > thead { display: none; }
-  html[data-system="sis"][data-app="library"] body.sis-easy #main table:not(.lms-tt) > :is(tbody,tfoot) { display: block; }
-  html[data-system="sis"][data-app="library"] body.sis-easy #main table:not(.lms-tt) > tbody > tr { display: flex; flex-wrap: wrap; align-items: baseline; padding: 12px 14px; border-bottom: 1px solid #DCE3EC; background: #fff; line-height: 1.45; }
-  html[data-system="sis"][data-app="library"] body.sis-easy #main table:not(.lms-tt) > tbody > tr > td { display: inline; padding: 0 !important; border: 0 !important; background: transparent !important; font-size: 13.5px; color: #5F6E82; white-space: nowrap; text-align: left !important; }
-  html[data-system="sis"][data-app="library"] body.sis-easy #main table:not(.lms-tt) > tbody > tr > td:first-child { flex: 0 0 100%; white-space: normal; font-size: 16px; font-weight: 600; color: #1F2D40; margin-bottom: 2px; }
-  html[data-system="sis"][data-app="library"] body.sis-easy #main table:not(.lms-tt) > tbody > tr > td:not(:first-child):not(:empty) ~ td:not(:empty)::before { content: " · "; color: #A5B1C2; }
-  html[data-system="sis"][data-app="library"] body.sis-easy #main table:not(.lms-tt) > tbody > tr > td[colspan] { flex: 0 0 100%; text-align: center !important; font-size: 14px; font-weight: 400; color: #5F6E82; white-space: normal; }
-  html[data-system="sis"][data-app="library"] body.sis-easy #main :is(.table-responsive,.lib-table-wrap) { overflow: visible !important; }
+  html[data-system="sis"]:is([data-app="library"],[data-app="canteen"]) body.sis-easy #main table:not(.lms-tt) { display: block; width: 100% !important; min-width: 0 !important; }
+  html[data-system="sis"]:is([data-app="library"],[data-app="canteen"]) body.sis-easy #main table:not(.lms-tt) > thead { display: none; }
+  html[data-system="sis"]:is([data-app="library"],[data-app="canteen"]) body.sis-easy #main table:not(.lms-tt) > :is(tbody,tfoot) { display: block; }
+  html[data-system="sis"]:is([data-app="library"],[data-app="canteen"]) body.sis-easy #main table:not(.lms-tt) > tbody > tr { display: flex; flex-wrap: wrap; align-items: baseline; padding: 12px 14px; border-bottom: 1px solid #DCE3EC; background: #fff; line-height: 1.45; }
+  html[data-system="sis"]:is([data-app="library"],[data-app="canteen"]) body.sis-easy #main table:not(.lms-tt) > tbody > tr > td { display: inline; padding: 0 !important; border: 0 !important; background: transparent !important; font-size: 13.5px; color: #5F6E82; white-space: nowrap; text-align: left !important; }
+  html[data-system="sis"]:is([data-app="library"],[data-app="canteen"]) body.sis-easy #main table:not(.lms-tt) > tbody > tr > td:first-child { flex: 0 0 100%; white-space: normal; font-size: 16px; font-weight: 600; color: #1F2D40; margin-bottom: 2px; }
+  html[data-system="sis"]:is([data-app="library"],[data-app="canteen"]) body.sis-easy #main table:not(.lms-tt) > tbody > tr > td:not(:first-child):not(:empty) ~ td:not(:empty)::before { content: " · "; color: #A5B1C2; }
+  html[data-system="sis"]:is([data-app="library"],[data-app="canteen"]) body.sis-easy #main table:not(.lms-tt) > tbody > tr > td[colspan] { flex: 0 0 100%; text-align: center !important; font-size: 14px; font-weight: 400; color: #5F6E82; white-space: normal; }
+  html[data-system="sis"]:is([data-app="library"],[data-app="canteen"]) body.sis-easy #main :is(.table-responsive,.lib-table-wrap) { overflow: visible !important; }
 }
 /* LMS welcome: the deep-blue banner of the mockup */
 html[data-system="sis"][data-app="lms"] body.sis-easy .lms-welcome { position: relative; overflow: hidden; background: #123D70; color: #fff; border-radius: 14px; padding: 22px 26px; align-items: center; }
@@ -257,8 +257,29 @@ html[data-system="sis"][data-app="lms"] body.sis-easy .lms-welcome :is(select,.f
 @media screen and (max-width: 991.98px) {
   /* number cells carry their column name on phone cards */
   html[data-system="sis"] body.sis-easy #main table.sis-select-table > tbody > tr > td[data-label]:not(.sis-name-cell)::before,
-  html[data-system="sis"][data-app="library"] body.sis-easy #main table:not(.lms-tt) > tbody > tr > td[data-label]:not(:first-child)::before { content: " · " attr(data-label) " " !important; color: #8A98AB; }
+  html[data-system="sis"]:is([data-app="library"],[data-app="canteen"]) body.sis-easy #main table:not(.lms-tt) > tbody > tr > td[data-label]:not(:first-child)::before { content: " · " attr(data-label) " " !important; color: #8A98AB; }
   html[data-system="sis"] body.sis-easy #main table.sis-select-table > tbody > tr > td[data-label]:not(.sis-name-cell):is(.sis-select-cell + td, .sis-name-cell + td)::before { content: attr(data-label) " " !important; }
   /* Library pages keep a side margin on phones */
-  html[data-system="sis"][data-app="library"] body.sis-easy:not(.bare) #main { padding-left: 16px !important; padding-right: 16px !important; }
+  html[data-system="sis"]:is([data-app="library"],[data-app="canteen"]) body.sis-easy:not(.bare) #main { padding-left: 16px !important; padding-right: 16px !important; }
+}
+
+/* v64.4: Canteen POS in the mockup layout (title in the header, flat bottom menu, cards and side margins on phones) */
+@media (max-width: 991.98px) {
+  html[data-system="sis"][data-app="canteen"] body.sis-easy .cpos-title { display: none; }
+  html[data-system="sis"][data-app="canteen"] body.sis-easy .cpos-head { padding: 0; margin-top: 12px; }
+  html[data-system="sis"][data-app="canteen"] body.sis-easy #main table > tbody > tr > td :is(.btn,button) { margin-left: 6px; }
+}
+@media (max-width: 991.98px) {
+  /* a photo column first: small picture beside the bold name */
+  html[data-system="sis"]:is([data-app="library"],[data-app="canteen"]) body.sis-easy #main table:not(.lms-tt) > tbody > tr > td:first-child:has(img):not(:has(a)) { flex: 0 0 50px; margin: 0 0 6px 0; align-self: center; }
+  html[data-system="sis"]:is([data-app="library"],[data-app="canteen"]) body.sis-easy #main table:not(.lms-tt) > tbody > tr > td:first-child:has(img):not(:has(a)) img { width: 40px !important; height: 40px !important; border-radius: 8px; object-fit: cover; }
+  html[data-system="sis"]:is([data-app="library"],[data-app="canteen"]) body.sis-easy #main table:not(.lms-tt) > tbody > tr > td:first-child:has(img):not(:has(a)) + td { flex: 0 0 calc(100% - 50px); min-width: 0; white-space: normal; font-size: 16px; font-weight: 600; color: #1F2D40; align-self: center; }
+  html[data-system="sis"]:is([data-app="library"],[data-app="canteen"]) body.sis-easy #main table:not(.lms-tt) > tbody > tr > td:first-child:has(img):not(:has(a)) + td + td::before { content: "" !important; }
+}
+@media (max-width: 991.98px) {
+  /* Canteen categories: one row of round chips that scrolls sideways (All Items in deep blue when chosen) */
+  html[data-system="sis"][data-app="canteen"] body.sis-easy .cpos-cats { flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; gap: 8px; margin: 12px -16px; padding: 0 16px; }
+  html[data-system="sis"][data-app="canteen"] body.sis-easy .cpos-cats::-webkit-scrollbar { display: none; }
+  html[data-system="sis"][data-app="canteen"] body.sis-easy .cpos-cat { flex: 0 0 auto; border-radius: 999px; padding: 8px 16px; border-color: #B9C5D4; font-weight: 500; }
+  html[data-system="sis"][data-app="canteen"] body.sis-easy .cpos-cat.active { background: #123D70; border-color: #123D70; color: #fff; }
 }
