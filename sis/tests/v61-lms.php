@@ -202,5 +202,14 @@ test('v61.1 dashboard: timetable periods, meetings today, attendance today, mate
     $r = Lms::classReport(Lms::classFor($cls)); ok($r['students'] === 2 && $r['works'] >= 1 && $r['average'] !== null, json_encode($r));
     as_user($ana); $mine = Lms::materials(Lms::myClasses()); ok($mine && !array_filter($mine, fn($f) => $f['source'] === 'Hidden'), 'student materials');
 });
+test('v64.6: lists of many classes load in a few queries and give exactly the same results', function () use ($teacher, $cls) {
+    as_user($teacher); $classes = Lms::myClasses();
+    $snap = fn() => json_encode(array_map(fn($c) => [Lms::classReport($c), Lms::meetings($c), Lms::settings($c['id']), Lms::roster($c), Lms::gradebook($c), Lms::toGrade($c)], $classes));
+    $before = $snap();
+    Lms::preload($classes); $after = $snap();
+    ok($before === $after, 'preloaded results differ');
+    Lms::preload($classes, true); ok($snap() === $before, 'settings-only preload differs');
+    Lms::preload($classes); Db::q('UPDATE lms_class_settings SET description = description WHERE 1 = 0'); ok($snap() === $before, 'stale after a write');
+});
 $c->logout(); $server->exec("DROP DATABASE IF EXISTS `$name`");
 echo "$pass passed, $fail failed\n"; exit($fail ? 1 : 0);

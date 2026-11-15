@@ -67,3 +67,8 @@ tr.std-row-selectable { cursor:pointer; }
 .std-tb-group:not(:has(> :not([hidden]):not(.std-tb-sep))) { display:none; }
 .std-tb-group-1 > .std-tb-sep:first-child, .std-tb-group-1 > .std-tb-sep:not(:has(~ .std-tb-btn:not([hidden]))) { display:none; }
 .std-tb-group-1 > [hidden] + .std-tb-sep:is(:nth-child(3)) { display:none; }
+/* v64.8: More Actions holds the page's other actions in named groups (they used to be in the "Actions" side panel) */
+.std-tb-menu { max-width:340px; max-height:min(70vh,560px); }
+.std-tb-menu-head { padding:9px 10px 4px; font-size:10.5px; font-weight:700; letter-spacing:.06em; text-transform:uppercase; color:#5F6E82; }
+.std-tb-menu-head:not(:first-child) { margin-top:4px; border-top:1px solid #E6EBF2; padding-top:10px; }
+.std-tb-menu button:hover:not(:disabled), .std-tb-menu button:focus-visible { background:#EEF4FE; }

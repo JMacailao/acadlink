@@ -2,6 +2,7 @@
 /** My schedule: the week of the signed-in person's classes, from the SIS class schedule, with clashes flagged. */
 declare(strict_types=1);
 $classes = Lms::myClasses();
+Lms::preload($classes); // v64.6
 $rows = [];
 foreach ($classes as $c) foreach (Lms::meetings($c) as $m) $rows[] = $m;
 $clashes = [];

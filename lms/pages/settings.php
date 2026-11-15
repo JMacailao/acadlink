@@ -22,6 +22,7 @@ if ($isPost && ($_POST['action'] ?? '') === 'copy') {
     flash($n ? 'success' : 'warning', $n ? 'Grading categories copied to ' . $n . ' class' . ($n === 1 ? '' : 'es') . '.' : 'Choose at least one class to copy to.');
     redirect('settings', array_filter(['sy' => $_GET['sy'] ?? null]));
 }
+Lms::preload($classes, true); // v64.6: every class's settings in one query
 layout_start('Settings');
 lms_head('Settings', 'Grading categories and weights of your classes. Classwork is graded in these categories; the weights make the class-work grade.', '', lms_year_picker('settings', $sy));
 ?>

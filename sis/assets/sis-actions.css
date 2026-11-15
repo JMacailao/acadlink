@@ -3,3 +3,8 @@
 @media(max-width:991.98px){.sis-actions-layout{display:block;min-height:0}.sis-actions-layout>.sis-record-scroll{overflow:visible}.sis-actions-panel{padding:20px 16px}.sis-actions-content{width:100%}}@media print{.sis-actions-panel,.sis-actions-toggle,.sis-actions-drawer{display:none!important}.sis-actions-layout{display:block}.payment-plan-summary .table-responsive{overflow:visible!important}.payment-plan-summary table{min-width:0!important;font-size:8pt}}
 
 .sis-proxied-control{display:none!important}.sis-actions-panel [hidden]{display:none!important}.sis-actions-panel section>button:hover{background:var(--ui-tint,#eaf6f0);color:var(--ui-primary,#078452)}
+/* v64.8: no "Actions" button or side panel. Their actions are in the toolbar's More Actions menu; the panel stays in the
+   page, hidden, because the menu clicks its controls. */
+.sis-actions-toggle, .sis-actions-drawer { display:none!important; }
+.sis-actions-panel { display:none!important; }
+.sis-actions-layout, .sis-actions-layout.actions-collapsed { grid-template-columns:minmax(0,1fr)!important; }

@@ -4,12 +4,13 @@ declare(strict_types=1);
 $years = GS::schoolYears();
 $sy = in_array($_GET['sy'] ?? '', $years, true) ? $_GET['sy'] : ($years[0] ?? '');
 $classes = Lms::myClasses($sy);
+Lms::preload($classes); // v64.6: a few queries for all classes
 $todo = Lms::todo($classes);
 $me = Lms::me();
 $counts = [];
 foreach ($classes as $c) {
     $counts[$c['id']] = in_array($c['role'], ['TEACHER', 'ADMIN'], true)
-        ? ['to_grade' => (int) Db::val("SELECT COUNT(*) FROM lms_submissions s JOIN lms_work w ON w.id = s.work_id WHERE w.class_id = ? AND w.deleted_at IS NULL AND s.status = 'SUBMITTED'", [$c['id']]), 'students' => count($c['studentIds'])]
+        ? ['to_grade' => Lms::toGrade($c), 'students' => count($c['studentIds'])]
         : ['due' => (int) Db::val("SELECT COUNT(*) FROM lms_work w LEFT JOIN lms_submissions s ON s.work_id = w.id AND s.student_doc_id = ? WHERE w.class_id = ? AND w.deleted_at IS NULL AND w.status = 'PUBLISHED' AND (s.status IS NULL OR s.status = 'DRAFT') AND (w.due_at IS NULL OR w.due_at >= NOW())", [$me['student'], $c['id']])];
 }
 $today = date('D') === 'Thu' ? 'Th' : (date('D') === 'Sun' ? 'Su' : substr(date('D'), 0, 1));

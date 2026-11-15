@@ -271,6 +271,7 @@ function layout_start(string $title, bool $bare = false): void
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="<?= $system === 'portal' ? '#2b1866' : '#123D70' ?>">
 <title><?= h($title) ?> · <?= h($school) ?></title>
+<script src="../js/no-inspect.js?v=64.6" defer></script>
 <link rel="icon" type="image/png" sizes="32x32" href="../icons/favicon-32.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -286,13 +287,13 @@ function layout_start(string $title, bool $bare = false): void
 <link rel="stylesheet" href="<?= sis_web() ?>assets/record-list.css?v=20261020b">
 <link rel="stylesheet" href="<?= sis_web() ?>assets/fixed-shell.css?v=20261020j">
 <link rel="stylesheet" href="<?= sis_web() ?>assets/accounting-ui.css?v=20261021toolbar">
-<link rel="stylesheet" href="<?= sis_web() ?>assets/sis-actions.css?v=20261021plans">
+<link rel="stylesheet" href="<?= sis_web() ?>assets/sis-actions.css?v=64.8">
 <link rel="stylesheet" href="<?= sis_web() ?>assets/compact-workspace.css?v=20261025toolbar11">
 <link rel="stylesheet" href="<?= sis_web() ?>assets/theme.css?v=53">
 <link rel="stylesheet" href="<?= sis_web() ?>assets/people.css?v=63">
 <link rel="stylesheet" href="<?= sis_web() ?>assets/schedule-grid.css?v=63.4">
 <link rel="stylesheet" href="<?= sis_web() ?>assets/unified-toolbar.css?v=60">
-<link rel="stylesheet" href="../css/standard-toolbar.css?v=64.6">
+<link rel="stylesheet" href="../css/standard-toolbar.css?v=64.8">
 <link rel="stylesheet" href="<?= sis_web() ?>assets/registration-fees.css?v=4">
 <link rel="stylesheet" href="<?= sis_web() ?>assets/assessment-fee-templates.css?v=1">
 <?php if (app_system() === 'CANTEEN'): ?><link rel="stylesheet" href="assets/canteen.css?v=63.5"><?php endif; ?>
@@ -424,10 +425,10 @@ function layout_end(bool $bare = false): void
 <script src="<?= sis_web() ?>assets/accounting-ui.js?v=31" defer></script>
 <script src="<?= sis_web() ?>assets/app.js?v=62.2"></script>
 <script src="<?= sis_web() ?>assets/friendly-ui.js?v=48"></script>
-<script src="<?= sis_web() ?>assets/sis-actions.js?v=41"></script>
+<script src="<?= sis_web() ?>assets/sis-actions.js?v=64.8"></script>
 <script src="<?= sis_web() ?>assets/theme.js?v=64.2"></script>
-<script src="../js/standard-toolbar-core.js?v=64.1"></script>
-<script src="<?= sis_web() ?>assets/standard-toolbar.js?v=68"></script>
+<script src="../js/standard-toolbar-core.js?v=64.8"></script>
+<script src="<?= sis_web() ?>assets/standard-toolbar.js?v=69"></script>
 <script src="<?= sis_web() ?>assets/card-labels.js?v=64.6"></script>
 <script src="<?= sis_web() ?>assets/curriculum-picker.js?v=64.6"></script>
 <?php if ($route === 'admission'): ?><script src="<?= sis_web() ?>assets/admission-form.js?v=1" defer></script><?php endif; ?>
