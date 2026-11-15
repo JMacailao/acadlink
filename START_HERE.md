@@ -9,6 +9,7 @@
 **Updating to v63.20?** Deploy or upload `sis/app` and `INSTALL.sql`, then open any SIS page: the database and its tables are put on one text rule automatically.
 
 **Updating to v63.19?** Upload `sis/app/lib/core.php` and `api/lib.php` (or deploy from GitHub). Fixes the 500 / blank page on Hostinger ("Illegal mix of collations").
+**Updating to v63.17?** Upload the files (including `shared`, `api` and `vendor`), press Ctrl+F5, then as power.admin open **My profile → Two-step sign-in** and turn it on. Keep the recovery codes somewhere safe.
 
 **Updating to v63.16?** Upload the files, press Ctrl+F5, then open **Settings → System Check** and fix anything marked Problem. Its checklist covers every upload from now on.
 

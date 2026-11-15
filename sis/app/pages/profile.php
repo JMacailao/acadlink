@@ -32,6 +32,34 @@ if ($isPost) {
     } elseif ($a === 'remove') {
         ESign::remove($target, (string) ($_POST['password'] ?? ''));
         flash('success', 'E-signature removed.');
+    } elseif (str_starts_with($a, 'two_step_')) { // v63.17: two-step sign-in
+        $ts = Auth::central()->twoStep(); $pw = (string) ($_POST['password'] ?? ''); $code = (string) ($_POST['code'] ?? '');
+        $ownPw = fn() => Auth::central()->verifyPassword($me, $pw) ?: throw new AppError('Your password is not correct.');
+        try {
+            if ($managing) {
+                if ($a !== 'two_step_off') throw new AppError('Only the person can set up their own two-step sign-in.');
+                if ($target === Backup::ownerId()) throw new AppError('power.admin turns this off on their own profile (or with sis/bin/reset-two-step.php on the server).');
+                $ownPw(); $ts->disable($target);
+                Audit::log('two_step_reset_by_admin', 'account', $target, ['by' => $me]);
+                flash('success', 'Two-step sign-in turned off for ' . $acct['display_name'] . '. They sign in with their password and can turn it on again in My profile.');
+            } elseif ($a === 'two_step_begin') { $ownPw(); $ts->begin($me, (string) $acct['username'], 'AcadLink'); }
+            elseif ($a === 'two_step_cancel') { if (!$ts->enabled($me)) $ts->disable($me); }
+            elseif ($a === 'two_step_confirm') {
+                $_SESSION['two_step_codes'] = $ts->confirm($me, $code);
+                Audit::log('two_step_on', 'account', $me, []);
+                flash('success', 'Two-step sign-in is on. Save your recovery codes now: they are shown only once.');
+            } elseif ($a === 'two_step_recovery') {
+                $ownPw(); if (!$ts->verify($me, $code)) throw new AppError('That code is not right.');
+                $_SESSION['two_step_codes'] = $ts->newRecovery($me);
+                Audit::log('two_step_new_recovery_codes', 'account', $me, []);
+                flash('success', 'New recovery codes made; the old ones no longer work. Save them now.');
+            } elseif ($a === 'two_step_off') {
+                $ownPw(); if (!$ts->verify($me, $code)) throw new AppError('That code is not right.');
+                $ts->disable($me); Audit::log('two_step_off', 'account', $me, []);
+                flash('success', 'Two-step sign-in is off. Your password alone signs you in now.');
+            } else throw new AppError('Unknown action.');
+        } catch (TwoStepError $e) { throw new AppError($e->getMessage()); }
+        redirect('profile', $back + ['tab' => 'twostep']);
     } else throw new AppError('Unknown action.');
     redirect('profile', $back);
 }
@@ -78,6 +106,50 @@ page_title($managing ? 'E-signature of ' . $acct['display_name'] : 'My profile',
     <label class="form-check form-switch mb-0"><input class="form-check-input" type="checkbox" role="switch" data-sound-toggle checked> <span class="form-check-label">Play a short sound when a Save or Send succeeds</span></label>
     <p class="small text-muted mb-0 mt-1">Saved in this browser only. The green success message is always shown.</p></div></div>
   <?php endif; ?>
+  <?php if ($acct['account_kind'] !== 'STUDENT'): // v63.17: two-step sign-in
+    $ts = Auth::central()->twoStep(); $tsOn = $ts->enabled($target); $tsPending = !$managing && !$tsOn ? $ts->pending($target, (string) $acct['username'], 'AcadLink') : null;
+    $tsCodes = !$managing ? ($_SESSION['two_step_codes'] ?? null) : null; unset($_SESSION['two_step_codes']); ?>
+  <div class="col-lg-<?= $managing ? '8' : '7' ?>" id="twostep">
+    <div class="form-section">
+      <h2 class="h6"><i class="bi bi-shield-lock me-1" aria-hidden="true"></i>Two-step sign-in <?= $tsOn ? '<span class="badge text-bg-success ms-1">On</span>' : '<span class="badge text-bg-secondary ms-1">Off</span>' ?></h2>
+      <?php if ($managing): ?>
+        <?php if ($tsOn && $target !== Backup::ownerId()): ?>
+        <p class="small text-muted">Lost their phone and their recovery codes? Turn it off; they can turn it on again in their own profile.</p>
+        <form method="post" class="d-flex flex-wrap gap-2 align-items-end" data-confirm="Turn off two-step sign-in for <?= h($acct['display_name']) ?>?"><?= csrf_field() ?><input type="hidden" name="action" value="two_step_off">
+          <div><label class="form-label small mb-0" for="tsAdminPw">Your password *</label><input class="form-control" type="password" id="tsAdminPw" name="password" required autocomplete="current-password"></div>
+          <button class="btn btn-outline-danger">Turn off for this person</button></form>
+        <?php else: ?><p class="small text-muted mb-0"><?= $tsOn ? 'On.' : 'Off: only they can turn it on, in their own profile.' ?></p><?php endif; ?>
+      <?php elseif ($tsCodes): ?>
+        <div class="alert alert-warning"><b>Your recovery codes</b> (each works once, if you lose your phone). Write them down or print this page now: they are not shown again.</div>
+        <div class="ts-codes mb-3"><?php foreach ($tsCodes as $c): ?><code><?= h($c) ?></code><?php endforeach; ?></div>
+        <button type="button" class="btn btn-outline-secondary btn-sm" data-page-print><i class="bi bi-printer me-1" aria-hidden="true"></i>Print</button>
+      <?php elseif ($tsOn): ?>
+        <p class="small text-muted">After your password, AcadLink asks for the 6-digit code from your authenticator app. <?= (int) $ts->recoveryLeft($target) ?> recovery codes left.</p>
+        <form method="post" class="row g-2 align-items-end mb-2"><?= csrf_field() ?>
+          <div class="col-sm-4"><label class="form-label small mb-0" for="tsPw">Your password *</label><input class="form-control" type="password" id="tsPw" name="password" required autocomplete="current-password"></div>
+          <div class="col-sm-3"><label class="form-label small mb-0" for="tsCode">Code now *</label><input class="form-control" id="tsCode" name="code" inputmode="numeric" autocomplete="one-time-code" maxlength="9" required></div>
+          <div class="col-sm-5 d-flex gap-2"><button class="btn btn-outline-primary" name="action" value="two_step_recovery">New recovery codes</button><button class="btn btn-outline-danger" name="action" value="two_step_off">Turn off</button></div>
+        </form>
+      <?php elseif ($tsPending): ?>
+        <ol class="small ps-3 mb-2"><li>On your phone, open an authenticator app (Google Authenticator, Microsoft Authenticator, Authy…) and add an account by <b>scanning this QR code</b>.</li><li>Type the 6-digit code it shows.</li></ol>
+        <div class="d-flex flex-wrap gap-3 align-items-start mb-2">
+          <div class="ts-qr border rounded bg-white p-2" data-ts-qr="<?= h($tsPending[1]) ?>" aria-label="QR code for your authenticator app"></div>
+          <div class="small"><div class="text-muted">Can't scan? Type this key instead:</div><code class="ts-key user-select-all"><?= h(trim(chunk_split($tsPending[0], 4, ' '))) ?></code><div class="text-muted mt-1">Account: <?= h($acct['username']) ?> · time-based</div></div>
+        </div>
+        <form method="post" class="d-flex flex-wrap gap-2 align-items-end"><?= csrf_field() ?>
+          <div><label class="form-label small mb-0" for="tsFirst">Code from the app *</label><input class="form-control" id="tsFirst" name="code" inputmode="numeric" autocomplete="one-time-code" maxlength="6" required autofocus></div>
+          <button class="btn btn-primary" name="action" value="two_step_confirm">Turn on</button>
+          <button class="btn btn-link" name="action" value="two_step_cancel" formnovalidate>Cancel</button>
+        </form>
+      <?php else: ?>
+        <p class="small text-muted">Even if someone learns your password, they can't sign in without the code from your phone.<?= $target === Backup::ownerId() ? ' <b>Strongly recommended for power.admin.</b>' : '' ?></p>
+        <form method="post" class="d-flex flex-wrap gap-2 align-items-end"><?= csrf_field() ?><input type="hidden" name="action" value="two_step_begin">
+          <div><label class="form-label small mb-0" for="tsStartPw">Your password *</label><input class="form-control" type="password" id="tsStartPw" name="password" required autocomplete="current-password"></div>
+          <button class="btn btn-primary">Turn on two-step sign-in</button></form>
+      <?php endif; ?>
+    </div>
+  </div>
+  <?php endif; ?>
   <div class="<?= $managing ? 'col-lg-8' : 'col-lg-7' ?>">
     <div class="form-section">
       <h2 class="h6">E-signature</h2>
@@ -108,4 +180,6 @@ page_title($managing ? 'E-signature of ' . $acct['display_name'] : 'My profile',
   </div>
 </div>
 <script src="assets/esign.js?v=50"></script>
+<?php if (!empty($tsPending) || !empty($tsCodes)): ?><?php if (!empty($tsPending)): ?><script src="../vendor/qrcode-generator-2.0.4/qrcode.js"></script><?php endif; ?><script src="<?= sis_web() ?>assets/two-step.js?v=1" defer></script><?php endif; ?>
+<style>.ts-qr svg { display: block; width: 180px; height: 180px; } .ts-key { font-size: 1rem; letter-spacing: .05em; } .ts-codes { display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 6px; } .ts-codes code { font-size: 1rem; padding: 6px 8px; border: 1px dashed #c9d3ce; border-radius: 6px; text-align: center; color: #123d2b; }</style>
 <?php layout_end();

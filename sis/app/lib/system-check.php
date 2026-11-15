@@ -113,7 +113,14 @@ final class SystemCheck
 
         // ---------------------------------------------------------------- accounts & security
         self::add('accounts', 'power.admin password', FirstSetup::needed() ? 'fail' : 'ok', FirstSetup::needed() ? 'Not set yet: nobody can manage AcadLink' : 'Set', FirstSetup::needed() ? 'Open First-time setup and choose the password.' : '');
-        foreach (self::$extra as $fn) $fn(); // later checks (e.g. two-step sign-in) register here
+        foreach (self::$extra as $fn) $fn(); // later checks register here
+        // v63.17: two-step sign-in for power.admin (and how many other Power Users use it)
+        try {
+            $ts = Auth::central()->twoStep(); $owner = Backup::ownerId();
+            if ($owner) self::add('accounts', 'Two-step sign-in for power.admin', $ts->enabled($owner) ? 'ok' : 'fail', $ts->enabled($owner) ? 'On (' . $ts->recoveryLeft($owner) . ' recovery codes left)' : 'Off: the password alone protects everything',
+                $ts->enabled($owner) ? '' : 'My profile → Two-step sign-in → Turn on, with an authenticator app on your phone. Keep the recovery codes somewhere safe.');
+            if ($owner && $ts->enabled($owner) && $ts->recoveryLeft($owner) < 3) self::add('accounts', 'power.admin recovery codes', 'warn', 'Only ' . $ts->recoveryLeft($owner) . ' left', 'My profile → Two-step sign-in → New recovery codes.');
+        } catch (Throwable $e) { self::add('accounts', 'Two-step sign-in for power.admin', 'fail', 'Could not check: ' . $e->getMessage()); }
         $single = Auth::central()->singleDevice();
         self::add('accounts', 'One device at a time', 'info', $single ? 'On: a sign-in elsewhere signs the other device out (after asking)' : 'Off: an account can be open on several devices', 'Settings → System Settings → Sign-in security.');
         $mail = Mailer::missing();

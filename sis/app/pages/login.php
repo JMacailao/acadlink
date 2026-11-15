@@ -8,14 +8,21 @@ if ($isPost && $forgot) {
     flash($res['ok'] ? 'success' : 'warning', $res['message']);
     redirect('forgot', ($_GET['portal'] ?? '') === 'student' ? ['portal' => 'student'] : []);
 }
+$twoStepError = ''; // v63.17
 $conflict = null; // v63.12: the account is open on another device (One device at a time): ask first
 if ($isPost && isset($_POST['cancel_takeover'])) {
+    $wasCode = isset($_SESSION['pending_two_step']); // v63.17: cancelled at the code, or at the other-device question
     Auth::cancelTakeOver();
-    flash('info', 'Sign-in cancelled. Your account stays open on the other device.');
+    flash('info', $wasCode ? 'Sign-in cancelled.' : 'Sign-in cancelled. Your account stays open on the other device.');
     redirect('login', ($_GET['portal'] ?? '') === 'student' ? ['portal' => 'student'] : []);
 }
 if ($isPost) {
-    if (isset($_POST['takeover'])) {
+    if (isset($_POST['two_step_code'])) { // v63.17: the code from the authenticator app
+        $remember = (Auth::pendingTwoStep() ?? [])['remember'] ?? [];
+        try { $u = Auth::verifyTwoStep((string) $_POST['two_step_code']); $_POST['next'] = (string) ($remember['next'] ?? ''); }
+        catch (CentralSessionConflict $c) { $u = null; $conflict = $c; }
+        catch (AppError $e) { $u = null; $twoStepError = $e->getMessage(); if (!Auth::pendingTwoStep()) { flash('warning', $e->getMessage()); redirect('login', ($_GET['portal'] ?? '') === 'student' ? ['portal' => 'student'] : []); } }
+    } elseif (isset($_POST['takeover'])) {
         $remember = (Auth::pendingSignin() ?? [])['remember'] ?? [];
         $u = Auth::takeOver();
         $_POST['next'] = (string) ($remember['next'] ?? '');
@@ -23,6 +30,7 @@ if ($isPost) {
         try {
             $u = Auth::login((string) In::str($_POST, 'username', 64, true, 'Username'), (string) ($_POST['password'] ?? ''), false, ['next' => (string) ($_POST['next'] ?? '')]);
         } catch (CentralSessionConflict $c) { $u = null; $conflict = $c; }
+        catch (CentralTwoStepRequired $t) { $u = null; } // v63.17: ask for the code below
     }
 }
 if ($isPost && $u) {
@@ -82,9 +90,10 @@ layout_start('Sign in', true);
     <div class="sl-card">
       <div class="sl-corner" aria-hidden="true"><i class="bi bi-<?= $student ? 'mortarboard' : 'book' ?>"></i></div>
       <div class="sl-wave" aria-hidden="true">👋</div>
-      <?php if (!$conflict): ?><p class="sl-hello"><span data-welcome-line>Welcome,</span></p><?php endif; // v63.12: not above the "another device" question ?>
-      <p class="sl-m-title" aria-hidden="true"><?= $forgot ? 'Forgot password' : 'Welcome back' ?></p>
-      <p class="sl-m-lead"><?= $forgot ? 'We email you a temporary password.' : 'Sign in to your ' . h($student ? 'Student Portal' : School::brand()) . ' account.' ?></p>
+      <?php if (!$conflict && !Auth::pendingTwoStep()): ?><p class="sl-hello"><span data-welcome-line>Welcome,</span></p><?php endif; // v63.12/63.17: not above a question ?>
+      <?php $askCode = !$forgot && !$conflict && Auth::pendingTwoStep(); // v63.17: phone heading follows the step ?>
+      <p class="sl-m-title" aria-hidden="true"><?= $forgot ? 'Forgot password' : ($askCode ? 'Two-step sign-in' : ($conflict ? 'Another device' : 'Welcome back')) ?></p>
+      <p class="sl-m-lead"><?= $forgot ? 'We email you a temporary password.' : ($askCode ? 'Type the code from your authenticator app.' : ($conflict ? 'Your account is open on another device.' : 'Sign in to your ' . h($student ? 'Student Portal' : School::brand()) . ' account.')) ?></p>
       <?php if ($forgot): ?>
       <h1 class="sl-name">Forgot password</h1>
       <p class="sl-intro">Enter your username or Student ID. If your account has an email, we send you a temporary password that works once for <?= PasswordReset::MINUTES ?> minutes.</p>
@@ -100,7 +109,19 @@ layout_start('Sign in', true);
       </form>
       <p class="mt-3 mb-3 text-center"><a class="sl-forgot" href="<?= url('login', $student ? ['portal' => 'student'] : []) ?>"><i class="bi bi-arrow-left" aria-hidden="true"></i> Back to sign in</a></p>
       <?php else: ?>
-      <?php if ($conflict): $ago = max(0, time() - (int) strtotime($conflict->lastSeen)); ?>
+      <?php if (!$conflict && Auth::pendingTwoStep()): // v63.17: two-step sign-in ?>
+      <h1 class="sl-name">Two-step sign-in</h1>
+      <p class="sl-intro">Open your authenticator app (Google Authenticator, Microsoft Authenticator…) and type the 6-digit code shown for AcadLink.</p>
+      <?php if ($twoStepError !== ''): ?><div class="alert alert-danger py-2" role="alert"><?= h($twoStepError) ?></div><?php endif; ?>
+      <?php foreach (take_flashes() as [$type, $msg]): ?><div class="alert alert-<?= h($type) ?> py-2" role="alert"><?= h($msg) ?></div><?php endforeach; ?>
+      <form method="post" class="mb-3" autocomplete="off"><?= csrf_field() ?>
+        <label class="form-label" for="twoStepCode">Code</label>
+        <input class="form-control form-control-lg text-center mb-2" id="twoStepCode" name="two_step_code" inputmode="numeric" autocomplete="one-time-code" maxlength="9" required autofocus placeholder="123456" style="letter-spacing:.3em">
+        <button class="btn btn-primary w-100 sl-submit">Continue</button>
+      </form>
+      <p class="small text-muted">Lost your phone? Type one of your <b>recovery codes</b> (like <code>a1b2-c3d4</code>) instead.</p>
+      <form method="post" class="mb-3"><?= csrf_field() ?><button class="btn btn-link p-0" name="cancel_takeover" value="1">Cancel</button></form>
+      <?php elseif ($conflict): $ago = max(0, time() - (int) strtotime($conflict->lastSeen)); ?>
       <h1 class="sl-name">Open on another device</h1>
       <div class="alert alert-warning py-2" role="alert"><i class="bi bi-laptop me-1" aria-hidden="true"></i>Your account is signed in on another device (last active <?= $ago < 90 ? 'just now' : h((string) round($ago / 60)) . ' minutes ago' ?>). Only one device can be signed in at a time.</div>
       <p class="sl-intro">Sign out the other device and continue here? Anything not yet saved on the other device will be lost.</p>
