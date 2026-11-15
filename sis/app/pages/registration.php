@@ -660,11 +660,15 @@ $fLevel = in_array($_GET['level']??'',YEAR_LEVELS,true)?$_GET['level']:'';
 $fPay = in_array($_GET['pay'] ?? '', ['UNPAID', 'PARTIAL', 'PAID'], true) ? $_GET['pay'] : '';
 $showVoided = ($_GET['show_voided'] ?? '') === '1';
 $q = trim((string) ($_GET['q'] ?? ''));
+// v64.10: date registered (From–To), when that filter is ticked
+$dFrom = In::date($_GET, 'from'); $dTo = $dFrom !== null ? (In::date($_GET, 'to') ?? $dFrom) : null;
+if ($dFrom !== null && $dTo < $dFrom) [$dFrom, $dTo] = [$dTo, $dFrom];
 $where = ['r.school_year = ?']; $p = [$sy];
 if (!$showVoided && $fState !== 'VOIDED') $where[] = "r.status <> 'CANCELLED'";
 if ($term) { $where[] = 'r.term = ?'; $p[] = $term; }
 if ($fLevel) { $where[] = 'r.year_level = ?'; $p[] = $fLevel; }
 if ($fSection !== '') { $where[] = 'r.section_name = ?'; $p[] = $fSection; }
+if ($dFrom !== null) { $where[] = 'r.created_at >= ? AND r.created_at < DATE_ADD(?, INTERVAL 1 DAY)'; array_push($p, $dFrom, $dTo); }
 if ($fState === 'VOIDED') $where[] = "r.status = 'CANCELLED'";
 if ($fState === 'OPEN') $where[] = "r.status <> 'CANCELLED' AND r.locked_at IS NULL";
 if ($fState === 'DONE') $where[] = "r.status <> 'CANCELLED' AND r.locked_at IS NOT NULL";
@@ -680,7 +684,7 @@ foreach ($rows as $r) {
 }
 $sectionNames = array_values(array_unique(array_map(fn($x) => $x['sectionName'], GS::sections($sy))));
 sort($sectionNames);
-$keep = array_filter(['sy' => $sy, 'term' => $term, 'state' => $fState, 'pay' => $fPay, 'section' => $fSection, 'level' => $fLevel, 'show_voided' => $showVoided ? '1' : '', 'q' => $q], fn($v) => $v !== '');
+$keep = array_filter(['sy' => $sy, 'term' => $term, 'state' => $fState, 'pay' => $fPay, 'section' => $fSection, 'level' => $fLevel, 'show_voided' => $showVoided ? '1' : '', 'q' => $q, 'from' => (string) $dFrom, 'to' => (string) $dTo], fn($v) => $v !== '');
 if(RecordList::applied())$keep['apply']='1';
 $showFilters = ($_GET['filters'] ?? '') !== 'hide';
 $back = url('registration', $keep);
@@ -709,6 +713,7 @@ echo NotificationCenter::banner('registration');
         <div class="or-filters-title">Filter Preferences</div>
         <div class="fp-grid">
           <?= fp_row('School Year', '<select class="form-select form-select-sm" name="sy" aria-label="School year">' . sy_options($sy) . '</select>', true, true) ?>
+          <?= fp_row('Date Registered', date_range_controls($dFrom, $dTo), $dFrom !== null) ?>
           <?= fp_row('Term', '<select class="form-select form-select-sm" name="term" aria-label="Term">' . list_options(TERMS, $term ?: TERMS[0]) . '</select>', $term !== '') ?>
           <?= fp_row('Year Level', '<select class="form-select form-select-sm" name="level" aria-label="Year level">' . list_options(YEAR_LEVELS, $fLevel ?: YEAR_LEVELS[0]) . '</select>', $fLevel !== '') ?>
           <?= fp_row('Section', '<select class="form-select form-select-sm" name="section" aria-label="Section">' . list_options($sectionNames, $fSection) . '</select>', $fSection !== '') ?>

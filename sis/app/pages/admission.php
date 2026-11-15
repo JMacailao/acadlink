@@ -182,6 +182,9 @@ $fType = array_key_exists($_GET['type'] ?? '', Admission::TYPES) ? $_GET['type']
 $fProgram = trim((string) ($_GET['program'] ?? ''));
 $fLevel = in_array($_GET['level'] ?? '', YEAR_LEVELS, true) ? $_GET['level'] : '';
 $q = trim((string) ($_GET['q'] ?? ''));
+// v64.10: date applied (From–To), when that filter is ticked
+$dFrom = In::date($_GET, 'from'); $dTo = $dFrom !== null ? (In::date($_GET, 'to') ?? $dFrom) : null;
+if ($dFrom !== null && $dTo < $dFrom) [$dFrom, $dTo] = [$dTo, $dFrom];
 $regSub = "(SELECT r.id FROM sis_registrations r WHERE r.student_number = a.student_number AND r.status <> 'CANCELLED' ORDER BY r.id DESC LIMIT 1)";
 $where = ['1=1']; $p = [];
 if (!$showVoided && $status !== 'CANCELLED') $where[] = "a.status <> 'CANCELLED'";
@@ -191,6 +194,7 @@ elseif ($status) { $where[] = 'a.status = ?'; $p[] = $status; }
 if ($fType) { $where[] = 'a.applicant_type = ?'; $p[] = $fType; }
 if ($fProgram !== '') { $where[] = 'a.program = ?'; $p[] = $fProgram; }
 if ($fLevel) { $where[] = 'a.year_level = ?'; $p[] = $fLevel; }
+if ($dFrom !== null) { $where[] = 'a.created_at >= ? AND a.created_at < DATE_ADD(?, INTERVAL 1 DAY)'; array_push($p, $dFrom, $dTo); }
 if ($q !== '') { $where[] = '(a.admission_no LIKE ? OR a.last_name LIKE ? OR a.first_name LIKE ? OR a.student_number LIKE ? OR CONCAT(a.last_name, \', \', a.first_name) LIKE ?)'; array_push($p, "%$q%", "%$q%", "%$q%", "%$q%", "%$q%"); }
 // v63.21: the counters count every matching applicant in the database ; v64.9: the list shows one page of them
 $sum = ['PENDING' => 0, 'ADMITTED' => 0, 'REJECTED' => 0, 'CANCELLED' => 0, 'toReg' => 0] + array_fill_keys(array_keys(Admission::TYPES), 0);
@@ -209,7 +213,7 @@ $docsHave = EnrollmentDocs::submittedFor(array_column($rows, 'id')); // v63.21: 
 $years = Db::all('SELECT DISTINCT school_year FROM sis_admissions ORDER BY school_year DESC');
 $years = array_values(array_unique(array_merge([selected_sy()], array_column($years, 'school_year'))));
 $programs = array_column(Db::all("SELECT DISTINCT program FROM sis_admissions WHERE program IS NOT NULL AND program <> '' ORDER BY program"), 'program');
-$keep = array_filter(['sy' => $fSy, 'status' => $status, 'type' => $fType, 'program' => $fProgram, 'level' => $fLevel, 'show_voided' => $showVoided ? '1' : '', 'q' => $q], fn($v) => $v !== '');
+$keep = array_filter(['sy' => $fSy, 'status' => $status, 'type' => $fType, 'program' => $fProgram, 'level' => $fLevel, 'show_voided' => $showVoided ? '1' : '', 'q' => $q, 'from' => (string) $dFrom, 'to' => (string) $dTo], fn($v) => $v !== '');
 if(RecordList::applied())$keep['apply']='1';
 $showFilters = ($_GET['filters'] ?? '') !== 'hide';
 $back = url('admission', $keep);
@@ -253,6 +257,7 @@ echo NotificationCenter::banner('admission');
         <div class="or-filters-title">Filter Preferences</div>
         <div class="fp-grid">
           <?= fp_row('School Year', '<select class="form-select form-select-sm" name="sy" aria-label="School year">' . list_options($years, $fSy ?: $years[0]) . '</select>', $fSy !== '') ?>
+          <?= fp_row('Date Applied', date_range_controls($dFrom, $dTo), $dFrom !== null) ?>
           <?= fp_row('Admission Status', '<select class="form-select form-select-sm" name="status" aria-label="Admission status">' . implode('', array_map(fn($k, $l) => '<option value="' . $k . '"' . ($status === $k ? ' selected' : '') . '>' . $l . '</option>', ['PENDING', 'ADMITTED', 'TOREGISTER', 'REJECTED', 'CANCELLED'], ['Pending', 'Admitted', 'Admitted, not registered', 'Rejected', 'Voided'])) . '</select>', $status !== '') ?>
           <?= fp_row('Show Voided', '<label class="form-check form-switch small"><input class="form-check-input" type="checkbox" name="show_voided" value="1"' . ($showVoided ? ' checked' : '') . '> Include cancelled admissions</label>', $showVoided) ?>
           <?= fp_row('Classification', '<select class="form-select form-select-sm" name="type" aria-label="Student classification">' . implode('', array_map(fn($k, $l) => '<option value="' . $k . '"' . ($fType === $k ? ' selected' : '') . '>' . h($l) . '</option>', array_keys(Admission::TYPES), Admission::TYPES)) . '</select>', $fType !== '') ?>

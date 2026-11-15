@@ -534,3 +534,11 @@ Admission, Registration, Teachers and Subject Fees used to draw every row (1,000
 - Sorting by clicking a column heading sorts the rows of the page shown.
 
 Files: `sis/app/lib/record-list.php` (`RecordList::window`, `slice`, `pagesAttr`, `pagerHtml`), `sis/app/pages/{admission,registration,teachers,subjectfees}.php`, `sis/assets/theme.js`, `sis/assets/blue-theme.css`, `sis/app/views/layout.php`, tests in `sis/tests/v63-fixes.php` and `v63-speed.php`.
+
+## v64.10 — Date filter on Admission and Registration
+
+- **Admission → Date Applied** and **Registration → Date Registered**: a From–To date filter (tick it in the filter panel, like the other filters). Counters, totals and paging follow it.
+- **Cashier** already had **O.R. Date Range** (today by default); it is unchanged.
+- All three have quick choices under the dates: **Today**, **Last 7 days**, **This month** (they fill the dates and tick the filter; press Apply).
+
+Files: `sis/app/views/layout.php` (`date_range_controls`), `sis/app/pages/{admission,registration,cashier}.php`, `sis/assets/app.js`, `sis/assets/blue-theme.css`, test in `sis/tests/v63-fixes.php`.

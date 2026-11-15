@@ -200,6 +200,17 @@ document.querySelectorAll('[data-fp]').forEach(function (box) {
 });
 
 
+// v64.10: date filter quick choices (Today, Last 7 days, This month) fill From and To and turn the filter on
+scope.on(document, 'click', function (e) {
+  var b = e.target.closest('[data-date-preset]'); if (!b) return;
+  var box = b.closest('.fp-ctl') || b.parentElement.parentElement, from = box.querySelector('input[name="from"]'), to = box.querySelector('input[name="to"]'); if (!from || !to) return;
+  var d = new Date(), iso = function (x) { return x.getFullYear() + '-' + String(x.getMonth() + 1).padStart(2, '0') + '-' + String(x.getDate()).padStart(2, '0'); }, end = iso(d);
+  var start = b.dataset.datePreset === '7' ? iso(new Date(d.getFullYear(), d.getMonth(), d.getDate() - 6)) : b.dataset.datePreset === 'month' ? iso(new Date(d.getFullYear(), d.getMonth(), 1)) : end;
+  var tick = b.closest('.fp-row') && b.closest('.fp-row').querySelector('[data-fp]');
+  if (tick && !tick.checked && !tick.disabled) { tick.checked = true; tick.dispatchEvent(new Event('change', { bubbles: true })); }
+  from.disabled = false; to.disabled = false; from.value = start; to.value = end;
+});
+
 // A button that puts a value into a field (e.g. "Full balance" on the payment form)
 scope.on(document,'click', function (e) {
   var b = e.target.closest('[data-fill]'); if (!b) return;

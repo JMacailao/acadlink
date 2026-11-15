@@ -128,6 +128,17 @@ test('v64.9: long lists send one page (15 / 30 / 50 / 100 / All); totals still c
     $_GET = $saveGet; $_COOKIE = $saveCookie;
 });
 
+test('v64.10: Admission and Registration filter by date (From–To); Cashier keeps its O.R. date range; quick choices on all three', function () {
+    $layout = (string) file_get_contents(SIS_ROOT . '/app/views/layout.php');
+    ok(str_contains($layout, 'function date_range_controls(?string $from, ?string $to): string') && substr_count($layout, 'data-date-preset=') === 3, 'date controls');
+    ok(str_contains((string) file_get_contents(SIS_ROOT . '/assets/app.js'), "b.dataset.datePreset === 'month'"), 'quick choices do nothing');
+    $adm = (string) file_get_contents(SIS_ROOT . '/app/pages/admission.php');
+    ok(str_contains($adm, "fp_row('Date Applied', date_range_controls(\$dFrom, \$dTo)") && str_contains($adm, 'a.created_at >= ? AND a.created_at < DATE_ADD(?, INTERVAL 1 DAY)'), 'Admission date filter');
+    $reg = (string) file_get_contents(SIS_ROOT . '/app/pages/registration.php');
+    ok(str_contains($reg, "fp_row('Date Registered', date_range_controls(\$dFrom, \$dTo)") && str_contains($reg, 'r.created_at >= ? AND r.created_at < DATE_ADD(?, INTERVAL 1 DAY)'), 'Registration date filter');
+    ok(str_contains((string) file_get_contents(SIS_ROOT . '/app/pages/cashier.php'), "fp_row('O.R. Date Range', date_range_controls(\$from, \$to), true, true)"), 'Cashier date range');
+});
+
 $server->exec("DROP DATABASE IF EXISTS `$name`");
 echo "$pass passed, $fail failed\n";
 exit($fail ? 1 : 0);
