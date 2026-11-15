@@ -1,4 +1,4 @@
-**Updating to v64.4?** Deploy or upload `sis/app/views/layout.php` and `sis/assets/blue-theme.css`, then press Ctrl+F5. Canteen POS and Finance follow the mockup layout too; nothing else changes.
+**Updating to v64.5?** Deploy or upload `sis/assets/blue-theme.css` and `sis/app/views/layout.php`, then press Ctrl+F5. The page title is no longer shown in the desktop header; nothing else changes.
 
 **Updating to v63.24?** Deploy or upload the changed files (see V63_UPDATE.md) and press Ctrl+F5 once. No database change.
 
