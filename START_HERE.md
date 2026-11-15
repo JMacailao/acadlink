@@ -1,4 +1,4 @@
-**Updating to v64.1?** Deploy or upload the changed files (`js/`, `css/standard-toolbar.css`, `pages/`, `sis/app/views/layout.php`, `sis/assets/standard-toolbar.js`), then press Ctrl+F5. The SIS menu is regrouped (Student Services, Academics) and every toolbar has the same button order; nothing else changes.
+**Updating to v64.2?** Deploy or upload `sis/app/views/layout.php`, `sis/assets/blue-theme.css` and `sis/assets/theme.js` (plus the v64.1 files), then press Ctrl+F5. The SIS follows the design mockup on desktop and phone; nothing else changes.
 
 **Updating to v63.24?** Deploy or upload the changed files (see V63_UPDATE.md) and press Ctrl+F5 once. No database change.
 

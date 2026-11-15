@@ -118,3 +118,97 @@ html[data-system][data-app="lms"], html[data-system][data-app="canteen"], html[d
   html:is([data-app="library"],[data-app="lms"],[data-app="canteen"]) :is(.btn-primary,.btn-success) { background: #EF7D24; border-color: #EF7D24; color: #fff; }
   html:is([data-app="library"],[data-app="lms"],[data-app="canteen"]) :is(.btn-primary,.btn-success):is(:hover,:focus-visible) { background: #D9660F; border-color: #D9660F; }
 }
+
+/* ==========================================================================================================
+   v64.2: closer to the design mockup.
+   Desktop: page title in the header, plain "Overview" heading over Dashboard in the side menu.
+   Phone (under 992 px): logo + page title + bell + avatar; one row of toolbar buttons (icon and word, no boxes);
+   search on its own row; flat bottom menu Home · Admissions · Enrollment · Cashier · More with an orange line
+   over the selected item. "More" opens the full side menu.
+   ========================================================================================================== */
+html[data-system="sis"] body.sis-easy .nav-static-head { font-size: 11.5px; font-weight: 600; letter-spacing: .02em; color: #5F6E82; padding: 14px 12px 6px; }
+html[data-system="sis"] body.sis-easy .sis-appbar-title { font: 700 22px/1.2 var(--font-title, inherit); color: #123D70; letter-spacing: -.01em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
+@media screen and (min-width: 992px) {
+  html[data-system="sis"] body.sis-easy .sis-appbar-title { margin-right: auto; max-width: 34vw; }
+  html[data-system="sis"] body.sis-easy .sis-appbar-search { margin-left: 0; }
+}
+/* flat bottom menu for the SIS and Finance */
+html:is([data-app="sis"],[data-app="finance"]) { --bn-accent: #EF7D24; --bn-ink: #3D5370; --bn-muted: #3D5370; --bn-h: 64px; }
+@media (max-width: 991.98px) {
+  html:is([data-app="sis"],[data-app="finance"]) .al-bnav { border-top: 1px solid #DCE3EC; box-shadow: 0 -2px 10px #12305a12; }
+  html:is([data-app="sis"],[data-app="finance"]) .al-bnav-ind { display: none; }
+  html:is([data-app="sis"],[data-app="finance"]) .al-bnav-item { padding-top: 11px; }
+  html:is([data-app="sis"],[data-app="finance"]) .al-bnav-item.is-up :is(.al-bnav-icon,.al-bnav-label) { transform: none; }
+  html:is([data-app="sis"],[data-app="finance"]) .al-bnav-item.is-up .al-bnav-icon { color: var(--bn-ink); }
+  html:is([data-app="sis"],[data-app="finance"]) .al-bnav-item.active :is(.al-bnav-icon,.al-bnav-label) { color: #EF7D24 !important; }
+  html:is([data-app="sis"],[data-app="finance"]) .al-bnav-item.active::before { content: ""; position: absolute; top: -1px; left: 50%; width: 46px; height: 4px; transform: translateX(-50%); border-radius: 0 0 4px 4px; background: #EF7D24; }
+  html:is([data-app="sis"],[data-app="finance"]) .al-bnav-label { font-size: .8rem; font-weight: 500; }
+}
+@media screen and (max-width: 991.98px) {
+  /* header: logo, page title, bell, avatar (the menu is under "More") */
+  html[data-system="sis"] body.sis-easy:has(.al-bnav) .sis-appbar-menu { display: none !important; }
+  html[data-system="sis"] body.sis-easy:has(.sis-appbar-title) .sis-appbar-brand { margin-right: 0; }
+  html[data-system="sis"] body.sis-easy:has(.sis-appbar-title) .sis-appbar-brand .sis-brand-text { display: none; }
+  html[data-system="sis"] body.sis-easy:has(.sis-appbar-title) .sis-appbar-brand img { width: 34px; height: 34px; }
+  html[data-system="sis"] body.sis-easy .sis-appbar-title { flex: 1 1 auto; margin-right: auto; font-size: 21px; }
+  html[data-system="sis"] body.sis-easy .sis-appbar { border-bottom: 2px solid #EF7D24; }
+  html[data-system="sis"] body.sis-easy .sis-appbar-bell { order: 5; }
+  html[data-system="sis"] body.sis-easy .sis-appbar-user { order: 6; }
+  html[data-system="sis"] body.sis-easy .sis-appbar-user .dropdown-toggle::after { display: none; }
+  html[data-system="sis"] body.sis-easy .sis-appbar-user .sis-user-avatar { width: 40px; height: 40px; background: #235FD6; color: #fff; font-weight: 700; }
+  /* the page heading: no breadcrumbs (the title is in the header); white strip holding the toolbar */
+  html[data-system="sis"] body.sis-easy:not(.bare) #main .sis-page-heading { background: #fff !important; border-bottom: 1px solid #DCE3EC !important; padding: 4px 0 8px !important; }
+  html[data-system="sis"] body.sis-easy .sis-page-heading .breadcrumbs { display: none !important; }
+  html[data-system="sis"] body.sis-easy .sis-page-heading .sis-toolbar-header { border: 0 !important; box-shadow: none !important; background: transparent !important; padding: 0 !important; margin: 0 !important; }
+  /* toolbar: row 1 = actions, scrolls sideways if needed; row 2 = filter, search, refresh, more */
+  html[data-system="sis"] body.sis-easy .std-tb { display: flex; flex-wrap: wrap; gap: 6px 0; border: 0; background: transparent; padding: 0; }
+  html[data-system="sis"] body.sis-easy .std-tb-group-1 { flex: 0 0 100% !important; flex-wrap: nowrap !important; overflow-x: auto; scrollbar-width: none; gap: 2px; padding: 0 10px 0 10px !important; border: 0 !important; }
+  html[data-system="sis"] body.sis-easy .std-tb-group-1::-webkit-scrollbar { display: none; }
+  html[data-system="sis"] body.sis-easy .std-tb-group-1 .std-tb-btn { flex: 0 0 auto; height: 44px; border: 0 !important; background: transparent !important; color: #1F2D40 !important; font-size: 15px; font-weight: 500; gap: 8px; padding: 0 10px; box-shadow: none !important; }
+  html[data-system="sis"] body.sis-easy .std-tb-group-1 .std-tb-btn i { font-size: 18px; color: #3D5370; }
+  html[data-system="sis"] body.sis-easy .std-tb-group-1 .std-tb-btn:disabled { color: #A5B1C2 !important; }
+  html[data-system="sis"] body.sis-easy .std-tb-group-1 .std-tb-btn:disabled i { color: #A5B1C2; }
+  html[data-system="sis"] body.sis-easy .std-tb-group-1 .std-tb-primary:not(:disabled), html[data-system="sis"] body.sis-easy .std-tb-group-1 .std-tb-primary:not(:disabled) i { color: #D9660F !important; }
+  html[data-system="sis"] body.sis-easy .std-tb-group-2 { flex: 0 0 auto !important; padding: 0 0 0 16px !important; border: 0 !important; gap: 4px; }
+  html[data-system="sis"] body.sis-easy .std-tb-group-3 { flex: 1 1 0 !important; flex-wrap: nowrap !important; min-width: 0; padding: 0 16px 0 6px; gap: 4px; }
+  html[data-system="sis"] body.sis-easy :is(.std-tb-group-2,.std-tb-group-3) .std-tb-btn { height: 44px; min-width: 44px; justify-content: center; padding: 0 10px; border-color: #DCE3EC; border-radius: 10px; }
+  html[data-system="sis"] body.sis-easy :is(.std-tb-group-2,.std-tb-group-3) .std-tb-btn .std-tb-label,
+  html[data-system="sis"] body.sis-easy .std-tb-group-3 .std-tb-caret { display: none !important; }
+  html[data-system="sis"] body.sis-easy .std-tb-search { flex: 1 1 auto; min-width: 0 !important; }
+  html[data-system="sis"] body.sis-easy .std-tb-input { height: 44px; font-size: 15px; border-radius: 10px; border-color: #B9C5D4; padding-left: 38px; }
+  html[data-system="sis"] body.sis-easy .std-tb-search > i { left: 14px; font-size: 15px; }
+  html[data-system="sis"] body.sis-easy .std-tb-sep { display: block; height: 22px; align-self: center; }
+}
+@media screen and (max-width: 991.98px) {
+  html[data-system="sis"] body.sis-easy .std-tb-group-1 .std-tb-btn i, html[data-system="sis"] body.sis-easy .std-tb-group-1 .std-tb-primary .bi { background: none !important; border: 0 !important; }
+  html[data-system="sis"] body.sis-easy:not(.bare) #main .sis-page-heading:not(:has(.std-tb)) { display: none !important; }
+  html:is([data-app="sis"],[data-app="finance"]) .al-bnav-item.active .al-bnav-label { font-weight: 600; }
+  html:is([data-app="sis"],[data-app="finance"]) .al-bnav-label { font-size: .76rem; letter-spacing: -.01em; }
+
+  /* record lists as cards: checkbox, name in bold, the other columns on the line under it */
+  html[data-system="sis"] body.sis-easy #main :is(.or-grid-wrap,.sis-record-scroll) th { position: static !important; }
+  html[data-system="sis"] body.sis-easy #main table.sis-select-table { display: block; width: 100% !important; min-width: 0 !important; border: 1px solid #DCE3EC; border-radius: 12px; background: #fff; overflow: hidden; }
+  html[data-system="sis"] body.sis-easy #main table.sis-select-table > thead { display: none; }
+  html[data-system="sis"] body.sis-easy #main table.sis-select-table > :is(tbody,tfoot) { display: block; }
+  html[data-system="sis"] body.sis-easy #main table.sis-select-table > tbody > tr { display: block; position: relative; padding: 12px 16px 12px 56px; border-bottom: 1px solid #DCE3EC; background: #fff; line-height: 1.45; }
+  html[data-system="sis"] body.sis-easy #main table.sis-select-table > tbody > tr:has(> td[colspan]) { padding-left: 16px; }
+  html[data-system="sis"] body.sis-easy #main table.sis-select-table > tbody > tr:is(.is-selected,.selected) { background: #EEF4FE !important; }
+  html[data-system="sis"] body.sis-easy #main table.sis-select-table > tbody > tr > td { display: inline; padding: 0 !important; border: 0 !important; background: transparent !important; font-size: 13.5px; color: #5F6E82; white-space: normal !important; position: static !important; }
+  html[data-system="sis"] body.sis-easy #main table.sis-select-table > tbody > tr > td:not(.sis-select-cell):not(.sis-name-cell):not(.sis-row-icons):not(:empty) ~ td:not(.sis-row-icons):not(.sis-name-cell):not(:empty)::before { content: " · "; color: #A5B1C2; }
+  html[data-system="sis"] body.sis-easy #main table.sis-select-table > tbody > tr > td.sis-select-cell { position: absolute !important; left: 16px; top: 50%; transform: translateY(-50%); display: block; }
+  html[data-system="sis"] body.sis-easy #main table.sis-select-table > tbody > tr > td.sis-select-cell input { width: 22px; height: 22px; margin: 0; }
+  html[data-system="sis"] body.sis-easy #main table.sis-select-table > tbody > tr > td.sis-name-cell { display: block; font-size: 16px; font-weight: 600; color: #1F2D40; margin-bottom: 2px; }
+  html[data-system="sis"] body.sis-easy #main table.sis-select-table > tbody > tr > td.sis-row-icons { display: none; }
+  html[data-system="sis"] body.sis-easy #main table.sis-select-table > tbody > tr > td[colspan] { display: block; text-align: center; color: #5F6E82; }
+  html[data-system="sis"] body.sis-easy #main table.sis-select-table > tbody > tr > td .badge { font-size: 12px; vertical-align: 1px; }
+  html[data-system="sis"] body.sis-easy #main table.sis-select-table > tfoot > tr { display: flex; flex-wrap: wrap; gap: 4px 12px; padding: 10px 16px; background: #F3F6FA; }
+  html[data-system="sis"] body.sis-easy #main table.sis-select-table > tfoot > tr > td { display: inline; border: 0 !important; padding: 0 !important; font-weight: 600; }
+  html[data-system="sis"] body.sis-easy #main table.sis-select-table > tfoot > tr > td:empty { display: none; }
+  html[data-system="sis"] body.sis-easy #main .or-grid-wrap { overflow: visible !important; border: 0 !important; }
+}
+@media screen and (max-width: 991.98px) {
+  /* the name comes first, the other columns follow on the line under it */
+  html[data-system="sis"] body.sis-easy #main table.sis-select-table > tbody > tr:not(:has(> td[colspan])) { display: flex; flex-wrap: wrap; align-items: baseline; }
+  html[data-system="sis"] body.sis-easy #main table.sis-select-table > tbody > tr > td.sis-name-cell { order: -1; flex: 0 0 100%; }
+  html[data-system="sis"] body.sis-easy #main table.sis-select-table > tbody > tr > td:not(.sis-name-cell):not(.sis-select-cell) { white-space: nowrap !important; }
+}

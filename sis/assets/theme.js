@@ -10,7 +10,7 @@
  document.querySelectorAll('#sidebar .nav-group').forEach(group=>{
    const button=group.querySelector('.nav-group-toggle'),items=group.querySelector('.nav-group-items'),key='sis.nav.'+group.dataset.navGroup;
    const set=open=>{button.setAttribute('aria-expanded',String(open));items.hidden=!open;group.classList.toggle('is-collapsed',!open);};
-   set(group.querySelector('.side-link.active')?true:(store.get(key)||((document.body.classList.contains('sis-easy')||['Assessment','Accounting'].includes(group.dataset.navGroup))?'closed':'open'))!=='closed');
+   set(group.querySelector('.side-link.active')?true:(store.get(key)||(['Assessment','Accounting'].includes(group.dataset.navGroup)?'closed':'open'))!=='closed');
    if(!button.dataset.bound){button.dataset.bound='1';button.addEventListener('click',()=>{const open=button.getAttribute('aria-expanded')!=='true';set(open);store.set(key,open?'open':'closed');});}
  });
 
