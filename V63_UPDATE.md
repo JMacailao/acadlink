@@ -425,3 +425,14 @@ How the restore protects you:
   screen and function works as before. Printed documents are unchanged (screen only).
 - Not yet in the new design (next steps): Student Portal, LMS, Canteen POS, Library, Finance, Grading System, sign-in page.
 - Source: `sis/assets/blue-theme.css` (new), `sis/app/views/layout.php`.
+
+### v64 step 2 — the same colours on every system
+
+Every AcadLink system now uses one palette (white, light blue-gray, deep blue `#123D70`, royal blue `#235FD6`, orange `#EF7D24`):
+
+- **Library, LMS, Canteen** — white sidebar, orange selected item, orange main button (`sis/assets/blue-theme.css`).
+- **Grading System** and the **sign-in page** — block at the end of `css/style.css`; the pages now link `style.css?v=64`.
+- **Student Portal** — deep-blue bar with an orange line, orange main button (`portal/assets/portal.css`).
+- **Workspace chooser** — blue tiles, orange Open button (`css/workspace-selector.css`).
+
+Only colours changed: no screen, menu, permission or data was altered. Press Ctrl+F5 once after updating.

@@ -86,3 +86,14 @@ body.portal .alert { border-radius: 12px; }
 body.portal .sched-grid th, body.portal .sched-grid td { vertical-align: top; }
 body.portal .sched-grid td { min-width: 110px; }
 body.portal .sched-cell { background: var(--portal-soft); border-left: 3px solid var(--portal); border-radius: 6px; padding: 4px 6px; margin-bottom: 4px; font-size: .85rem; }
+
+/* v64: the Student Portal uses the AcadLink palette: deep-blue bar, royal-blue links, orange primary action */
+:root, :root[data-theme="light"] {
+  --portal: #235FD6; --portal-strong: #123D70; --portal-soft: #E8F0FD; --portal-line: #DCE3EC; --portal-ink: #1F2D40; --portal-muted: #5F6E82;
+  --portal-bg: #F3F6FA; --portal-card: #ffffff;
+  --bs-primary: #235FD6; --bs-primary-rgb: 35, 95, 214; --bs-link-color: #235FD6; --bs-link-color-rgb: 35, 95, 214; --bs-link-hover-color: #1B4CB0;
+}
+.portal-bar { background: #123D70; box-shadow: none; border-bottom: 3px solid #EF7D24; }
+.portal-nav-link.active { border-bottom-color: #EF7D24; }
+body.portal .btn-primary { --bs-btn-bg: #EF7D24; --bs-btn-border-color: #EF7D24; --bs-btn-hover-bg: #D9660F; --bs-btn-hover-border-color: #D9660F; --bs-btn-active-bg: #C25A0C; --bs-btn-active-border-color: #C25A0C; --bs-btn-disabled-bg: #F2B98A; --bs-btn-disabled-border-color: #F2B98A; }
+body.portal .btn-outline-primary { --bs-btn-color: #235FD6; --bs-btn-border-color: #9DB9EE; --bs-btn-hover-bg: #235FD6; --bs-btn-hover-border-color: #235FD6; --bs-btn-hover-color: #fff; --bs-btn-active-bg: #1B4CB0; --bs-btn-active-border-color: #1B4CB0; }

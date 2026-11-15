@@ -30,7 +30,7 @@ $short = ['GRADING' => 'Grading', 'SIS' => 'Admission', 'LMS' => 'LMS', 'CANTEEN
 $initials = strtoupper(implode('', array_map(fn($w) => mb_substr($w, 0, 1), array_slice(preg_split('/[\s,]+/', trim((string) $a['display_name'])) ?: [], 0, 2))));
 layout_start('Choose a workspace', true);
 ?>
-<link rel="stylesheet" href="../css/workspace-selector.css?v=63.1">
+<link rel="stylesheet" href="../css/workspace-selector.css?v=64">
 <style>
   body { background: #f8fafc; }
   #portalChooser { min-height: 100dvh; max-width: 1180px; margin: 0 auto; padding: 28px 34px 24px !important; }

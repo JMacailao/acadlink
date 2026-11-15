@@ -93,3 +93,28 @@
   html[data-system="sis"] body.sis-easy .dash-total-label .bi, html[data-system="sis"] body.sis-easy .dash-action .bi:first-child { color: var(--al-blue); }
   html[data-system="sis"] body.sis-easy .dash-action { color: var(--al-deep); }
 }
+
+/* v64 step 2: Library, LMS and Canteen use the same palette (they keep their own layouts and pictures). */
+html[data-app="library"] { --lib: #235FD6; --lib-dark: #123D70; --lib-deep: #123D70; --lib-soft: #E8F0FD; --lib-softer: #F3F6FA; --lib-line: #DCE3EC; --lib-ink: #1F2D40; --lib-muted: #5F6E82; --lib-card: #fff; --lib-bg: #F3F6FA; }
+html[data-app="lms"] { --lms: #235FD6; --lms-dark: #123D70; --lms-soft: #E8F0FD; --lms-line: #DCE3EC; --lms-card: #fff; --lms-ink: #1F2D40; --lms-muted: #5F6E82; --lms-bg: #F3F6FA; --lms-side: #fff; }
+html[data-app="canteen"] { --canteen: #EF7D24; --canteen-dark: #D9660F; --canteen-soft: #FDEFE2; --canteen-line: #F6D3B8; }
+:root, html[data-system="portal"], html[data-app="lms"], html[data-app="canteen"], html[data-app="library"],
+html[data-system][data-app="lms"], html[data-system][data-app="canteen"], html[data-system][data-app="library"] { --bn-accent: #EF7D24; }
+@media screen {
+  html:is([data-app="library"],[data-app="lms"]) #sidebar, html:is([data-app="library"],[data-app="lms"]) #sidebar .sidebar-inner { background: #fff !important; }
+  html:is([data-app="library"],[data-app="lms"]) #sidebar { border-right: 1px solid #DCE3EC; }
+  html:is([data-app="library"],[data-app="lms"]) #sidebar .side-link { color: #1F2D40 !important; border-radius: 7px; }
+  html:is([data-app="library"],[data-app="lms"]) #sidebar .side-link i { color: #3D5370 !important; }
+  html:is([data-app="library"],[data-app="lms"]) #sidebar .side-link:hover { background: #F3F6FA !important; }
+  html:is([data-app="library"],[data-app="lms"]) #sidebar .side-link.active { background: #EF7D24 !important; color: #fff !important; box-shadow: none; }
+  html:is([data-app="library"],[data-app="lms"]) #sidebar .side-link.active i { color: #fff !important; }
+  html:is([data-app="library"],[data-app="lms"]) #sidebar .sis-rail-profile { border-top-color: #DCE3EC !important; }
+  html:is([data-app="library"],[data-app="lms"]) #sidebar .sis-rail-profile :is(strong,i) { color: #1F2D40 !important; }
+  html:is([data-app="library"],[data-app="lms"]) #sidebar .sis-rail-profile small { color: #5F6E82 !important; }
+  html:is([data-app="library"],[data-app="lms"]) #sidebar :is(.sis-sidebar-head,.sis-sidebar-head span,.sis-rail-brand,.sis-rail-brand strong,.lms-brand,.lms-brand *,.lib-brand,.lib-brand *) { color: #123D70 !important; }
+  html:is([data-app="library"],[data-app="lms"]) #sidebar .sis-sidebar-head .btn-close { filter: none; }
+  html[data-app="lms"] #sidebar .sis-nav-badge { background: #EF7D24; color: #fff; }
+  html:is([data-app="library"],[data-app="lms"]) .sis-appbar { border-bottom: 2px solid #EF7D24 !important; }
+  html:is([data-app="library"],[data-app="lms"],[data-app="canteen"]) :is(.btn-primary,.btn-success) { background: #EF7D24; border-color: #EF7D24; color: #fff; }
+  html:is([data-app="library"],[data-app="lms"],[data-app="canteen"]) :is(.btn-primary,.btn-success):is(:hover,:focus-visible) { background: #D9660F; border-color: #D9660F; }
+}
