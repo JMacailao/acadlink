@@ -609,3 +609,14 @@ Files: `sis/app/views/assessment-fee-templates.php`, `sis/assets/assessment-fee-
 The list of subject prices is unchanged; the old form and the separate "Default fee" box below it were replaced by this page.
 
 Files: `sis/app/pages/subjectfees.php`, `sis/app/views/subject-pricing.php` (new), `sis/assets/subject-pricing.js` (new), `sis/assets/blue-theme.css`, version tag in `sis/app/views/layout.php`; test in `sis/tests/v63-fixes.php`.
+
+## v65.5 — Class schedules follow the class's teacher
+
+A class (one subject of one section in one term) has its teacher in **Grading assignments** (the curriculum's teacher at first, or another teacher chosen for that section). Class Schedules kept its own teacher, so changing the class's teacher left the schedule, the teacher's **My schedule**, timetables and the clash check on the old teacher. Now:
+1. **Add a class** in Class Schedules fills in the **Teacher** with the teacher of that section's class for the chosen subject (it can still be changed). A schedule saved without a teacher takes the class's teacher.
+2. When a class's teacher changes — in **Grading assignments**, from the **curriculum**, or when the class is created — the schedule entries of that section, subject and term that still have the previous teacher (or no teacher) take the new one. An entry is left as it is when the new teacher already has a class at an overlapping time. Professor X ("needs teacher") shows as no teacher in schedules.
+3. Class Schedules shows **"Grading teacher: …"** beside a schedule whose teacher differs from the class's teacher.
+
+Tested: changing a class's teacher in the Grading System moved its schedule; a clashing entry stayed; only entries with the previous teacher move; a new class fills only empty entries.
+
+Files: `shared/schedule-teacher-sync.php` (new), `shared/curriculum-assignments.php`, `sis/app/lib/grading.php`, `sis/app/lib/schedules.php` (the unused `assignedTeacher` helper removed), `sis/app/pages/schedules.php`, `sis/assets/schedule-teacher.js` (new), `sis/assets/blue-theme.css`, version tag in `sis/app/views/layout.php`; tests in `sis/tests/v63-fixes.php`.

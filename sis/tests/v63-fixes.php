@@ -218,6 +218,41 @@ test('v65.4: Subject pricing page sets several subject prices at once', function
     ok(str_contains($js, 'Add at least one subject.') && str_contains($js, "'beforeunload'"), 'empty save or leaving unsaved is not handled');
 });
 
+test('v65.5: a class schedule follows the teacher of its class (clashes are left as they were)', function () {
+    $pdo = Db::pdo();
+    $doc = fn(string $col, string $id, array $d) => Db::q('INSERT INTO docs (col, id, data) VALUES (?, ?, ?)', [$col, $id, json_encode($d)]);
+    foreach (['t1' => 'Ana One', 't2' => 'Ben Two', 't3' => 'Cara Three'] as $id => $n) $doc('teachers', "st_$id", ['teacherId' => strtoupper($id), 'teacherName' => $n]);
+    $sy = '2031-2032'; $term = '1st Semester';
+    $cls = ['teacherDocId' => 'st_t1', 'teacherName' => 'Ana One', 'subjectId' => 'st_sub1', 'subjectCode' => 'ST1', 'schoolYear' => $sy, 'term' => $term, 'sectionId' => 'st_secA', 'sectionName' => 'ST 1A', 'studentIds' => []];
+    $doc('gradingAssignments', 'st_cls1', $cls);
+    $sched = fn(string $sec, string $sub, ?string $t, string $days, string $a, string $b) => (int) Db::insert('sis_class_schedules', ['school_year' => $sy, 'term' => $term, 'section_doc_id' => $sec, 'subject_doc_id' => $sub, 'teacher_doc_id' => $t, 'days' => $days, 'start_time' => $a, 'end_time' => $b, 'kind' => 'LEC']);
+    $s1 = $sched('st_secA', 'st_sub1', 'st_t1', 'M', '08:00:00', '09:00:00');   // Ben is busy then (s3): stays with Ana
+    $s2 = $sched('st_secA', 'st_sub1', 'st_t1', 'W', '08:00:00', '09:00:00');   // follows to Ben
+    $s3 = $sched('st_secB', 'st_subX', 'st_t2', 'M', '08:30:00', '09:30:00');   // Ben's other class
+    $s4 = $sched('st_secA', 'st_sub1', null, 'F', '08:00:00', '09:00:00');      // no teacher yet: follows
+    $who = fn(int $id) => Db::val('SELECT teacher_doc_id FROM sis_class_schedules WHERE id = ?', [$id]);
+    $svc = new CurriculumAssignments($pdo);
+    ScheduleTeacherSync::$moved = ScheduleTeacherSync::$clashed = 0;
+    $after = array_replace($cls, ['teacherDocId' => 'st_t2', 'teacherName' => 'Ben Two']);
+    Db::tx(fn() => $svc->reassignGrades('st_cls1', $after, $cls));
+    ok($who($s2) === 'st_t2' && $who($s4) === 'st_t2', 'schedules did not follow the new teacher');
+    ok($who($s1) === 'st_t1' && ScheduleTeacherSync::$clashed === 1, 'a schedule that clashes with the new teacher must stay as it was');
+    ok($who($s3) === 'st_t2', 'another section was changed');
+    // a later change moves only the entries that still have the previous teacher
+    Db::tx(fn() => $svc->reassignGrades('st_cls1', array_replace($after, ['teacherDocId' => 'st_t3']), $after));
+    ok($who($s2) === 'st_t3' && $who($s4) === 'st_t3' && $who($s1) === 'st_t1', 'only entries with the previous teacher should move');
+    // Professor X (needs teacher) is no teacher in a schedule
+    Db::tx(fn() => $svc->reassignGrades('st_cls1', array_replace($after, ['teacherDocId' => '_acadlink_professor_x']), array_replace($after, ['teacherDocId' => 'st_t3'])));
+    ok($who($s2) === null, 'Professor X should leave the schedule without a teacher');
+    // a new class gives its teacher to schedules that have none, and never replaces a chosen one
+    $s5 = $sched('st_secA', 'st_sub2', null, 'T', '10:00:00', '11:00:00'); $s6 = $sched('st_secA', 'st_sub2', 'st_t1', 'TH', '10:00:00', '11:00:00');
+    $new = array_replace($cls, ['subjectId' => 'st_sub2', 'teacherDocId' => 'st_t3']);
+    $doc('gradingAssignments', 'st_cls2', $new);
+    Db::tx(fn() => $svc->reassignGrades('st_cls2', $new, null));
+    ok($who($s5) === 'st_t3' && $who($s6) === 'st_t1', 'a new class should fill only empty schedules');
+    ok(ScheduleTeacherSync::classTeachers($pdo, 'st_secA', $sy, $term)['st_sub2']['id'] === 'st_t3', 'class teacher lookup');
+});
+
 $server->exec("DROP DATABASE IF EXISTS `$name`");
 echo "$pass passed, $fail failed\n";
 exit($fail ? 1 : 0);

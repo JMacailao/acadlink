@@ -1,6 +1,7 @@
 <?php
 declare(strict_types=1);
 require_once __DIR__.'/student-history.php';
+require_once __DIR__.'/schedule-teacher-sync.php';
 /** Shared curriculum defaults and non-destructive class generation for SIS and Grading. */
 final class CurriculumAssignments
 {
@@ -97,6 +98,7 @@ final class CurriculumAssignments
             $stamp=['__ts'=>gmdate('Y-m-d\TH:i:s.000\Z')];
             $a=['teacherDocId'=>$tid,'teacherId'=>$t['teacherId']??'','teacherName'=>$t['teacherName'],'subjectId'=>$sid,'subjectCode'=>$sub['subjectCode']??'','subjectName'=>$sub['subjectName']??'','units'=>(float)($sub['units']??0),'schoolYear'=>$section['schoolYear'],'term'=>$term,'yearLevel'=>$section['yearLevel'],'sectionId'=>$sectionId,'sectionName'=>$section['sectionName'],'studentIds'=>$students,'curriculumId'=>$cid,'autoCreated'=>true,'createdAt'=>$stamp,'updatedAt'=>$stamp];
             $this->put('gradingAssignments',$id,$a);$all[$id]=$a;$n++;
+            ScheduleTeacherSync::follow($this->db,$a,null); // v65.5: schedules without a teacher take the class's teacher
         }
         return $n;
     }
@@ -139,6 +141,9 @@ final class CurriculumAssignments
     public function reassignGrades(string $assignmentId,array $assignment,?array $before): void {
         StudentHistoryStore::recordClass($this->db,$assignmentId,$before);
         StudentHistoryStore::recordClass($this->db,$assignmentId,$assignment);
+        // v65.5: the class schedule follows the class's teacher (new class: only schedules without a teacher)
+        if (!$before) ScheduleTeacherSync::follow($this->db,$assignment,null);
+        elseif ((string)($before['teacherDocId']??'')!==(string)($assignment['teacherDocId']??'')) ScheduleTeacherSync::follow($this->db,$assignment,(string)($before['teacherDocId']??''));
         if (!$before || ($before['teacherDocId']??null)===($assignment['teacherDocId']??null)) return;
         $teacher=$this->get('teachers',(string)($assignment['teacherDocId']??''));
         if (!$teacher) throw new RuntimeException('Choose an existing teacher.');

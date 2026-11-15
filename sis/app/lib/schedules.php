@@ -139,6 +139,8 @@ final class Schedules
         if (!GS::get('subjects', $subject)) throw new AppError('Choose the subject.');
         $teacher = (string) ($in['teacher_doc_id'] ?? '');
         if ($teacher !== '' && !GS::get('teachers', $teacher)) throw new AppError('Choose an existing teacher, or leave it empty.');
+        // v65.5: no teacher chosen = the teacher of this class in Grading assignments (if it has one)
+        if ($teacher === '') $teacher = (string) (ScheduleTeacherSync::classTeachers(Db::pdo(), $section, $sy, $term)[$subject]['id'] ?? '');
         $room = (int) ($in['room_id'] ?? 0);
         $roomRow = $room ? Db::one('SELECT * FROM sis_rooms WHERE id = ?', [$room]) : null;
         if ($room && (!$roomRow || !$roomRow['is_active'])) throw new AppError('Choose an active room, or leave it empty.');
@@ -199,15 +201,6 @@ final class Schedules
         return [$done, $skipped];
     }
 
-    /** The teacher record a grading assignment gives for a subject in a section and term (to suggest the teacher). */
-    public static function assignedTeacher(string $section, string $subject, string $sy, string $term): ?string
-    {
-        foreach (Db::all("SELECT data FROM docs WHERE col = 'gradingAssignments'") as $r) {
-            $d = json_decode((string) $r['data'], true) ?: [];
-            if (($d['sectionId'] ?? '') === $section && ($d['subjectId'] ?? '') === $subject && ($d['schoolYear'] ?? '') === $sy && ($d['term'] ?? '') === $term) return (string) ($d['teacherDocId'] ?? '') ?: null;
-        }
-        return null;
-    }
 
     // ------------------------------------------------------------------ registration
 
