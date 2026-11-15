@@ -1,3 +1,5 @@
+**Updating to v63.22?** Deploy or upload the changed files (see V63_UPDATE.md). No database change. Every page asks the database far less.
+
 **Updating to v63.21?** Deploy or upload the changed files (see V63_UPDATE.md), then open any SIS page once as power.admin: the database records schema version 35 and gets one new index. Pages with many photos and the Admission list are much faster.
 
 **Updating to v63.20?** Deploy or upload `sis/app` and `INSTALL.sql`, then open any SIS page: the database and its tables are put on one text rule automatically.

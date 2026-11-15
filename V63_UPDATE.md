@@ -326,3 +326,21 @@ How the restore protects you:
   `canteen/pages/image.php`, `canteen/pages/products.php`, `canteen/pages/pos.php`, `canteen/assets/pos.js`,
   `library/pages/cover.php`, `library/lib/library.php`, `lms/pages/file.php`, `sis/app/lib/student-photo.php`,
   `sis/app/lib/grading.php`, `sis/app/lib/sis.php`, `sis/app/lib/subject-fees.php`, `sis/tests/v63-speed.php` (new).
+
+## v63.22 — Caching: each page asks the database ~85% less
+- **Request cache** (`Db::memo`): a value read again in the same page view is remembered, and **any write drops every
+  remembered value**, so a page never shows something older than what it just saved. Used for the signed-in user,
+  the Grading System lists (`GS::all`, `GS::get`, school years) and the automatic-backup settings.
+- **The signed-in person is looked up once per page** (`Auth::user()`, `CentralAccounts::legacyId()`): it was looked up
+  again for every permission check, about 80 times per page, two queries each.
+- **Sign-in check on every request** stays complete (revoked, expired, idle, signed in elsewhere, password or policy
+  changed), but: the temporary-password expiry is checked only for accounts that still have a temporary password, and
+  "last seen" is written at most once a minute instead of on every request.
+- Measured (queries per page view): SIS dashboard **195 → 30**, Students **169 → 27**, Admission **170 → 33**,
+  LMS **106 → 30**, Library **89 → 32**, Canteen POS **113 → 35**, Grading System home **346 → 274**.
+- Not cached across requests on purpose: sign-in, permissions, balances and grades take effect immediately.
+- Tests: `v63-speed` (7 checks; a repeated read is remembered, a write drops it, the user is rebuilt after a change,
+  revocation still checked on every request).
+- Source: `sis/app/lib/core.php` (`Db::memo`, `Db::changed`, `Db::writes`), `sis/app/lib/auth.php`,
+  `shared/central-accounts.php`, `shared/curriculum-assignments.php`, `sis/app/lib/grading.php`, `sis/app/lib/backup.php`,
+  `sis/tests/v63-speed.php`.

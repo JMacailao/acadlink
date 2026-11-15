@@ -92,8 +92,34 @@ final class Db
         return self::$pdo;
     }
 
+    /** v63.22: number of writes sent in this request; request caches (memo) are dropped whenever it changes. */
+    private static int $writes = 0;
+    private static array $memo = [];
+    private static int $memoAt = -1;
+    private static ?WeakReference $memoDb = null;
+
+    /** A write that did not go through Db::q (another connection wrapper): drop the request caches. */
+    public static function changed(): void { self::$writes++; }
+    /** The write counter (a request cache keyed by it is dropped by any write). */
+    public static function writes(): int { return self::$writes; }
+
+    /**
+     * v63.22: a value read once per request: the same read again returns the remembered value, until any write is sent
+     * (INSERT, UPDATE, DELETE, ALTER … through Db::q, or Db::changed()), which drops every remembered value.
+     */
+    public static function memo(string $key, callable $load): mixed
+    {
+        $pdo = self::pdo();
+        if (self::$memoAt !== self::$writes || self::$memoDb?->get() !== $pdo) { self::$memo = []; self::$memoAt = self::$writes; self::$memoDb = WeakReference::create($pdo); }
+        if (array_key_exists($key, self::$memo)) return self::$memo[$key];
+        $v = $load();
+        if (self::$memoAt === self::$writes) self::$memo[$key] = $v; // not remembered when loading it wrote something
+        return $v;
+    }
+
     public static function q(string $sql, array $params = []): PDOStatement
     {
+        if (!preg_match('/^\s*(SELECT|SHOW|SET|DESCRIBE|EXPLAIN)\b/i', $sql)) self::$writes++;
         $st = self::pdo()->prepare($sql);
         $st->execute($params);
         return $st;

@@ -12,14 +12,18 @@ final class CentralSessionConflict extends RuntimeException {
 final class CentralAccounts
 {
     public const COOKIE = 'ACADLINK_AUTH';
-    private array $accountCache=[], $groupCache=[], $permissionCache=[];
+    private array $accountCache=[], $groupCache=[], $permissionCache=[], $legacyCache=[];
+    /** v63.22: goes up whenever the remembered account data is dropped (a change to accounts), so callers holding a copy reload it. */
+    public int $generation=0;
     private ?array $currentCache=null;
     private bool $currentChecked=false;
     private string $checkedToken='';
     private ?array $policyCache=null;
     public function __construct(private PDO $db, private bool $forceSecureCookie=false) {}
     public function clearCache(): void {
-        $this->accountCache=$this->groupCache=$this->permissionCache=[];
+        $this->accountCache=$this->groupCache=$this->permissionCache=$this->legacyCache=[];
+        $this->generation++;
+        if (class_exists('Db', false)) Db::changed(); // v63.22: SIS request caches see account changes
         $this->currentChecked=false;
         $this->policyCache=null;
     }
@@ -94,8 +98,10 @@ final class CentralAccounts
     }
     public function can(int $id,string $permission): bool { return isset($this->permissions($id)[$permission]); }
     public function legacyId(int $id,string $system): ?string {
+        // v63.22: asked ~80 times per page (every permission check); remembered for this request until an account changes
+        $k=$id."\0".$system; if (array_key_exists($k,$this->legacyCache)) return $this->legacyCache[$k];
         $v=$this->q('SELECT source_key FROM central_legacy_links WHERE account_id=? AND source_system=?',[$id,$system])->fetchColumn();
-        return $v===false ? null : (string)$v;
+        return $this->legacyCache[$k] = $v===false ? null : (string)$v;
     }
     private function token(): string { return (string)($_COOKIE[self::COOKIE] ?? $_SESSION['central_token'] ?? ''); }
     private function cookie(string $token): void {
@@ -108,9 +114,11 @@ final class CentralAccounts
         if ($this->currentChecked && $this->checkedToken===$token) return $this->currentCache;
         $this->checkedToken=$token; $this->currentChecked=true; $this->currentCache=null;
         if (!preg_match('/^[a-f0-9]{64}$/D',$token) || !$this->installed()) return null;
-        $s=$this->one("SELECT s.account_id FROM central_sessions s JOIN central_accounts a ON a.id=s.account_id JOIN central_security_policy p ON p.id=1 WHERE s.token_hash=? AND s.revoked_at IS NULL AND s.expires_at>NOW() AND s.last_seen_at>NOW()-INTERVAL ? MINUTE AND a.status='ACTIVE' AND s.account_auth_version=a.auth_version AND s.policy_version=p.policy_version",[hash('sha256',$token),$this->idleWindow()]);
-        if (!$s || $this->temporaryExpired((int)$s['account_id'])) return null;
-        $this->q('UPDATE central_sessions SET last_seen_at=NOW() WHERE token_hash=?',[hash('sha256',$token)]);
+        $s=$this->one("SELECT s.account_id, a.must_change_password, TIMESTAMPDIFF(SECOND, s.last_seen_at, NOW()) AS seen_ago FROM central_sessions s JOIN central_accounts a ON a.id=s.account_id JOIN central_security_policy p ON p.id=1 WHERE s.token_hash=? AND s.revoked_at IS NULL AND s.expires_at>NOW() AND s.last_seen_at>NOW()-INTERVAL ? MINUTE AND a.status='ACTIVE' AND s.account_auth_version=a.auth_version AND s.policy_version=p.policy_version",[hash('sha256',$token),$this->idleWindow()]);
+        // v63.22: the temporary-password check only for accounts that still have one (it ran two queries on every request)
+        if (!$s || ((int)$s['must_change_password'] && $this->temporaryExpired((int)$s['account_id']))) return null;
+        // v63.22: "last seen" at most once a minute (the sign-in window is hours); it was a write on every request
+        if ((int)$s['seen_ago'] >= 60) $this->q('UPDATE central_sessions SET last_seen_at=NOW() WHERE token_hash=?',[hash('sha256',$token)]);
         $this->currentChecked=true;
         return $this->currentCache=$this->account((int)$s['account_id']);
     }
