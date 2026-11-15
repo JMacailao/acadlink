@@ -42,7 +42,7 @@
       const out = p.track && p.stock <= 0;
       if (out) card.classList.add('is-out');
       const pic = document.createElement('div'); pic.className = 'cpos-pic';
-      if (p.img) { const img = document.createElement('img'); img.src = p.img; img.alt = ''; img.loading = 'lazy'; img.decoding = 'async'; pic.append(img); }
+      if (p.img) { const img = document.createElement('img'); img.loading = 'lazy'; img.decoding = 'async'; img.alt = ''; img.src = p.img; /* v63.23: lazy before src, or every photo downloads at once */ pic.append(img); }
       else { const i = document.createElement('i'); i.className = 'bi bi-' + p.icon; i.setAttribute('aria-hidden', 'true'); pic.append(i); }
       const name = document.createElement('h3'); name.textContent = p.name;
       const foot = document.createElement('div'); foot.className = 'cpos-card-foot';
@@ -85,7 +85,7 @@
       const p = byId.get(l.id);
       const li = document.createElement('li'); li.className = 'cpos-line'; li.dataset.id = l.id;
       const pic = document.createElement('div'); pic.className = 'cpos-pic sm';
-      if (p.img) { const img = document.createElement('img'); img.src = p.img; img.alt = ''; img.loading = 'lazy'; img.decoding = 'async'; pic.append(img); } else pic.innerHTML = '<i class="bi bi-' + p.icon + '" aria-hidden="true"></i>';
+      if (p.img) { const img = document.createElement('img'); img.loading = 'lazy'; img.decoding = 'async'; img.alt = ''; img.src = p.img; /* v63.23: lazy before src, or every photo downloads at once */ pic.append(img); } else pic.innerHTML = '<i class="bi bi-' + p.icon + '" aria-hidden="true"></i>';
       const info = document.createElement('div'); info.className = 'cpos-line-info';
       const n = document.createElement('b'); n.textContent = p.name; const u = document.createElement('small'); u.textContent = peso(p.price);
       info.append(n, u);

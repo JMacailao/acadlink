@@ -344,3 +344,10 @@ How the restore protects you:
 - Source: `sis/app/lib/core.php` (`Db::memo`, `Db::changed`, `Db::writes`), `sis/app/lib/auth.php`,
   `shared/central-accounts.php`, `shared/curriculum-assignments.php`, `sis/app/lib/grading.php`, `sis/app/lib/backup.php`,
   `sis/tests/v63-speed.php`.
+
+## v63.23 — Canteen POS loads only the photos on screen
+- The POS set each product photo's address before marking it "lazy", so the browser downloaded **all** photos at once
+  (measured on the live site: 1,000 photos, 51 s). The photo is now marked lazy first, so only the products on screen
+  load, as you scroll.
+- `v63-speed` checks the order in `canteen/assets/pos.js`.
+- Source: `canteen/assets/pos.js`, `canteen/pages/pos.php`, `sis/tests/v63-speed.php`.
