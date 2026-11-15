@@ -1,4 +1,4 @@
-**Updating to v64.3?** Deploy or upload the changed files (`sis/app/views/layout.php`, `sis/assets/blue-theme.css`, `sis/assets/card-labels.js`, `sis/assets/activity.css`, `sis/assets/navigation.css`, `css/style.css`, `pages/`), then press Ctrl+F5. Library and LMS follow the mockup, and loading shows a blue, green and orange circle in the middle.
+**Updating to v64.4?** Deploy or upload `sis/app/views/layout.php` and `sis/assets/blue-theme.css`, then press Ctrl+F5. Canteen POS and Finance follow the mockup layout too; nothing else changes.
 
 **Updating to v63.24?** Deploy or upload the changed files (see V63_UPDATE.md) and press Ctrl+F5 once. No database change.
 

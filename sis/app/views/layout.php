@@ -49,7 +49,7 @@ const NAV = [
 
 /** v58: the Finance system's menu (finance/index.php). Same item format as NAV. */
 const FINANCE_NAV = [
-    ['dashboard', 'Overview', 'speedometer2', [], '', 'Revenue by source and what needs attention'],
+    ['dashboard', 'Dashboard', 'house-door', [], '', 'Revenue by source and what needs attention'],
     ['notifications', 'Notifications', 'bell', ['admission', 'registration', 'payments.view', 'accounting'], '', 'Special-request approvals'],
     ['cashier', 'Cashier', 'cash-coin', ['payments.view'], 'Cashier', 'Payments and receipts'],
     ['docfees', 'Document Fees', 'file-earmark-text', ['payments.view'], 'Cashier', 'TOR and certificate requests to pay'],
@@ -302,7 +302,7 @@ function layout_start(string $title, bool $bare = false): void
 <?php if ($route === 'assessment' && ($_GET['tab'] ?? '') === 'names'): ?><script src="<?= sis_web() ?>assets/fee-templates.js?v=1" defer></script><?php endif; ?>
 <?php if ($route === 'documents' && ($_GET['tab'] ?? '') === 'settings'): ?><script src="<?= sis_web() ?>assets/documents-template-preview.js?v=1" defer></script><?php endif; ?>
 <?php if ($route === 'admission'): ?><link rel="stylesheet" href="<?= sis_web() ?>assets/admission-form.css?v=1"><?php endif; ?>
-<?php if ($system === 'sis' && !$bare && $u): ?><link rel="stylesheet" href="<?= sis_web() ?>assets/easy-navigation.css?v=6"><link rel="stylesheet" href="<?= sis_web() ?>assets/dashboard.css?v=2"><link rel="stylesheet" href="<?= sis_web() ?>assets/blue-theme.css?v=64.3"><?php endif; // v64: the blue and orange design, loaded last ?>
+<?php if ($system === 'sis' && !$bare && $u): ?><link rel="stylesheet" href="<?= sis_web() ?>assets/easy-navigation.css?v=6"><link rel="stylesheet" href="<?= sis_web() ?>assets/dashboard.css?v=2"><link rel="stylesheet" href="<?= sis_web() ?>assets/blue-theme.css?v=64.4"><?php endif; // v64: the blue and orange design, loaded last ?>
 </head>
 <?php $embedFlashes = $bare && isset($_GET['embed']) ? take_flashes() : []; // pop-up pages show their own messages ?>
 <body data-client-scope="<?= h($u ? acadlink_client_scope(Auth::central()) : '') ?>" class="<?= $bare ? 'bare' : ('sis-theme' . ($system === 'sis' && $u ? ' sis-easy' : '')) ?>" data-user-id="<?= h((string) ($u['id'] ?? 'guest')) ?>" data-route="<?= h((string) $route) ?>"<?= array_filter($embedFlashes, fn($f) => $f[0] === 'success') ? ' data-changed="1"' : '' ?>>
@@ -317,7 +317,7 @@ function layout_start(string $title, bool $bare = false): void
 <header class="sis-appbar d-print-none" aria-label="School workspace">
   <button class="sis-appbar-menu d-lg-none" type="button" data-bs-toggle="offcanvas" data-bs-target="#sidebar" aria-controls="sidebar" aria-label="Open menu"><i class="bi bi-list" aria-hidden="true"></i></button>
   <a href="<?= url('dashboard') ?>" class="sis-appbar-brand"><img src="<?= h($logo ?: '../icons/acadlink-mark.png') ?>" alt=""><span class="sis-brand-text"><span class="sis-brand-name"><?= h(School::brand()) ?></span><span class="sis-brand-sub"><?= $system === 'portal' ? 'Student Portal' : h(app_title()) ?></span></span></a>
-  <?php if ($system === 'sis' && in_array(app_system(), ['SIS', 'FINANCE', 'LIBRARY', 'LMS'], true)): ?><div class="sis-appbar-title" aria-hidden="true"><?= h($title) ?></div><?php endif; ?>
+  <?php if ($system === 'sis' && in_array(app_system(), ['SIS', 'FINANCE', 'LIBRARY', 'LMS', 'CANTEEN'], true)): ?><div class="sis-appbar-title" aria-hidden="true"><?= h($title) ?></div><?php endif; ?>
   <?php if (app_system() === 'CANTEEN'): ?><div class="cpos-appbar-title d-none d-md-flex"><img class="cpos-appbar-logo" src="<?= h($logo ?: '../icons/acadlink-mark.png') ?>" alt="">Canteen POS</div><?php endif; ?>
   <?php if (app_system() === 'LMS'): ?><div class="lms-appbar-title d-none d-md-flex"><?= h(School::brand()) ?> LMS</div><?php endif; ?>
   <?php if (app_system() === 'LIBRARY'): ?><div class="lib-appbar-title d-none d-md-flex"><i class="bi bi-book-half" aria-hidden="true"></i>Library</div><?php endif; ?>
@@ -356,7 +356,7 @@ function layout_start(string $title, bool $bare = false): void
       <div class="sis-sidebar-head d-lg-none"><span><?= h(School::brand()) ?> <?= $system === 'portal' ? 'Portal' : (['FINANCE' => 'Finance', 'CANTEEN' => 'Canteen', 'LIBRARY' => 'Library', 'LMS' => 'LMS'][app_system()] ?? 'SIS') ?></span><button type="button" class="btn-close" data-bs-dismiss="offcanvas" data-bs-target="#sidebar" aria-label="Close menu"></button></div>
       <nav class="pb-2"><?php if(app_system()==='SIS' && in_array(Auth::role(),['TEACHER','STUDENT'],true)): ?><a class="side-link" href="<?= url('history',['tab'=>'grades']) ?>"><i class="bi bi-clock-history"></i><span>History of Grades</span></a><?php if(Auth::role()==='STUDENT'): ?><a class="side-link" href="<?= url('history',['tab'=>'assessments']) ?>"><i class="bi bi-receipt"></i><span>History of Assessments</span></a><?php endif; endif; ?>
       <?php if(app_system()==='SIS' && Auth::can('self')): ?><a class="side-link" href="<?= url(Auth::studentNumber()?'myenrollment':'myadmission') ?>"><i class="bi bi-person-plus"></i><span><?= Auth::studentNumber()?'Apply for Enrollment':'My admission application' ?></span></a><?php endif; ?>
-      <?php if (app_system() === 'SIS'): ?><div class="nav-static-head" aria-hidden="true">Overview</div><?php endif; ?>
+      <?php if (in_array(app_system(), ['SIS', 'FINANCE'], true)): ?><div class="nav-static-head" aria-hidden="true">Overview</div><?php endif; ?>
       <?php $group = ''; $groupN = 0; $here = $route . (isset($_GET['tab']) && is_string($_GET['tab']) ? '&tab=' . $_GET['tab'] : '') . ($route === 'assessment' && isset($_GET['plan']) ? '&plan=list' : '');
       foreach (app_nav() as [$r, $label, $icon, $perms, $g, $hint]):
           $extern = $r[0] === '@' ? substr($r, 1) : ''; // v64.2: a link to another AcadLink system

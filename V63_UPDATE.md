@@ -463,3 +463,10 @@ Files: `sis/app/views/layout.php`, `sis/assets/blue-theme.css`, `sis/assets/them
 - **Loading spinner:** only a spinning circle in the middle of the screen, coloured blue, green and orange, in every system (SIS family and Grading). The words are kept for screen readers. The thin progress line at the top uses the same colours.
 
 Files: `sis/app/views/layout.php`, `sis/assets/blue-theme.css`, `sis/assets/card-labels.js` (new), `sis/assets/activity.css`, `sis/assets/navigation.css`, `css/style.css`, `pages/*.html`. Press Ctrl+F5 once.
+
+## v64.4 — Canteen POS and Finance in the mockup layout
+
+- **Canteen POS:** page title in the header (desktop and phone), flat bottom menu with an orange line over the selected item, no second big title on phones, side margins on phones (content touched the screen edge before). Categories are one row of round chips that scrolls sideways. Products and Sales lists show as cards on phones: small picture, bold name, details with column names ("Price ₱95.00", "Stock 18").
+- **Finance:** "Overview" heading over **Dashboard** in the side menu, like the SIS (the first link was named "Overview"). Title in the header, toolbar, cards and bottom menu were already in place from v64.2.
+
+Files: `sis/app/views/layout.php`, `sis/assets/blue-theme.css`. Press Ctrl+F5 once.
