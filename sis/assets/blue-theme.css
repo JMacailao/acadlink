@@ -1,0 +1,120 @@
+/* v64 AcadLink design: white sidebar and header, light blue-gray page, deep-blue headings and banner, royal-blue icons
+   and links, orange for the selected menu item and the primary action. Loaded last for the staff SIS; screen only. */
+@media screen {
+  html[data-system="sis"] body.sis-easy {
+    --al-white: #FFFFFF; --al-bg: #F3F6FA; --al-deep: #123D70; --al-blue: #235FD6; --al-orange: #EF7D24; --al-orange-strong: #D9660F;
+    --al-line: #DCE3EC; --al-line-strong: #B9C5D4; --al-ink: #1F2D40; --al-muted: #5F6E82; --al-blue-soft: #E8F0FD; --al-orange-soft: #FDEFE2;
+    --sis-accent: var(--al-blue); --sis-accent-strong: #1B4CB0; --sis-accent-soft: var(--al-blue-soft);
+    --sis-rail: var(--al-white); --sis-rail-hover: var(--al-bg);
+    --t-bar: #fff; --t-bar-line: var(--al-line); --t-primary: var(--al-blue); --t-primary-strong: #1B4CB0; --t-group: var(--al-deep);
+    --t-tint: var(--al-blue-soft); --t-hover: #F1F5FB; --t-pill: var(--al-blue); --t-rail: var(--al-white); --t-rail-line: var(--al-line); --t-band: var(--al-bg);
+    --t-zebra: #F8FAFD; --t-line: var(--al-line); --t-line-strong: var(--al-line-strong); --t-ink: var(--al-ink); --t-muted: var(--al-muted); --t-head: var(--al-bg);
+    --ui-primary: var(--al-orange); --ui-primary-hover: var(--al-orange-strong); --bs-primary-rgb: 35,95,214;
+    --bs-link-color: var(--al-blue); --bs-link-color-rgb: 35,95,214; --bs-link-hover-color: #1B4CB0; --bs-link-hover-color-rgb: 27,76,176;
+    --dash-accent: var(--al-deep); --dash-accent-strong: var(--al-deep);
+    background: var(--al-bg);
+  }
+  html[data-system="sis"] body.sis-easy :focus-visible { outline-color: var(--al-blue); }
+
+  /* header: white, with the orange line */
+  html[data-system="sis"] body.sis-easy .sis-appbar { border-bottom: 2px solid var(--al-orange); }
+  html[data-system="sis"] body.sis-easy .sis-appbar :is(.dropdown-toggle,.sis-appbar-menu,.sis-appbar-bell):hover { background: var(--al-bg); color: var(--al-deep); }
+  html[data-system="sis"] body.sis-easy .sis-appbar-bell { color: var(--al-deep); }
+  .sis-easy .sis-user-avatar, html[data-system="sis"] body.sis-easy .user-avatar { background: var(--al-blue); color: #fff; }
+  html[data-system="sis"] body.sis-easy .sis-appbar-search .form-control:focus { border-color: var(--al-blue); box-shadow: 0 0 0 3px #235FD622; }
+  html[data-system="sis"] body.sis-easy .sis-dot { background: var(--al-orange); }
+
+  /* sidebar: white, small outline icons, the selected item in orange */
+  html[data-system="sis"] body.sis-easy .sidebar { --bs-offcanvas-bg: #fff; --bs-offcanvas-color: var(--al-ink); border-right: 1px solid var(--al-line); }
+  html[data-system="sis"] body.sis-easy:not(.bare) .sidebar-inner { background: #fff; color: var(--al-ink); }
+  html[data-system="sis"] body.sis-easy .sidebar-inner > nav { scrollbar-color: var(--al-line-strong) #fff; }
+  .sis-easy .sis-rail-brand { color: var(--al-deep); padding: 16px 18px 14px; border-bottom: 1px solid var(--al-line); margin: 0 12px; padding-inline: 6px; }
+  .sis-easy .sis-rail-brand strong { color: var(--al-deep); font-size: 23px; }
+  .sis-easy .sis-rail-brand small { color: var(--al-muted); }
+  html[data-system="sis"] body.sis-easy .side-link { color: var(--al-ink); min-height: 40px; padding: 8px 12px; font-weight: 500; }
+  html[data-system="sis"] body.sis-easy .side-link i { color: #3D5370; }
+  html[data-system="sis"] body.sis-easy .side-link:hover { background: var(--al-bg); color: var(--al-deep); }
+  html[data-system="sis"] body.sis-easy .side-link.active { background: var(--al-orange); color: #fff; font-weight: 600; }
+  html[data-system="sis"] body.sis-easy .side-link.active i { color: #fff; }
+  html[data-system="sis"] body.sis-easy .nav-group { margin-top: 10px; }
+  html[data-system="sis"] body.sis-easy .nav-group-toggle { color: var(--al-muted); font-size: 12.5px !important; font-weight: 600; min-height: 36px; padding: 8px 12px; }
+  html[data-system="sis"] body.sis-easy .nav-group-toggle .bi:first-child { display: none; }
+  html[data-system="sis"] body.sis-easy .nav-group-toggle:hover { background: var(--al-bg); color: var(--al-deep); }
+  html[data-system="sis"] body.sis-easy .nav-group .side-link { padding-left: 12px; }
+  html[data-system="sis"] body.sis-easy .nav-group-chevron { color: var(--al-muted); }
+  html[data-system="sis"] body.sis-easy #sidebar :focus-visible { outline-color: var(--al-blue); }
+  html[data-system="sis"] body.sis-easy .side-link .badge, html[data-system="sis"] body.sis-easy .side-link .side-count { background: var(--al-orange); color: #fff; }
+  html[data-system="sis"] body.sis-easy .side-link.active .badge { background: #fff; color: var(--al-orange-strong); }
+  .sis-easy .sis-rail-profile { color: var(--al-ink); border-top: 1px solid var(--al-line); }
+  .sis-easy .sis-rail-profile small { color: var(--al-muted); }
+  .sis-easy .sis-rail-profile:hover { background: var(--al-bg); color: var(--al-deep); }
+  html[data-system="sis"] body.sis-easy .sis-sidebar-head { color: var(--al-deep); }
+  html[data-system="sis"] body.sis-easy .sis-sidebar-head .btn-close { filter: none; }
+
+  /* page */
+  html[data-system="sis"] body.sis-easy .app-shell #main, html[data-system="sis"] body.sis-easy .app-shell #main.sis-header-layout { background: var(--al-bg); }
+  html[data-system="sis"] body.sis-easy #main :is(h1,h2,h3,.h5,.h6,.sis-module-title) { color: var(--al-deep); }
+  html[data-system="sis"] body.sis-easy .breadcrumbs a, html[data-system="sis"] body.sis-easy .breadcrumbs .bi { color: var(--al-blue); }
+  html[data-system="sis"] body.sis-easy .breadcrumbs :is(strong,[aria-current]) { color: var(--al-deep); }
+  html[data-system="sis"] body.sis-easy #main a:not(.btn):not(.side-link):not(.nav-link):not(.dash-total):not(.dash-action) { color: var(--al-blue); }
+
+  /* toolbar and buttons: orange is the primary action */
+  html[data-system="sis"] body.sis-easy .std-tb { --std-green: var(--al-deep); --std-green-soft: var(--al-blue-soft); --std-line: var(--al-line-strong); --std-ink: var(--al-ink); }
+  html[data-system="sis"] body.sis-easy .std-tb-btn .bi { color: var(--al-deep); }
+  html[data-system="sis"] body.sis-easy .std-tb-primary, html[data-system="sis"] body.sis-easy .std-tb-primary .bi { background: var(--al-orange); border-color: var(--al-orange); color: #fff; }
+  html[data-system="sis"] body.sis-easy .std-tb-primary:hover:not(:disabled) { background: var(--al-orange-strong); border-color: var(--al-orange-strong); }
+  html[data-system="sis"] body.sis-easy .btn-primary, html[data-system="sis"] body.sis-easy .btn-success {
+    --bs-btn-bg: var(--al-orange); --bs-btn-border-color: var(--al-orange); --bs-btn-hover-bg: var(--al-orange-strong); --bs-btn-hover-border-color: var(--al-orange-strong);
+    --bs-btn-active-bg: #C25A0C; --bs-btn-active-border-color: #C25A0C; --bs-btn-disabled-bg: #F2B98A; --bs-btn-disabled-border-color: #F2B98A; --bs-btn-color: #fff; --bs-btn-hover-color: #fff; --bs-btn-focus-shadow-rgb: 239,125,36; }
+  html[data-system="sis"] body.sis-easy :is(.btn-primary,.btn-success) { background: var(--al-orange); border-color: var(--al-orange); color: #fff; }
+  html[data-system="sis"] body.sis-easy :is(.btn-primary,.btn-success):is(:hover,:focus-visible) { background: var(--al-orange-strong); border-color: var(--al-orange-strong); }
+  html[data-system="sis"] body.sis-easy :is(.btn-primary,.btn-success):disabled { background: #F2B98A; border-color: #F2B98A; }
+  html[data-system="sis"] body.sis-easy .shn-link.active { background: var(--al-orange); color: #fff; }
+  html[data-system="sis"] body.sis-easy .shn-link.active :is(i,b,small) { color: #fff; }
+  html[data-system="sis"] body.sis-easy .btn-outline-primary, html[data-system="sis"] body.sis-easy .btn-outline-success {
+    --bs-btn-color: var(--al-blue); --bs-btn-border-color: #9DB9EE; --bs-btn-hover-bg: var(--al-blue); --bs-btn-hover-border-color: var(--al-blue); --bs-btn-hover-color: #fff; --bs-btn-active-bg: #1B4CB0; --bs-btn-active-border-color: #1B4CB0; }
+  html[data-system="sis"] body.sis-easy #main .nav-pills .nav-link.active { background: var(--al-deep); }
+  html[data-system="sis"] body.sis-easy .sis-list-bar .sis-pager-btn.is-current { background: var(--al-deep); border-color: var(--al-deep); }
+  html[data-system="sis"] body.sis-easy .form-check-input:checked { background-color: var(--al-blue); border-color: var(--al-blue); }
+  html[data-system="sis"] body.sis-easy :is(.form-control,.form-select):focus { border-color: var(--al-blue); box-shadow: 0 0 0 3px #235FD61f; }
+  html[data-system="sis"] body.sis-easy .sis-record-scroll table > thead > tr > th { color: var(--al-deep); }
+  html[data-system="sis"] body.sis-easy .text-success { color: var(--al-blue) !important; }
+  html[data-system="sis"] body.sis-easy .progress-bar, html[data-system="sis"] body.sis-easy .dash-progress-bar > span { background-color: var(--al-orange); }
+
+  /* dashboard: the deep-blue welcome banner with quiet geometric shapes */
+  html[data-system="sis"] body.sis-easy .dash-intro { position: relative; overflow: hidden; background: var(--al-deep); color: #fff; border-radius: 8px; padding: 16px 26px; }
+  html[data-system="sis"] body.sis-easy .dash-intro::before, html[data-system="sis"] body.sis-easy .dash-intro::after { content: ""; position: absolute; right: -60px; top: -150px; width: 460px; height: 460px; background: #1B4F8C; transform: rotate(38deg); opacity: .55; pointer-events: none; }
+  html[data-system="sis"] body.sis-easy .dash-intro::after { right: 170px; top: 30px; opacity: .3; }
+  html[data-system="sis"] body.sis-easy .dash-intro > * { position: relative; z-index: 1; }
+  html[data-system="sis"] body.sis-easy .dash-intro .dash-greeting { color: #fff; font-size: 21px; font-weight: 700; }
+  html[data-system="sis"] body.sis-easy .dash-intro :is(.dash-description,label) { color: #D5E1F2; }
+  html[data-system="sis"] body.sis-easy .dash-intro .btn { background: transparent; border-color: #9FB6D6; color: #fff; }
+  html[data-system="sis"] body.sis-easy .dash-total-value, html[data-system="sis"] body.sis-easy .dash-total strong { color: var(--al-deep); }
+  html[data-system="sis"] body.sis-easy .dash-total-label .bi, html[data-system="sis"] body.sis-easy .dash-action .bi:first-child { color: var(--al-blue); }
+  html[data-system="sis"] body.sis-easy .dash-action { color: var(--al-deep); }
+}
+
+/* v64 step 2: Library, LMS and Canteen use the same palette (they keep their own layouts and pictures). */
+html[data-app="library"] { --lib: #235FD6; --lib-dark: #123D70; --lib-deep: #123D70; --lib-soft: #E8F0FD; --lib-softer: #F3F6FA; --lib-line: #DCE3EC; --lib-ink: #1F2D40; --lib-muted: #5F6E82; --lib-card: #fff; --lib-bg: #F3F6FA; }
+html[data-app="lms"] { --lms: #235FD6; --lms-dark: #123D70; --lms-soft: #E8F0FD; --lms-line: #DCE3EC; --lms-card: #fff; --lms-ink: #1F2D40; --lms-muted: #5F6E82; --lms-bg: #F3F6FA; --lms-side: #fff; }
+html[data-app="canteen"] { --canteen: #EF7D24; --canteen-dark: #D9660F; --canteen-soft: #FDEFE2; --canteen-line: #F6D3B8; }
+:root, html[data-system="portal"], html[data-app="lms"], html[data-app="canteen"], html[data-app="library"],
+html[data-system][data-app="lms"], html[data-system][data-app="canteen"], html[data-system][data-app="library"] { --bn-accent: #EF7D24; }
+@media screen {
+  html:is([data-app="library"],[data-app="lms"]) #sidebar, html:is([data-app="library"],[data-app="lms"]) #sidebar .sidebar-inner { background: #fff !important; }
+  html:is([data-app="library"],[data-app="lms"]) #sidebar { border-right: 1px solid #DCE3EC; }
+  html:is([data-app="library"],[data-app="lms"]) #sidebar .side-link { color: #1F2D40 !important; border-radius: 7px; }
+  html:is([data-app="library"],[data-app="lms"]) #sidebar .side-link i { color: #3D5370 !important; }
+  html:is([data-app="library"],[data-app="lms"]) #sidebar .side-link:hover { background: #F3F6FA !important; }
+  html:is([data-app="library"],[data-app="lms"]) #sidebar .side-link.active { background: #EF7D24 !important; color: #fff !important; box-shadow: none; }
+  html:is([data-app="library"],[data-app="lms"]) #sidebar .side-link.active i { color: #fff !important; }
+  html:is([data-app="library"],[data-app="lms"]) #sidebar .sis-rail-profile { border-top-color: #DCE3EC !important; }
+  html:is([data-app="library"],[data-app="lms"]) #sidebar .sis-rail-profile :is(strong,i) { color: #1F2D40 !important; }
+  html:is([data-app="library"],[data-app="lms"]) #sidebar .sis-rail-profile small { color: #5F6E82 !important; }
+  html:is([data-app="library"],[data-app="lms"]) #sidebar :is(.sis-sidebar-head,.sis-sidebar-head span,.sis-rail-brand,.sis-rail-brand strong,.lms-brand,.lms-brand *,.lib-brand,.lib-brand *) { color: #123D70 !important; }
+  html:is([data-app="library"],[data-app="lms"]) #sidebar .sis-sidebar-head .btn-close { filter: none; }
+  html[data-app="lms"] #sidebar .sis-nav-badge { background: #EF7D24; color: #fff; }
+  html:is([data-app="library"],[data-app="lms"]) .sis-appbar { border-bottom: 2px solid #EF7D24 !important; }
+  html:is([data-app="library"],[data-app="lms"],[data-app="canteen"]) :is(.btn-primary,.btn-success) { background: #EF7D24; border-color: #EF7D24; color: #fff; }
+  html:is([data-app="library"],[data-app="lms"],[data-app="canteen"]) :is(.btn-primary,.btn-success):is(:hover,:focus-visible) { background: #D9660F; border-color: #D9660F; }
+}
