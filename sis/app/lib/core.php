@@ -19,17 +19,43 @@ final class Db
         $dsn = sprintf('mysql:host=%s;port=%d;dbname=%s;charset=utf8mb4',
             $cfg['db_host'], (int)($cfg['db_port'] ?? 3306), $cfg['db_name']);
         if (!empty($cfg['db_socket'])) $dsn = sprintf('mysql:unix_socket=%s;dbname=%s;charset=utf8mb4', $cfg['db_socket'], $cfg['db_name']);
-        self::$pdo = new PDO($dsn, $cfg['db_user'], $cfg['db_pass'], [
-            PDO::ATTR_ERRMODE            => PDO::ERRMODE_EXCEPTION,
-            PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
-            PDO::ATTR_EMULATE_PREPARES   => false,
-            PDO::ATTR_STRINGIFY_FETCHES  => false,
-        ]);
+        // v65: a shared host allows only so many database connections at once (about 20 on the test site). When that
+        // limit or another passing problem stops the connection, wait a moment and try again (up to about 6 seconds)
+        // instead of failing at once: a connection frees up within a fraction of a second. Settings errors (wrong
+        // password, unknown database) fail at once.
+        $started = microtime(true);
+        for ($try = 1; ; $try++) {
+            try {
+                self::$pdo = new PDO($dsn, $cfg['db_user'], $cfg['db_pass'], [
+                    PDO::ATTR_ERRMODE            => PDO::ERRMODE_EXCEPTION,
+                    PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
+                    PDO::ATTR_EMULATE_PREPARES   => false,
+                    PDO::ATTR_STRINGIFY_FETCHES  => false,
+                ]);
+                break;
+            } catch (PDOException $e) {
+                if (!self::connectRetryable($e) || microtime(true) - $started > 6.0) throw $e;
+                usleep(random_int(120000, 350000) + min(4, $try) * 50000);
+            }
+        }
         // v63.19: one text-comparison rule (collation) for the whole connection. Some hosts (e.g. Hostinger) set the server's
         // collation_connection to utf8mb4_unicode_ci while sent values get utf8mb4_general_ci: "Illegal mix of collations".
         self::$pdo->exec('SET NAMES utf8mb4 COLLATE ' . self::COLLATION);
         self::$pdo->exec("SET SESSION sql_mode = 'STRICT_ALL_TABLES,NO_ZERO_DATE,NO_ZERO_IN_DATE,ERROR_FOR_DIVISION_BY_ZERO,NO_ENGINE_SUBSTITUTION'");
         self::$pdo->exec("SET time_zone = '" . date('P') . "'");
+    }
+
+    /** v65: the MySQL error number of a failed connection ("SQLSTATE[HY000] [1203] …"), or 0. */
+    public static function connectErrorCode(PDOException $e): int
+    {
+        $code = (int) ($e->errorInfo[1] ?? 0);
+        if (!$code && preg_match('/\[(\d{4})\]/', $e->getMessage(), $m)) $code = (int) $m[1];
+        return $code;
+    }
+    /** v65: true unless the settings are wrong (access denied, no such database), which waiting cannot fix. */
+    public static function connectRetryable(PDOException $e): bool
+    {
+        return !in_array(self::connectErrorCode($e), [1044, 1045, 1049, 1698, 2005], true);
     }
 
     /** v63.19: the text-comparison rule (collation) of every connection and of AcadLink's tables. */

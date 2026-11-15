@@ -96,8 +96,9 @@ function sis_boot(): void
     } catch (PDOException $e) {
         error_log('SIS DB connect failed: ' . $e->getMessage());
         if (PHP_SAPI === 'cli') { fwrite(STDERR, $e->getMessage() . "\n"); exit(1); }
-        $code = (int) ($e->errorInfo[1] ?? 0); if (!$code && preg_match('/\[(\d{4})\]/', $e->getMessage(), $m)) $code = (int) $m[1];
-        if (in_array($code, [1040, 1203, 1226], true)) { // too many connections: the hosting limit was reached for a moment
+        // v65: anything but a settings error (wrong password, no such database) is a passing problem, such as the host's
+        // limit on connections at once (Db::connect already waited and tried again): say the system is busy
+        if (Db::connectRetryable($e)) {
             http_response_code(503); header('Retry-After: 10'); header('Content-Type: text/html; charset=utf-8');
             $post = ($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST';
             exit('<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">' . ($post ? '' : '<meta http-equiv="refresh" content="10">')

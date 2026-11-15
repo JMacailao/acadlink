@@ -115,9 +115,12 @@ final class Notify
     /** Send queued notification emails. Returns [sent, failed]. */
     public static function flushEmails(int $max = 25): array
     {
-        $sent = 0; $failed = 0;
+        $sent = 0; $failed = 0; $started = microtime(true);
         if (Mailer::missing()) return [0, 0];
         foreach (Db::all("SELECT * FROM sis_notifications WHERE email_status = 'PENDING' ORDER BY id LIMIT " . max(1, min(200, $max))) as $n) {
+            // v65: sending runs after the page was delivered but still holds a PHP worker and a database connection (shared
+            // hosts allow only ~20 at once): stop after ~6 seconds; the rest goes out after the next page view
+            if (PHP_SAPI !== 'cli' && microtime(true) - $started > 6.0) break;
             if (!Db::q("UPDATE sis_notifications SET email_status = 'SENT', emailed_at = NOW() WHERE id = ? AND email_status = 'PENDING'", [$n['id']])->rowCount()) continue; // another request took it
             try {
                 $name = (string) (Db::val('SELECT full_name FROM sis_users WHERE id = ?', [$n['recipient_user_id']]) ?: '');
