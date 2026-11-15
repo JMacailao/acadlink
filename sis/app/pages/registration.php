@@ -709,8 +709,7 @@ echo NotificationCenter::banner('registration');
   </div>
   <div class="or-body">
     <div class="or-main">
-      <form id="regFilters" data-record-filters method="get" class="or-filters d-print-none<?= $showFilters ? '' : ' d-none' ?>"><input type="hidden" name="r" value="registration"><input type="hidden" name="apply" value="1">
-        <div class="or-filters-title">Filter Preferences</div>
+      <form id="regFilters" data-record-filters method="get" class="or-filters al-filters d-print-none<?= $showFilters ? '' : ' d-none' ?>"><input type="hidden" name="r" value="registration"><input type="hidden" name="apply" value="1">
         <div class="fp-grid">
           <?= fp_row('School Year', '<select class="form-select form-select-sm" name="sy" aria-label="School year">' . sy_options($sy) . '</select>', true, true) ?>
           <?= fp_row('Date Registered', date_range_controls($dFrom, $dTo), $dFrom !== null) ?>
