@@ -542,3 +542,9 @@ Files: `sis/app/lib/record-list.php` (`RecordList::window`, `slice`, `pagesAttr`
 - All three have quick choices under the dates: **Today**, **Last 7 days**, **This month** (they fill the dates and tick the filter; press Apply).
 
 Files: `sis/app/views/layout.php` (`date_range_controls`), `sis/app/pages/{admission,registration,cashier}.php`, `sis/assets/app.js`, `sis/assets/blue-theme.css`, test in `sis/tests/v63-fixes.php`.
+
+## v64.11 — Lists reopen on page 1
+
+Found while re-testing v64.9 on the live site: a list remembered the page number with its filters, so after visiting page 5 of Registration, opening Registration again showed page 5. Filters are still remembered; the page number and "All" are not, so a list always reopens on page 1.
+
+File: `sis/app/lib/record-list.php`; test in `sis/tests/v63-fixes.php`.

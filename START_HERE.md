@@ -1,4 +1,4 @@
-**Updating to v64.10?** Hostinger deploys from GitHub; press Ctrl+F5 once. Long lists send one page at a time, and Admission / Registration can be filtered by date; no database step.
+**Updating to v64.11?** Hostinger deploys from GitHub; press Ctrl+F5 once. Lists reopen on page 1; no database step.
 
 **Updating to v63.24?** Deploy or upload the changed files (see V63_UPDATE.md) and press Ctrl+F5 once. No database change.
 

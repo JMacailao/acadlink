@@ -87,7 +87,7 @@ final class RecordList
     public static function key(): string {return self::route().'|'.(string)($_GET['tab']??'').'|'.(self::route()==='bulkaccounts'?(string)($_GET['group']??'TEACHER'):'');}
     public static function context(): array {return array_filter($_GET,fn($v,$k)=>is_string($v)&&!in_array($k,['id','edit','open','editName','new','entry','action','template','embed'],true),ARRAY_FILTER_USE_BOTH);}
     public static function base(): array { $p=[];foreach(['tab','group'] as $k)if(isset($_GET[$k])&&is_string($_GET[$k])&&($k!=='group'||self::route()==='bulkaccounts'))$p[$k]=$_GET[$k];return $p; }
-    public static function remember(): void {if(self::enabled()&&($_SERVER['REQUEST_METHOD']??'GET')==='GET'){if(self::applied())$_SESSION['record_lists'][self::key()]=self::context();else unset($_SESSION['record_lists'][self::key()]);}}
+    public static function remember(): void {if(self::enabled()&&($_SERVER['REQUEST_METHOD']??'GET')==='GET'){if(self::applied())$_SESSION['record_lists'][self::key()]=array_diff_key(self::context(),['pg'=>1,'per'=>1]); /* v64.11: filters are remembered, the page number is not (a list reopens on page 1) */else unset($_SESSION['record_lists'][self::key()]);}}
     public static function redirectParams(string $route,array $params): array {
         if(($route===self::route())&&($_SERVER['REQUEST_METHOD']??'')==='POST'&&self::enabled()&&!isset($params['new'])){
             $saved=$_SESSION['record_lists'][self::key()]??[];if(isset($params['tab'])&&$params['tab']!==($_GET['tab']??''))return $params;unset($saved['r']);return array_replace($saved,$params);

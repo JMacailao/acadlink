@@ -139,6 +139,14 @@ test('v64.10: Admission and Registration filter by date (From–To); Cashier kee
     ok(str_contains((string) file_get_contents(SIS_ROOT . '/app/pages/cashier.php'), "fp_row('O.R. Date Range', date_range_controls(\$from, \$to), true, true)"), 'Cashier date range');
 });
 
+test('v64.11: a list reopens on page 1 (filters are remembered, the page number is not)', function () {
+    $save = [$_GET, $_SESSION['record_lists'] ?? null, $_SERVER['REQUEST_METHOD'] ?? null];
+    $_SERVER['REQUEST_METHOD'] = 'GET'; $_GET = ['r' => 'teachers', 'apply' => '1', 'q' => 'Bulk', 'pg' => '5', 'per' => 'all'];
+    RecordList::remember(); $kept = $_SESSION['record_lists'][RecordList::key()] ?? [];
+    ok(($kept['q'] ?? '') === 'Bulk' && !isset($kept['pg']) && !isset($kept['per']), 'remembered: ' . json_encode($kept));
+    [$_GET, $_SESSION['record_lists'], $_SERVER['REQUEST_METHOD']] = $save;
+});
+
 $server->exec("DROP DATABASE IF EXISTS `$name`");
 echo "$pass passed, $fail failed\n";
 exit($fail ? 1 : 0);
