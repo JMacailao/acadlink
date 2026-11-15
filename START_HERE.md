@@ -1,3 +1,5 @@
+**Updating to v64?** Deploy or upload `sis/assets/blue-theme.css` and `sis/app/views/layout.php`, then press Ctrl+F5. The SIS has the new blue and orange design; nothing else changes.
+
 **Updating to v63.24?** Deploy or upload the changed files (see V63_UPDATE.md) and press Ctrl+F5 once. No database change.
 
 **Updating to v63.23?** Upload `canteen/assets/pos.js` and `canteen/pages/pos.php` (or deploy). The Canteen POS loads only the photos on screen.

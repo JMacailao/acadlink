@@ -414,3 +414,14 @@ How the restore protects you:
 - Source: `sis/app/lib/core.php` (`flash`, `redirect`, `take_flashes`), `sis/app/lib/subject-fees.php`
   (`TemplateFees::doubleCharge`), `sis/app/views/assessment-fee-templates.php`, `sis/assets/theme.js`,
   `sis/app/views/layout.php`, `sis/app/pages/teachers.php`, `sis/app/views/payment-plan-summary.php`, `sis/tests/v63-fixes.php`.
+
+## v64 — New AcadLink design, step 1: the SIS
+- The staff SIS (Admission, Registration, Records, Cashier, Assessment, Fees, Administration, Settings) uses the new palette:
+  white `#FFFFFF` sidebar, cards and panels; light blue-gray `#F3F6FA` page; deep blue `#123D70` headings and welcome
+  banner; royal blue `#235FD6` icons, links and highlights; orange `#EF7D24` for the selected menu item and the primary action.
+- White sidebar with small outline icons, quiet group labels and the selected item in orange; white header with an
+  orange line; orange primary buttons, blue outline buttons; deep-blue dashboard banner with quiet geometric shapes.
+- One new stylesheet, `sis/assets/blue-theme.css`, loaded last; it only overrides colours and a few sizes, so every
+  screen and function works as before. Printed documents are unchanged (screen only).
+- Not yet in the new design (next steps): Student Portal, LMS, Canteen POS, Library, Finance, Grading System, sign-in page.
+- Source: `sis/assets/blue-theme.css` (new), `sis/app/views/layout.php`.
