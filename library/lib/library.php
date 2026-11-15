@@ -287,7 +287,7 @@ final class Library
     /** HTML for a book cover thumbnail: the uploaded cover, or a coloured tile with the title's initials. */
     public static function coverHtml(int $titleId, string $title, ?string $ver, string $size = 'sm'): string
     {
-        if ($ver) return '<img class="lib-cover lib-cover-' . h($size) . '" src="' . h(url('cover', ['id' => $titleId, 'v' => $ver])) . '" alt="" loading="lazy">';
+        if ($ver) return '<img class="lib-cover lib-cover-' . h($size) . '" src="' . h(url('cover', ['id' => $titleId, 'v' => $ver])) . '" alt="" loading="lazy" decoding="async">';
         $words = array_values(array_filter(preg_split('/\s+/', preg_replace('/[^\p{L}\p{N}\s]/u', '', $title)) ?: []));
         $ini = mb_strtoupper(mb_substr($words[0] ?? '?', 0, 1) . mb_substr($words[1] ?? '', 0, 1));
         $hue = hexdec(substr(md5($title), 0, 2)) * 360 / 255;
@@ -694,7 +694,7 @@ final class Library
     /** Fines collected between two datetimes (Finance → Collections by source). */
     public static function collected(string $from, string $toExclusive): array
     {
-        if (!Db::val("SELECT 1 FROM information_schema.tables WHERE table_schema = DATABASE() AND table_name = 'library_fine_payments'")) return [0, 0];
+        if (!Db::tableExists('library_fine_payments')) return [0, 0];
         $r = Db::one("SELECT COALESCE(SUM(amount_cents),0) t, COUNT(*) n FROM library_fine_payments WHERE status = 'POSTED' AND paid_at >= ? AND paid_at < ?", [$from, $toExclusive]);
         return [(int) $r['t'], (int) $r['n']];
     }

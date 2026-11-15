@@ -300,3 +300,104 @@ How the restore protects you:
 - Source: `shared/two-step.php` (new), `shared/central-accounts.php`, `sis/app/lib/auth.php`, `sis/app/pages/login.php`,
   `sis/app/pages/profile.php`, `sis/assets/two-step.js` (new), `vendor/qrcode-generator-2.0.4` (new, MIT), `api/lib.php`,
   `sis/app/lib/system-check.php`, `sis/bin/reset-two-step.php` (new), `sis/tests/v63-security.php`.
+## v63.19 — Works on Hostinger databases ("Illegal mix of collations")
+- **Fixed:** on Hostinger, My profile (and so every page for a Power User without an email) answered
+  **500 / a blank page**. The log said `SQLSTATE[HY000]: General error: 1267 Illegal mix of collations
+  (utf8mb4_general_ci,COERCIBLE) and (utf8mb4_unicode_ci,COERCIBLE)`. Hostinger's database server sets the
+  connection's text-comparison rule (collation) to `utf8mb4_unicode_ci`, while values sent with a query get
+  `utf8mb4_general_ci`, so a comparison like `? = 'STUDENT'` is refused.
+- Every connection (SIS, Student Portal, LMS, Canteen, Library, Finance and the Grading System API) now starts with
+  `SET NAMES utf8mb4 COLLATE utf8mb4_unicode_ci`, the rule AcadLink's tables use. Nothing to change in `api/config.php`
+  or the database.
+- Source: `sis/app/lib/core.php`, `api/lib.php`.
+
+## v63.20 — "Illegal mix of collations" can't come back
+- **One text rule everywhere.** On upgrade (the first page after an update, once per session), AcadLink sets the
+  database's default and every table to `utf8mb4_unicode_ci`. Tables a host or an older version created with another
+  rule (e.g. `utf8mb4_general_ci`, or `utf8mb4_uca1400_ai_ci` on newer MariaDB) are converted; their data is kept.
+  Binary tables (the Grading System's `docs`, `accounts`, `login_attempts`, restore jobs) and ascii token columns are
+  left as they are on purpose. Anything that could not be converted is written to the PHP error log.
+- **Every table names its rule.** The few `CREATE TABLE` statements that relied on the server's default
+  (`sis_payment_plans`, `sis_registration_plans`, `sis_payment_plan_events`, `sis_document_counters`, `sis_form_once`)
+  now say `COLLATE=utf8mb4_unicode_ci`, in `INSTALL.sql` too.
+- **New test suite `v63-db-collation`** (20 suites now), run on every pull request:
+  - builds a database the way Hostinger does: a `utf8mb4_general_ci` database, a user without SUPER, and a server
+    that forces `collation_connection = utf8mb4_unicode_ci`. It first proves that this setting reproduces the error;
+  - on it: setup password, sign-in, permissions, and accounts of every group;
+  - fails if any `CREATE TABLE` in the code doesn't name its collation, or any database connection doesn't start with
+    `SET NAMES utf8mb4 COLLATE …`.
+  Checked: removing either fix makes the suite fail.
+- Source: `sis/app/lib/core.php` (`Db::alignCollation`, `Db::COLLATION`), `sis/app/bootstrap.php`,
+  `sis/app/lib/documents.php`, `INSTALL.sql`, `sis/database/schema.sql`, `sis/database/demo_bulk_seed.sql`,
+  `sis/tests/v63-db-collation.php` (new), `sis/tests/all.sh`.
+
+## v63.21 — Faster on Hostinger (measured on a school of 3,000 students)
+- **Product photos, student photos, book covers and LMS files** (`BinaryResponse`, `sis/app/lib/binary-response.php`):
+  - the session lock is released before the file is read, so the photos of a list download **side by side** instead of
+    one after another (Canteen Products took **73 s** for 1,000 photos);
+  - the after-page jobs (notification scan, email queue, automatic backup) no longer run for every photo;
+  - photos are kept by the browser for a year when the address names that exact picture (a student photo id or LMS file
+    id never changes; product photos and covers carry a `?v=` tag of the picture), and a known copy gets "304 Not
+    Modified"; no session cookie or 1981 "Expires" header on files;
+  - lists load photos only when they scroll into view (`loading="lazy"`): Canteen Products, POS, Library, student photos.
+- **Admission list** (was **10 s, 20,159 queries** for 3,000 applicants → **1.2 s, 164 queries** on the same data):
+  - the document checklists of all applicants are read in one query (it re-read the requirement list and 8 counts for
+    every row); the requirement list is read once per request;
+  - the counters count every matching applicant in the database. The list still shows the newest 2,000 and now says
+    so ("Showing the newest 2,000 of 3,000 matching applicants…"), with search and filters to find the others;
+  - new index `k_sis_reg_student` on `sis_registrations (student_number, id)` for "already registered?" per row.
+- **Every sign-in and every new visitor**: `sis_upgrade()` stores `schema_version` (now **35**) in `sis_settings`; a new
+  session reads that one value instead of ~50 information_schema checks (**173 → 11 queries** for a new visitor).
+  Raise `SIS_SCHEMA_VERSION` (sis/app/bootstrap.php) whenever the upgrade gains a step.
+- **Every page**: the table checks that ran on each request (`central_sessions`, temporary passwords, `docs`, Library
+  fines, subject fees) ask the table itself (`Db::tableExists`, a zero-row read) instead of information_schema, which is
+  slow on shared hosting; the Grading System home went from 72 such checks to 0.
+- New test suite `v63-speed` (21 suites).
+- Source: `sis/app/lib/binary-response.php` (new), `sis/app/bootstrap.php`, `sis/app/lib/core.php`,
+  `shared/central-accounts.php`, `sis/app/lib/enrollment-docs.php`, `sis/app/pages/admission.php`, `sis/app/pages/photo.php`,
+  `canteen/pages/image.php`, `canteen/pages/products.php`, `canteen/pages/pos.php`, `canteen/assets/pos.js`,
+  `library/pages/cover.php`, `library/lib/library.php`, `lms/pages/file.php`, `sis/app/lib/student-photo.php`,
+  `sis/app/lib/grading.php`, `sis/app/lib/sis.php`, `sis/app/lib/subject-fees.php`, `sis/tests/v63-speed.php` (new).
+
+## v63.22 — Caching: each page asks the database ~85% less
+- **Request cache** (`Db::memo`): a value read again in the same page view is remembered, and **any write drops every
+  remembered value**, so a page never shows something older than what it just saved. Used for the signed-in user,
+  the Grading System lists (`GS::all`, `GS::get`, school years) and the automatic-backup settings.
+- **The signed-in person is looked up once per page** (`Auth::user()`, `CentralAccounts::legacyId()`): it was looked up
+  again for every permission check, about 80 times per page, two queries each.
+- **Sign-in check on every request** stays complete (revoked, expired, idle, signed in elsewhere, password or policy
+  changed), but: the temporary-password expiry is checked only for accounts that still have a temporary password, and
+  "last seen" is written at most once a minute instead of on every request.
+- Measured (queries per page view): SIS dashboard **195 → 30**, Students **169 → 27**, Admission **170 → 33**,
+  LMS **106 → 30**, Library **89 → 32**, Canteen POS **113 → 35**, Grading System home **346 → 274**.
+- Not cached across requests on purpose: sign-in, permissions, balances and grades take effect immediately.
+- Tests: `v63-speed` (7 checks; a repeated read is remembered, a write drops it, the user is rebuilt after a change,
+  revocation still checked on every request).
+- Source: `sis/app/lib/core.php` (`Db::memo`, `Db::changed`, `Db::writes`), `sis/app/lib/auth.php`,
+  `shared/central-accounts.php`, `shared/curriculum-assignments.php`, `sis/app/lib/grading.php`, `sis/app/lib/backup.php`,
+  `sis/tests/v63-speed.php`.
+
+## v63.23 — Canteen POS loads only the photos on screen
+- The POS set each product photo's address before marking it "lazy", so the browser downloaded **all** photos at once
+  (measured on the live site: 1,000 photos, 51 s). The photo is now marked lazy first, so only the products on screen
+  load, as you scroll.
+- `v63-speed` checks the order in `canteen/assets/pos.js`.
+- Source: `canteen/assets/pos.js`, `canteen/pages/pos.php`, `sis/tests/v63-speed.php`.
+
+## v63.24 — Fixes found while filling the live test site
+- **A "saved" message showed in another tab** of the same account (e.g. "Teacher saved" on the Sections tab). A message
+  now belongs to the page its save goes to (`redirect()` addresses it) and waits for that page; a message nobody sees
+  is dropped after two minutes. Messages without a page (pages that redirect themselves) behave as before.
+- **Tuition charged twice: now flagged.** A fee template that charges a fee **per unit** and also the subjects' own
+  prices in the same category (e.g. "Tuition Fee per unit" plus each subject's tuition price) shows a warning on the
+  template: students would pay both. Untick one of them in Manage fees.
+- **Subjects tab** counter said "of 10 curriculums"; it now says "subjects".
+- **Teachers list** showed two "Actions" columns; it keeps its own menu only.
+- **Payment plan** line said "Overdue: ₱0.00", easy to read as "overdue"; it now says "Nothing overdue" (or shows the
+  overdue amount in red).
+- Checked and not a bug: Canteen and Library staff with a temporary password ARE asked to change it (tested on the live
+  site with a new Canteen cashier account).
+- New test suite `v63-fixes` (22 suites).
+- Source: `sis/app/lib/core.php` (`flash`, `redirect`, `take_flashes`), `sis/app/lib/subject-fees.php`
+  (`TemplateFees::doubleCharge`), `sis/app/views/assessment-fee-templates.php`, `sis/assets/theme.js`,
+  `sis/app/views/layout.php`, `sis/app/pages/teachers.php`, `sis/app/views/payment-plan-summary.php`, `sis/tests/v63-fixes.php`.

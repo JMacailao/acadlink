@@ -33,7 +33,7 @@ DROP TEMPORARY TABLE IF EXISTS demo_bulk_curriculum_map;
 
 CREATE TEMPORARY TABLE demo_bulk_numbers (
   n INT UNSIGNED NOT NULL PRIMARY KEY
-) ENGINE=InnoDB;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 INSERT INTO demo_bulk_numbers (n)
 SELECT d0.digit + (10 * d1.digit) + (100 * d2.digit) + (1000 * d3.digit) + 1
@@ -51,7 +51,7 @@ CREATE TEMPORARY TABLE demo_bulk_section_map (
   year_level       VARCHAR(20) NOT NULL,
   section_id       VARCHAR(191) NOT NULL,
   section_name     VARCHAR(80) NOT NULL
-) ENGINE=InnoDB;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 INSERT INTO demo_bulk_section_map
   (section_no, program_no, year_no, section_in_year, program, year_level, section_id, section_name)
@@ -83,7 +83,7 @@ CREATE TEMPORARY TABLE demo_bulk_student_map (
   student_doc_id   VARCHAR(191) NOT NULL,
   registration_no  VARCHAR(20) NOT NULL,
   KEY k_demo_section (section_no)
-) ENGINE=InnoDB;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 INSERT INTO demo_bulk_student_map
   (student_no, program_no, year_no, section_no, program, year_level, section_id, section_name, student_id, student_doc_id, registration_no)
@@ -112,7 +112,7 @@ CREATE TEMPORARY TABLE demo_bulk_curriculum_map (
   year_level     VARCHAR(20) NOT NULL,
   curriculum_id  VARCHAR(191) NOT NULL,
   subject_start  SMALLINT UNSIGNED NOT NULL
-) ENGINE=InnoDB;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 INSERT INTO demo_bulk_curriculum_map (group_no, program_no, year_no, program, year_level, curriculum_id, subject_start)
 SELECT x.group_no, x.program_no, x.year_no,

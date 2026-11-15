@@ -4,7 +4,7 @@ $planSummary=PaymentPlans::schedule($r);
 if($planSummary): $terms=$planSummary['saved']['terms']; ?>
 <section class="form-section payment-plan-summary" aria-label="Payment plan">
 <h2 class="h6">Payment plan · <?= h($terms['name']) ?></h2>
-<p class="small">Amount due now: <strong>₱<?= Money::fmt($planSummary['due']) ?></strong> · Overdue: ₱<?= Money::fmt($planSummary['overdue']) ?> · Next unpaid due date: <?= h($planSummary['next']??'Fully paid') ?></p>
+<p class="small">Amount due now: <strong>₱<?= Money::fmt($planSummary['due']) ?></strong><?= $planSummary['overdue'] ? ' · <span class="text-danger">Overdue: ₱' . Money::fmt($planSummary['overdue']) . '</span>' : ' · Nothing overdue' ?> · Next unpaid due date: <?= h($planSummary['next']??'Fully paid') ?></p><?php /* v63.24: "Overdue: ₱0.00" read as "overdue" */ ?>
 <?php if($terms['kind']==='FULL'&&$planSummary['offer']): ?>
 <p class="small <?= (int)$planSummary['saved']['earned_cents']?'text-success':'text-muted' ?>"><?php if((int)$planSummary['saved']['earned_cents']): ?>Earned full-payment discount: ₱<?= Money::fmt((int)$planSummary['saved']['earned_cents']) ?>.<?php elseif(!$planSummary['expired']): ?>Conditional offer: pay ₱<?= Money::fmt(max(0,Registration::balance($r)-$planSummary['offer'])) ?> more by <?= h($terms['steps'][0]['due']) ?> to earn a ₱<?= Money::fmt($planSummary['offer']) ?> discount. Regular balance applies until qualified.<?php else: ?>Full-payment offer expired without qualifying payment. Regular balance applies.<?php endif; ?></p>
 <?php endif; ?>

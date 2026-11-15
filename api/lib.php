@@ -111,6 +111,8 @@ function pdo(): PDO {
     if (in_array($n, [1040, 1203, 1226], true)) fail("unavailable", "The school's server is busy right now. Nothing was saved. Wait a few seconds and try again.");
     fail("unavailable", "Can't connect to the MySQL database: " . dbConnectProblem($e) . " Check the details in api/config.php.");
   }
+  // v63.19: one text-comparison rule (collation) for the connection, as in the SIS (sis/app/lib/core.php)
+  $pdo->exec('SET NAMES utf8mb4 COLLATE utf8mb4_unicode_ci');
   // Both workspaces must compare central session timestamps in the school timezone.
   date_default_timezone_set($c['timezone'] ?? 'Asia/Manila');
   $pdo->exec("SET time_zone = " . $pdo->quote(date('P')));

@@ -1,3 +1,14 @@
+**Updating to v63.24?** Deploy or upload the changed files (see V63_UPDATE.md) and press Ctrl+F5 once. No database change.
+
+**Updating to v63.23?** Upload `canteen/assets/pos.js` and `canteen/pages/pos.php` (or deploy). The Canteen POS loads only the photos on screen.
+
+**Updating to v63.22?** Deploy or upload the changed files (see V63_UPDATE.md). No database change. Every page asks the database far less.
+
+**Updating to v63.21?** Deploy or upload the changed files (see V63_UPDATE.md), then open any SIS page once as power.admin: the database records schema version 35 and gets one new index. Pages with many photos and the Admission list are much faster.
+
+**Updating to v63.20?** Deploy or upload `sis/app` and `INSTALL.sql`, then open any SIS page: the database and its tables are put on one text rule automatically.
+
+**Updating to v63.19?** Upload `sis/app/lib/core.php` and `api/lib.php` (or deploy from GitHub). Fixes the 500 / blank page on Hostinger ("Illegal mix of collations").
 **Updating to v63.17?** Upload the files (including `shared`, `api` and `vendor`), press Ctrl+F5, then as power.admin open **My profile → Two-step sign-in** and turn it on. Keep the recovery codes somewhere safe.
 
 **Updating to v63.16?** Upload the files, press Ctrl+F5, then open **Settings → System Check** and fix anything marked Problem. Its checklist covers every upload from now on.

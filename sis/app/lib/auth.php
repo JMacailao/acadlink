@@ -66,10 +66,22 @@ final class Auth
         $a=self::central()->current();
         return $a ? (int)self::central()->legacyId((int)$a['id'],'SIS') ?: null : null;
     }
+    /** v63.22: the signed-in user is built once per request (it was rebuilt ~80 times per page, two queries each). */
+    private static ?string $userKey = null;
+    private static ?WeakReference $userDb = null;
+
     public static function user(): ?array
     {
         $id=self::id();
         if (!$id) return null;
+        $key=$id.'|'.(self::$actingAs ?? '').'|'.(self::central()->current()['id'] ?? '').'|'.self::central()->generation.'|'.Db::writes();
+        if (self::$user !== null && self::$userKey === $key && self::$userDb?->get() === Db::pdo()) return self::$user;
+        self::$user = self::buildUser($id); self::$userKey = self::$user === null ? null : $key; self::$userDb = WeakReference::create(Db::pdo());
+        return self::$user;
+    }
+
+    private static function buildUser(int $id): ?array
+    {
         $u=Db::one('SELECT * FROM sis_users WHERE id=?',[$id]);
         if (!$u) return null;
         if (!(PHP_SAPI==='cli' && self::$actingAs!==null)) {
