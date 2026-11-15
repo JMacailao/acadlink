@@ -264,7 +264,7 @@ final class SubjectFees
         $ids = array_values(array_unique(array_column($subjects, 'subject_doc_id')));
         // Before the v56 upgrade has run (tick table missing): every Fee Management price applies, as in v55.
         static $ticksReady = null;
-        $ticksReady ??= (bool) Db::val("SELECT 1 FROM information_schema.tables WHERE table_schema = DATABASE() AND table_name = 'sis_assessment_name_subject_fees'");
+        $ticksReady ??= Db::tableExists('sis_assessment_name_subject_fees');
         $scope = $nameId === null || !$ticksReady
             ? ($nameId === null ? 'f.assessment_name_id IS NULL' : '(f.assessment_name_id IS NULL OR f.assessment_name_id = ?)')
             : '(f.assessment_name_id = ? OR (f.assessment_name_id IS NULL AND EXISTS (SELECT 1 FROM sis_assessment_name_subject_fees t WHERE t.subject_fee_id = f.id AND t.assessment_name_id = ?)))';

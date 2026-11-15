@@ -23,7 +23,7 @@ final class GS
     public static function available(): bool
     {
         static $ok = null;
-        return $ok ??= (bool) Db::val("SELECT COUNT(*) FROM information_schema.tables WHERE table_schema = DATABASE() AND table_name = 'docs'");
+        return $ok ??= Db::tableExists('docs');
     }
 
     /** A new record id like the grading system's (20 letters and digits). */
@@ -278,7 +278,7 @@ final class GS
         Db::q('UPDATE central_person_links SET student_number = ? WHERE student_doc_id = ? OR (student_doc_id IS NULL AND student_number = ?)', [$new, $docId, $old]);
         Db::q('UPDATE sis_portal_enrollments SET student_number = ? WHERE student_doc_id = ? OR student_number = ?', [$new, $docId, $old]);
         foreach (['sis_admissions', 'sis_balance_cases', 'sis_eligibility_holds', 'sis_users'] as $t)
-            if (Db::val('SELECT 1 FROM information_schema.tables WHERE table_schema = DATABASE() AND table_name = ?', [$t])) Db::q("UPDATE $t SET student_number = ? WHERE student_number = ?", [$new, $old]);
+            if (Db::tableExists($t)) Db::q("UPDATE $t SET student_number = ? WHERE student_number = ?", [$new, $old]);
     }
 
     public static function isTermComplete(string $studentDocId, string $schoolYear, string $term): bool

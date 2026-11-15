@@ -298,3 +298,31 @@ How the restore protects you:
 - Source: `sis/app/lib/core.php` (`Db::alignCollation`, `Db::COLLATION`), `sis/app/bootstrap.php`,
   `sis/app/lib/documents.php`, `INSTALL.sql`, `sis/database/schema.sql`, `sis/database/demo_bulk_seed.sql`,
   `sis/tests/v63-db-collation.php` (new), `sis/tests/all.sh`.
+
+## v63.21 — Faster on Hostinger (measured on a school of 3,000 students)
+- **Product photos, student photos, book covers and LMS files** (`BinaryResponse`, `sis/app/lib/binary-response.php`):
+  - the session lock is released before the file is read, so the photos of a list download **side by side** instead of
+    one after another (Canteen Products took **73 s** for 1,000 photos);
+  - the after-page jobs (notification scan, email queue, automatic backup) no longer run for every photo;
+  - photos are kept by the browser for a year when the address names that exact picture (a student photo id or LMS file
+    id never changes; product photos and covers carry a `?v=` tag of the picture), and a known copy gets "304 Not
+    Modified"; no session cookie or 1981 "Expires" header on files;
+  - lists load photos only when they scroll into view (`loading="lazy"`): Canteen Products, POS, Library, student photos.
+- **Admission list** (was **10 s, 20,159 queries** for 3,000 applicants → **1.2 s, 164 queries** on the same data):
+  - the document checklists of all applicants are read in one query (it re-read the requirement list and 8 counts for
+    every row); the requirement list is read once per request;
+  - the counters count every matching applicant in the database. The list still shows the newest 2,000 and now says
+    so ("Showing the newest 2,000 of 3,000 matching applicants…"), with search and filters to find the others;
+  - new index `k_sis_reg_student` on `sis_registrations (student_number, id)` for "already registered?" per row.
+- **Every sign-in and every new visitor**: `sis_upgrade()` stores `schema_version` (now **35**) in `sis_settings`; a new
+  session reads that one value instead of ~50 information_schema checks (**173 → 11 queries** for a new visitor).
+  Raise `SIS_SCHEMA_VERSION` (sis/app/bootstrap.php) whenever the upgrade gains a step.
+- **Every page**: the table checks that ran on each request (`central_sessions`, temporary passwords, `docs`, Library
+  fines, subject fees) ask the table itself (`Db::tableExists`, a zero-row read) instead of information_schema, which is
+  slow on shared hosting; the Grading System home went from 72 such checks to 0.
+- New test suite `v63-speed` (21 suites).
+- Source: `sis/app/lib/binary-response.php` (new), `sis/app/bootstrap.php`, `sis/app/lib/core.php`,
+  `shared/central-accounts.php`, `sis/app/lib/enrollment-docs.php`, `sis/app/pages/admission.php`, `sis/app/pages/photo.php`,
+  `canteen/pages/image.php`, `canteen/pages/products.php`, `canteen/pages/pos.php`, `canteen/assets/pos.js`,
+  `library/pages/cover.php`, `library/lib/library.php`, `lms/pages/file.php`, `sis/app/lib/student-photo.php`,
+  `sis/app/lib/grading.php`, `sis/app/lib/sis.php`, `sis/app/lib/subject-fees.php`, `sis/tests/v63-speed.php` (new).
