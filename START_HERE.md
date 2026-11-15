@@ -1,3 +1,5 @@
+**Updating to v63.23?** Upload `canteen/assets/pos.js` and `canteen/pages/pos.php` (or deploy). The Canteen POS loads only the photos on screen.
+
 **Updating to v63.22?** Deploy or upload the changed files (see V63_UPDATE.md). No database change. Every page asks the database far less.
 
 **Updating to v63.21?** Deploy or upload the changed files (see V63_UPDATE.md), then open any SIS page once as power.admin: the database records schema version 35 and gets one new index. Pages with many photos and the Admission list are much faster.

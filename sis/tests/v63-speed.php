@@ -80,6 +80,10 @@ test('file routes: session released, year-long caching only for the exact versio
     $boot = (string) file_get_contents(SIS_ROOT . '/app/bootstrap.php'); ok(str_contains($boot, 'BinaryResponse::active() || !Auth::id()'), 'after-page jobs still run for files');
     $lazy = ['sis/app/lib/student-photo.php' => 'loading="lazy"', 'library/lib/library.php' => 'loading="lazy"', 'canteen/pages/products.php' => 'loading="lazy"', 'canteen/assets/pos.js' => "img.loading = 'lazy'"];
     foreach ($lazy as $f => $needle) ok(str_contains((string) file_get_contents("$root/$f"), $needle), "$f: photos are not lazy-loaded");
+    // v63.23: a script must mark the image lazy BEFORE giving it an address, or the browser downloads it at once
+    preg_match_all('/img\.(loading|src) = [^;]+;/', (string) file_get_contents("$root/canteen/assets/pos.js"), $m);
+    for ($i = 0; $i + 1 < count($m[1]); $i += 2) ok($m[1][$i] === 'loading' && $m[1][$i + 1] === 'src', 'pos.js sets src before loading = lazy');
+    ok(count($m[1]) >= 4, 'pos.js photo code not found');
 });
 
 test('request cache: a repeated read is remembered, and any write drops it', function () {
