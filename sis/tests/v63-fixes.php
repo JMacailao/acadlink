@@ -171,6 +171,16 @@ test('v65: printouts, readable colours, labels and the Students pager', function
     ok(str_contains($st, '$pageRows = RecordList::slice($rows, $win)') && !str_contains($st, 'array_slice($rows, 0, 500)'), 'Students is not paged');
 });
 
+test('v65.1: Cashier, Admission and Registration filters are one plain row with From/To date boxes', function () {
+    foreach (['cashier', 'admission', 'registration'] as $pg)
+        ok(str_contains((string) file_get_contents(SIS_ROOT . "/app/pages/$pg.php"), 'class="or-filters al-filters d-print-none'), "$pg filters do not use the new row");
+    $l = (string) file_get_contents(SIS_ROOT . '/app/views/layout.php');
+    ok(str_contains($l, '<label class="al-date-box"><span>From</span>') && str_contains($l, '<label class="al-date-box"><span>To</span>'), 'From/To date boxes');
+    $css = (string) file_get_contents(SIS_ROOT . '/assets/blue-theme.css');
+    ok(str_contains($css, '.or-filters.al-filters .fp-row:has(.al-date-box) { grid-column: span 2; }'), 'the date range takes two columns');
+    ok(str_contains((string) file_get_contents(SIS_ROOT . '/app/pages/cashier.php'), "'All cashiers'"), 'Cashier shows All cashiers');
+});
+
 $server->exec("DROP DATABASE IF EXISTS `$name`");
 echo "$pass passed, $fail failed\n";
 exit($fail ? 1 : 0);

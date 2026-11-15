@@ -1,4 +1,4 @@
-**Updating to v65?** Hostinger deploys from GitHub; press Ctrl+F5 once. Security review (no holes), "system is busy" handling when many people use it at once, print and accessibility fixes, deeper orange buttons, Students list paged; no database step.
+**Updating to v65.1?** Hostinger deploys from GitHub; press Ctrl+F5 once. New filter design on Cashier, Admission and Registration (one row, From/To date boxes); no database step.
 
 **Updating to v63.24?** Deploy or upload the changed files (see V63_UPDATE.md) and press Ctrl+F5 once. No database change.
 

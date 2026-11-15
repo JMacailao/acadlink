@@ -564,3 +564,9 @@ File: `sis/app/lib/record-list.php`; test in `sis/tests/v63-fixes.php`.
 **Speed.** The Students list sends one page at a time (was up to 500 students, 811 KB; now 15, 47 KB) and every student is reachable (no 500 limit). The Grading System's Curriculum page opens in about 3 s on the test site (about 1 s of it is the data; the rest is the Grading System's usual start-up).
 
 Files: `sis/app/lib/core.php`, `sis/app/bootstrap.php`, `api/lib.php`, `sis/app/lib/notify.php`, `sis/app/lib/account-email.php`, `sis/app/pages/{students,subjectfees,history}.php`, `sis/app/views/payment-plan-summary.php`, `sis/assets/{app.js,sis-actions.css,blue-theme.css}`, `js/standard-toolbar-core.js`, `css/{style.css,workspace-selector.css}`, `portal/assets/portal.css`, version tags in `sis/app/views/layout.php`, `portal/views/layout.php`, `sis/app/pages/workspaces.php`, `pages/*.html`; tests in `sis/tests/v63-fixes.php`.
+
+## v65.1 — New filter design on Cashier, Admission and Registration
+
+The filter panel is now one plain row, as in the design: a tick box with a bold label above each filter, the control below it, and unticked filters shown grey. The date range is two boxes, **From | date** and **To | date** (it takes two columns). Dropdowns show a ▾ arrow; Cashier's dropdown says "All cashiers". On phones each filter takes the full width. The Today / Last 7 days / This month shortcuts and the panel's own Apply/Clear buttons are hidden; the toolbar's Filters and Apply still work, and unticking a filter and pressing Apply removes it.
+
+Files: `sis/app/pages/{cashier,admission,registration}.php`, `sis/app/views/layout.php` (`date_range_controls`, version tags), `sis/assets/blue-theme.css`; test in `sis/tests/v63-fixes.php`.

@@ -253,8 +253,7 @@ echo NotificationCenter::banner('admission');
   </div>
   <div class="or-body">
     <div class="or-main">
-      <form id="admFilters" data-record-filters method="get" class="or-filters d-print-none<?= $showFilters ? '' : ' d-none' ?>"><input type="hidden" name="r" value="admission"><input type="hidden" name="apply" value="1">
-        <div class="or-filters-title">Filter Preferences</div>
+      <form id="admFilters" data-record-filters method="get" class="or-filters al-filters d-print-none<?= $showFilters ? '' : ' d-none' ?>"><input type="hidden" name="r" value="admission"><input type="hidden" name="apply" value="1">
         <div class="fp-grid">
           <?= fp_row('School Year', '<select class="form-select form-select-sm" name="sy" aria-label="School year">' . list_options($years, $fSy ?: $years[0]) . '</select>', $fSy !== '') ?>
           <?= fp_row('Date Applied', date_range_controls($dFrom, $dTo), $dFrom !== null) ?>
