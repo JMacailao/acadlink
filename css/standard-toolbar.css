@@ -54,3 +54,12 @@ tr.std-row-selectable { cursor:pointer; }
   .sis-toolbar-header .std-tb [data-std-slot="post"] .std-tb-label, .sis-toolbar-header .std-tb [data-std-slot="selectAll"] .std-tb-label,
   .sis-toolbar-header .std-tb [data-std-slot="refresh"] .std-tb-label { display:none; }
 }
+/* v64.1: fixed order View · New | Edit · Delete · Post · Void | Select All. Thin dividers between the parts. */
+.std-tb-sep { flex:0 0 1px; width:1px; height:20px; background:var(--std-line); margin:0 3px; }
+.std-tb-sep:not(:has(~ .std-tb-btn:not([hidden]))) { display:none; }
+.std-tb-group > [data-std-slot="view"][hidden] + [data-std-slot="new"][hidden] + .std-tb-sep { display:none; }
+.std-tb-sep + [hidden] + [hidden] + [hidden] + [hidden] + .std-tb-sep { display:none; }
+@media (max-width:991.98px) { .std-tb-sep { display:none; } }
+@media (min-width:992px) and (max-width:1279.98px) {
+  .sis-toolbar-header .std-tb :is([data-std-slot="view"],[data-std-slot="delete"]) .std-tb-label { display:none; }
+}

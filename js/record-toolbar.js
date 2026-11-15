@@ -1,5 +1,5 @@
 /* Grading system: the standard toolbar on the list pages (same as the SIS).
-   New · Edit · Void · Post · Select All | Hide/Show Filters · Apply Filter | Search · Refresh · More Actions
+   View · New | Edit · Delete · Post · Void | Select All | Hide/Show Filters · Apply Filter | Search · Refresh · More Actions
    - Click a row to select it; Edit and Void click that row's own Edit and Delete buttons (double-click = Edit).
    - Filters and the search wait for Apply Filter (or Enter in the search box), as in the SIS.
    - School-year filters open at the current school year (the newest school year on record).
@@ -117,8 +117,10 @@
     else tb.set('new', { enabled: false, title: cfg.name + ' has no New action' });
     const edit = tr && tr.querySelector('[data-edit]'), del = tr && tr.querySelector('[data-delete]');
     tb.set('edit', edit ? { enabled: true, title: T.labelOf(edit) || 'Edit', run: () => edit.click() } : { enabled: false, title: tr ? 'This record cannot be edited' : 'Select a row first' });
-    if (del) tb.set('void', { enabled: T.usable(del), title: T.labelOf(del) || 'Delete', run: () => del.click() });
-    else tb.set('void', { enabled: false, title: !tr ? 'Select a row first' : (tr.querySelector('.btn-outline-danger[disabled]')?.closest('[title]')?.title || 'This record cannot be deleted') });
+    tb.set('view', { enabled: false, title: cfg.name + ' has no View action' });
+    tb.set('void', { enabled: false, title: cfg.name + ' has no Void action' });
+    if (del) tb.set('delete', { enabled: T.usable(del), title: T.labelOf(del) || 'Delete', run: () => del.click() });
+    else tb.set('delete', { enabled: false, title: !tr ? 'Select a row first' : (tr.querySelector('.btn-outline-danger[disabled]')?.closest('[title]')?.title || 'This record cannot be deleted') });
     tb.set('post', { enabled: false, title: cfg.name + ' has no Post action' });
     const all = $(cfg.selectAll);
     tb.set('selectAll', all ? { enabled: !all.disabled, label: all.checked ? 'Clear All' : 'Select All', title: 'Select every student on the list', run: () => { all.click(); setTimeout(update); } } : { enabled: false, title: cfg.name + ' has no bulk actions' });

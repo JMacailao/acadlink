@@ -436,3 +436,10 @@ Every AcadLink system now uses one palette (white, light blue-gray, deep blue `#
 - **Workspace chooser** — blue tiles, orange Open button (`css/workspace-selector.css`).
 
 Only colours changed: no screen, menu, permission or data was altered. Press Ctrl+F5 once after updating.
+
+## v64.1 — Regrouped menu and fixed toolbar order
+
+- **SIS menu.** "Enrollment" and "Records" are now **Student Services** (applications, admission, registration, clearance, eligibility, students, photos, privacy, TOR, histories) and **Academics** (curriculum, class schedules, sections, year levels, teachers). Assessment, Fees and Administration are unchanged. No page or permission changed, only where the link sits.
+- **Toolbar (SIS and Grading).** One fixed order everywhere: **View · New | Edit · Delete · Post · Void | Select All | Filters · Apply Filter | Search · Refresh · More**. View and Delete now have their own buttons (View used to be under More Actions; Delete used to share the Void button). Each button still clicks the page's own control, so confirmations and permissions are the same.
+
+Files: `sis/app/views/layout.php`, `js/standard-toolbar-core.js`, `js/record-toolbar.js`, `sis/assets/standard-toolbar.js`, `css/standard-toolbar.css`, `pages/*.html` (version tags). Press Ctrl+F5 once.

@@ -4,27 +4,28 @@ declare(strict_types=1);
 require_once __DIR__ . '/bottom-nav.php'; // v61.2
 require_once dirname(__DIR__,3).'/shared/client-state.php';
 
-/** [route, label, icon, permissions, group, hint] — items of one group are listed together under a collapsible heading */
+/** v64.1: grouped as Student Services · Academics · Assessment · Fees · Administration.
+ * [route, label, icon, permissions, group, hint] — items of one group are listed together under a collapsible heading */
 const NAV = [
     ['dashboard', 'Overview', 'house-door', [], '', ''],
     ['notifications', 'Notifications', 'bell', ['admission', 'registration', 'payments.view', 'accounting'], '', 'Special-request approvals'],
     ['my', 'My Account', 'person-badge', ['self'], '', 'Grades, fees, receipts'],
-    ['enrollment', 'Enrollment Applications', 'clipboard-check', ['admission', 'admission.view'], 'Enrollment', 'Student Portal applications'],
-    ['admission', 'Admission', 'person-plus', ['admission', 'admission.view'], 'Enrollment', 'New applicants'],
-    ['registration', 'Registration', 'journal-check', ['registration', 'payments.view', 'registration.view'], 'Enrollment', 'Enroll for a term'],
-    ['clearance', 'Online Clearance', 'patch-check', ['clearance'], 'Enrollment', 'Sign and review student clearance'],
-    ['eligibility', 'Enrollment Eligibility', 'shield-check', ['registration', 'eligibility.view'], 'Enrollment', 'Checks, holds and prerequisites'],
-    ['students', 'Students', 'people', ['students'], 'Records', ''],
-    ['photos', 'Photo Approvals', 'person-bounding-box', ['students.edit'], 'Records', 'New photos students sent'],
-    ['privacy', 'Data Privacy', 'shield-lock', ['students.edit', 'settings.manage'], 'Records', 'Privacy notice and records to review'],
-    ['teachers', 'Teachers', 'person-video3', ['teachers'], 'Records', ''],
-    ['sections', 'Sections', 'collection', ['sections'], 'Records', ''],
-    ['yearlevels', 'Year Levels', 'bar-chart-steps', ['yearlevels'], 'Records', ''],
-    ['curriculum', 'Curriculum', 'list-check', ['curriculum'], 'Records', 'Subjects per term'],
-    ['history&tab=grades', 'History of Grades', 'clock-history', ['students', 'registration'], 'Records', 'Permanent grade records'],
-    ['history&tab=assessments', 'History of Assessments', 'receipt', ['registration', 'accounting', 'payments.view'], 'Records', 'Permanent assessment records'],
-    ['documents', 'TOR & Certificates', 'file-earmark-text', ['documents'], 'Records', 'Issue, sign, reprint and void'],
-    ['schedules', 'Class Schedules', 'calendar-week', ['schedules'], 'Records', 'Days, times, rooms and teachers'],
+    ['enrollment', 'Enrollment Applications', 'clipboard-check', ['admission', 'admission.view'], 'Student Services', 'Student Portal applications'],
+    ['admission', 'Admission', 'person-plus', ['admission', 'admission.view'], 'Student Services', 'New applicants'],
+    ['registration', 'Registration', 'journal-check', ['registration', 'payments.view', 'registration.view'], 'Student Services', 'Enroll for a term'],
+    ['clearance', 'Online Clearance', 'patch-check', ['clearance'], 'Student Services', 'Sign and review student clearance'],
+    ['eligibility', 'Enrollment Eligibility', 'shield-check', ['registration', 'eligibility.view'], 'Student Services', 'Checks, holds and prerequisites'],
+    ['students', 'Students', 'people', ['students'], 'Student Services', ''],
+    ['photos', 'Photo Approvals', 'person-bounding-box', ['students.edit'], 'Student Services', 'New photos students sent'],
+    ['privacy', 'Data Privacy', 'shield-lock', ['students.edit', 'settings.manage'], 'Student Services', 'Privacy notice and records to review'],
+    ['documents', 'TOR & Certificates', 'file-earmark-text', ['documents'], 'Student Services', 'Issue, sign, reprint and void'],
+    ['history&tab=grades', 'History of Grades', 'clock-history', ['students', 'registration'], 'Student Services', 'Permanent grade records'],
+    ['history&tab=assessments', 'History of Assessments', 'receipt', ['registration', 'accounting', 'payments.view'], 'Student Services', 'Permanent assessment records'],
+    ['curriculum', 'Curriculum', 'list-check', ['curriculum'], 'Academics', 'Subjects per term'],
+    ['schedules', 'Class Schedules', 'calendar-week', ['schedules'], 'Academics', 'Days, times, rooms and teachers'],
+    ['sections', 'Sections', 'collection', ['sections'], 'Academics', ''],
+    ['yearlevels', 'Year Levels', 'bar-chart-steps', ['yearlevels'], 'Academics', ''],
+    ['teachers', 'Teachers', 'person-video3', ['teachers'], 'Academics', ''],
     ['cashier', 'Cashier', 'cash-coin', ['payments.view'], '', 'Payments and receipts'],
     ['assessment&tab=categories', 'Fee categories', 'tags', ['assessment'], 'Assessment', 'Fee groups'],
     ['assessment&tab=labels', 'Fee labels', 'tag', ['assessment'], 'Assessment', 'Fee lines'],
@@ -198,7 +199,7 @@ function settings_hub_nav(): string
 }
 
 /** Icon shown beside each sidebar group heading. */
-const NAV_GROUP_ICONS = ['Enrollment' => 'clipboard-check', 'Records' => 'folder2-open', 'Assessment' => 'calculator', 'Fees' => 'cash-stack', 'Accounting' => 'journal-bookmark', 'Administration' => 'gear-wide-connected', 'Finance' => 'wallet2', 'Cashier' => 'cash-coin', 'Balances' => 'wallet2', 'Reports' => 'printer', 'Supervisor' => 'person-check', 'Inventory' => 'box-seam'];
+const NAV_GROUP_ICONS = ['Student Services' => 'people', 'Academics' => 'mortarboard', 'Assessment' => 'calculator', 'Fees' => 'cash-stack', 'Accounting' => 'journal-bookmark', 'Administration' => 'gear-wide-connected', 'Finance' => 'wallet2', 'Cashier' => 'cash-coin', 'Balances' => 'wallet2', 'Reports' => 'printer', 'Supervisor' => 'person-check', 'Inventory' => 'box-seam'];
 
 /** The sidebar group of the current route, used by the breadcrumb ("Home › Enrollment › Admission"). */
 function nav_group_of(string $route): string
@@ -265,7 +266,7 @@ function layout_start(string $title, bool $bare = false): void
 <link rel="stylesheet" href="<?= sis_web() ?>assets/people.css?v=63">
 <link rel="stylesheet" href="<?= sis_web() ?>assets/schedule-grid.css?v=63.4">
 <link rel="stylesheet" href="<?= sis_web() ?>assets/unified-toolbar.css?v=60">
-<link rel="stylesheet" href="../css/standard-toolbar.css?v=57">
+<link rel="stylesheet" href="../css/standard-toolbar.css?v=64.1">
 <link rel="stylesheet" href="<?= sis_web() ?>assets/registration-fees.css?v=4">
 <link rel="stylesheet" href="<?= sis_web() ?>assets/assessment-fee-templates.css?v=1">
 <?php if (app_system() === 'CANTEEN'): ?><link rel="stylesheet" href="assets/canteen.css?v=63.5"><?php endif; ?>
@@ -395,8 +396,8 @@ function layout_end(bool $bare = false): void
 <script src="<?= sis_web() ?>assets/friendly-ui.js?v=48"></script>
 <script src="<?= sis_web() ?>assets/sis-actions.js?v=41"></script>
 <script src="<?= sis_web() ?>assets/theme.js?v=63.24"></script>
-<script src="../js/standard-toolbar-core.js?v=57"></script>
-<script src="<?= sis_web() ?>assets/standard-toolbar.js?v=67"></script>
+<script src="../js/standard-toolbar-core.js?v=64.1"></script>
+<script src="<?= sis_web() ?>assets/standard-toolbar.js?v=68"></script>
 <?php if ($route === 'admission'): ?><script src="<?= sis_web() ?>assets/admission-form.js?v=1" defer></script><?php endif; ?>
 <script src="<?= sis_web() ?>assets/eligibility.js?v=31"></script>
 <script src="<?= sis_web() ?>assets/workspaces.js?v=31"></script>

@@ -1,5 +1,5 @@
 /* AcadLink standard toolbar, shared by the SIS and the Grading system.
-   New · Edit · Void · Post · Select All | Hide/Show Filters · Apply Filter | Search · Refresh · More Actions
+   View · New | Edit · Delete · Post · Void | Select All | Hide/Show Filters · Apply Filter | Search · Refresh · More Actions (v64.1 order)
    Every slot is always shown; one a page cannot use stays greyed out with a tooltip saying why.
    The toolbar never does the work itself: each slot runs a function the page adapter gives it
    (usually clicking the module's own control), so permissions and confirmations stay with the module. */
@@ -7,10 +7,12 @@
   'use strict';
   if (window.AcadToolbar) return;
   const SLOTS = [
+    ['view', 'View', 'eye', ''],
     ['new', 'New', 'plus-lg', 'primary'],
     ['edit', 'Edit', 'pencil', ''],
-    ['void', 'Void', 'slash-circle', 'danger'],
+    ['delete', 'Delete', 'trash', 'danger'],
     ['post', 'Post', 'check2-circle', ''],
+    ['void', 'Void', 'slash-circle', 'danger'],
     ['selectAll', 'Select All', 'check2-all', ''],
     ['filters', 'Hide Filters', 'funnel', ''],
     ['apply', 'Apply Filter', 'funnel-fill', 'apply'],
@@ -40,7 +42,8 @@
     groups.forEach((g, i) => { g.className = 'std-tb-group std-tb-group-' + (i + 1); g.setAttribute('role', 'group'); });
     groups[0].setAttribute('aria-label', 'Record actions'); groups[1].setAttribute('aria-label', 'Filters'); groups[2].setAttribute('aria-label', 'Search and more');
     const slots = {};
-    SLOTS.forEach(([key, label, icon, tone]) => { const b = button(key, label, icon, tone); slots[key] = b; (['filters', 'apply'].includes(key) ? groups[1] : groups[0]).append(b); });
+    SLOTS.forEach(([key, label, icon, tone]) => { const b = button(key, label, icon, tone); slots[key] = b; (['filters', 'apply'].includes(key) ? groups[1] : groups[0]).append(b);
+      if (key === 'new' || key === 'void') { const sep = document.createElement('span'); sep.className = 'std-tb-sep'; sep.setAttribute('aria-hidden', 'true'); groups[0].append(sep); } });
     // Search
     const box = document.createElement('div'); box.className = 'std-tb-search'; box.dataset.stdSlot = 'search';
     box.innerHTML = '<i class="bi bi-search" aria-hidden="true"></i>';
@@ -106,10 +109,12 @@
   /** Which standard slot an action label belongs to (first match wins). */
   const MATCH = {
     edit: /^(edit\b|view\s*\/\s*edit\b)/i,
-    void: /^(void\b|cancel admission\b|delete\b|remove\b)/i,
+    view: /^view\b/i,
+    delete: /^(delete\b|remove\b)/i,
+    void: /^(void\b|cancel admission\b)/i,
     post: /^(post\b|import\b(?!\s+from))/i,
   };
-  function slotOf(text) { for (const k of ['edit', 'void', 'post']) if (MATCH[k].test(text)) return k; return null; }
+  function slotOf(text) { for (const k of ['edit', 'view', 'delete', 'void', 'post']) if (MATCH[k].test(text)) return k; return null; }
 
-  window.AcadToolbar = { create, iconFor, labelOf, usable, slotOf, closeMenu };
+  window.AcadToolbar = { ACTIONS: ['view', 'edit', 'delete', 'post', 'void'], create, iconFor, labelOf, usable, slotOf, closeMenu };
 })();
