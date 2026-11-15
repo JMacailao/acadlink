@@ -25,7 +25,7 @@
  }
  const route=document.body.dataset.route||'',params=new URLSearchParams(location.search),tab=params.get('tab')||'';
  const registrationDetail=route==='registration'&&!!main.querySelector('[data-registration-detail]');
- const NOUNS={enrollment:'application',admission:'applicant',registration:'registration',cashier:'receipt',students:'student',teachers:'teacher',sections:'section',yearlevels:'year level',curriculum:'curriculum',assessment:tab==='names'?'fee template':tab==='labels'?'label':'category',discounts:'discount',users:'account',bulkaccounts:'record',migration:'batch',accounting:'entry',notifications:'notification',balance:'student',activity:'activity',history:'record'};
+ const NOUNS={enrollment:'application',admission:'applicant',registration:'registration',cashier:'receipt',students:'student',teachers:'teacher',sections:'section',yearlevels:'year level',curriculum:tab==='subjects'?'subject':'curriculum',assessment:tab==='names'?'fee template':tab==='labels'?'label':'category',discounts:'discount',users:'account',bulkaccounts:'record',migration:'batch',accounting:'entry',notifications:'notification',balance:'student',activity:'activity',history:'record'};
  const plural=n=>/[^aeiou]y$/.test(n)?n.slice(0,-1)+'ies':/(s|x|ch)$/.test(n)?n+'es':n+'s';
  const title=s=>s.replace(/\b\w/g,c=>c.toUpperCase());
 

@@ -351,3 +351,21 @@ How the restore protects you:
   load, as you scroll.
 - `v63-speed` checks the order in `canteen/assets/pos.js`.
 - Source: `canteen/assets/pos.js`, `canteen/pages/pos.php`, `sis/tests/v63-speed.php`.
+
+## v63.24 — Fixes found while filling the live test site
+- **A "saved" message showed in another tab** of the same account (e.g. "Teacher saved" on the Sections tab). A message
+  now belongs to the page its save goes to (`redirect()` addresses it) and waits for that page; a message nobody sees
+  is dropped after two minutes. Messages without a page (pages that redirect themselves) behave as before.
+- **Tuition charged twice: now flagged.** A fee template that charges a fee **per unit** and also the subjects' own
+  prices in the same category (e.g. "Tuition Fee per unit" plus each subject's tuition price) shows a warning on the
+  template: students would pay both. Untick one of them in Manage fees.
+- **Subjects tab** counter said "of 10 curriculums"; it now says "subjects".
+- **Teachers list** showed two "Actions" columns; it keeps its own menu only.
+- **Payment plan** line said "Overdue: ₱0.00", easy to read as "overdue"; it now says "Nothing overdue" (or shows the
+  overdue amount in red).
+- Checked and not a bug: Canteen and Library staff with a temporary password ARE asked to change it (tested on the live
+  site with a new Canteen cashier account).
+- New test suite `v63-fixes` (22 suites).
+- Source: `sis/app/lib/core.php` (`flash`, `redirect`, `take_flashes`), `sis/app/lib/subject-fees.php`
+  (`TemplateFees::doubleCharge`), `sis/app/views/assessment-fee-templates.php`, `sis/assets/theme.js`,
+  `sis/app/views/layout.php`, `sis/app/pages/teachers.php`, `sis/app/views/payment-plan-summary.php`, `sis/tests/v63-fixes.php`.

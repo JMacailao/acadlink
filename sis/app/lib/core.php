@@ -656,6 +656,9 @@ function sis_web(): string
 
 function redirect(string $route, array $params = []): never
 {
+    // v63.24: messages of this request belong to the page it goes to (not to whatever page another tab opens next)
+    if (!empty($_SESSION['flash'])) foreach ($_SESSION['flash'] as &$f) if (!isset($f['to'])) $f['to'] = app_system() . '|' . $route;
+    unset($f);
     if(class_exists('RecordList'))$params=RecordList::redirectParams($route,$params);
     header('Location: ' . url($route, $params));
     exit;
@@ -663,7 +666,7 @@ function redirect(string $route, array $params = []): never
 
 function flash(string $type, string $message): void
 {
-    $_SESSION['flash'][] = [$type, $message];
+    $_SESSION['flash'][] = [$type, $message, 'at' => time()];
 }
 
 /** A refused form keeps what was typed: saved for the next page load, which fills the form in again. */
@@ -689,11 +692,22 @@ function take_old_input(): ?string
     return json_encode(['action' => $o['action'], 'fields' => $o['fields']], JSON_HEX_TAG | JSON_HEX_AMP | JSON_UNESCAPED_UNICODE);
 }
 
+/**
+ * The messages for this page. v63.24: a message meant for another page (see redirect()) waits for that page, so a
+ * second tab of the same account does not show it; unseen messages are dropped after two minutes.
+ */
 function take_flashes(): array
 {
-    $f = $_SESSION['flash'] ?? [];
-    unset($_SESSION['flash']);
-    return $f;
+    $r = $GLOBALS['route'] ?? null; // the page the app resolved (the Student Portal starts on 'my' or 'children')
+    $here = app_system() . '|' . (is_string($r) ? $r : (is_string($_GET['r'] ?? null) ? $_GET['r'] : 'dashboard'));
+    $show = []; $keep = [];
+    foreach ($_SESSION['flash'] ?? [] as $f) {
+        if (!is_array($f) || !isset($f[0], $f[1])) continue;
+        if ((int) ($f['at'] ?? time()) < time() - 120) continue;
+        if (!isset($f['to']) || $f['to'] === $here) $show[] = [$f[0], $f[1]]; else $keep[] = $f;
+    }
+    if ($keep) $_SESSION['flash'] = $keep; else unset($_SESSION['flash']);
+    return $show;
 }
 
 function student_name(array $s): string
