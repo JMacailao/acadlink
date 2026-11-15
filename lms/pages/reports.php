@@ -4,6 +4,7 @@ declare(strict_types=1);
 if (!lms_nav_allows('reports')) throw new Forbidden('Reports are for teachers.');
 $sy = lms_year();
 $classes = array_values(array_filter(Lms::myClasses($sy), fn($c) => $c['role'] !== 'STUDENT'));
+Lms::preload($classes); // v64.6
 layout_start('Reports');
 lms_head('Reports', 'A summary of each class for ' . ($sy ?: 'this school year') . '.', '', lms_year_picker('reports', $sy) . '<button type="button" class="btn btn-outline-primary btn-sm d-print-none" data-page-print><i class="bi bi-printer me-1"></i>Print</button>');
 $tot = ['students' => 0, 'handed' => 0, 'expected' => 0, 'missing' => 0];

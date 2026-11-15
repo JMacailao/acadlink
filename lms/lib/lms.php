@@ -151,11 +151,51 @@ final class Lms
     }
 
     /** The class roster from the Grading System: [doc id => ['id','no','name','section']]. */
+    /**
+     * v64.6: pages that list many classes (My Classes, Schedule, Gradebook, Reports, Settings) load what they need for all
+     * of them in a few queries, instead of 5–7 queries per class. A coordinator sees every class of the school (1,280 on
+     * the test site): that was 6,000+ queries and 2–5 seconds per page. Ignored as soon as anything is written.
+     */
+    private static array $pre = []; private static int $preAt = -1;
+    private static function pre(string $kind, string $classId): mixed
+    {
+        if (self::$preAt !== Db::writes() || !isset(self::$pre['ids'][$classId])) return null;
+        if (!empty(self::$pre['partial']) && $kind !== 'settings') return null;
+        return self::$pre[$kind][$classId] ?? ($kind === 'settings' ? false : []);
+    }
+    public static function preload(array $classes, bool $settingsOnly = false): void
+    {
+        self::$pre = ['ids' => []]; self::$preAt = Db::writes();
+        $ids = array_values(array_unique(array_column($classes, 'id'))); if (!$ids) return;
+        $each = function (string $sql, callable $row) use ($ids) { foreach (array_chunk($ids, 900) as $ch) foreach (Db::all(str_replace('(?)', '(' . implode(',', array_fill(0, count($ch), '?')) . ')', $sql), $ch) as $r) $row($r); };
+        $each('SELECT * FROM lms_class_settings WHERE class_id IN (?)', function ($r) { self::$pre['settings'][$r['class_id']] = $r; });
+        if ($settingsOnly) { self::$pre['ids'] = array_fill_keys($ids, true); self::$pre['partial'] = true; return; }
+        $each("SELECT * FROM lms_work WHERE class_id IN (?) AND deleted_at IS NULL AND status = 'PUBLISHED' ORDER BY due_at IS NULL, due_at, id", function ($r) { self::$pre['works'][$r['class_id']][] = $r; });
+        $each('SELECT s.*, w.class_id AS _class FROM lms_submissions s JOIN lms_work w ON w.id = s.work_id WHERE w.class_id IN (?)', function ($r) { self::$pre['subs'][$r['_class']][] = $r; });
+        $each("SELECT w.class_id, SUM(w.deleted_at IS NULL AND w.status = 'PUBLISHED' AND s.status IN ('SUBMITTED','RETURNED')) handed, SUM(w.deleted_at IS NULL AND s.is_late = 1 AND s.status <> 'DRAFT') late, SUM(w.deleted_at IS NULL AND s.status = 'SUBMITTED') to_grade FROM lms_submissions s JOIN lms_work w ON w.id = s.work_id WHERE w.class_id IN (?) GROUP BY w.class_id",
+            function ($r) { self::$pre['counts'][$r['class_id']] = ['handed' => (int) $r['handed'], 'late' => (int) $r['late'], 'to_grade' => (int) $r['to_grade']]; });
+        $each("SELECT s.class_id, SUM(a.status IN ('PRESENT','LATE','EXCUSED')) ok, COUNT(*) n, COUNT(DISTINCT s.id) meetings FROM lms_attendance_sessions s LEFT JOIN lms_attendance a ON a.session_id = s.id WHERE s.class_id IN (?) GROUP BY s.class_id",
+            function ($r) { self::$pre['att'][$r['class_id']] = $r; });
+        $sids = array_values(array_unique(array_merge(...array_map(fn($c) => (array) ($c['studentIds'] ?? []), $classes))));
+        foreach (array_chunk($sids, 900) as $ch) foreach (Db::all("SELECT id, data FROM docs WHERE col = 'students' AND id IN (" . implode(',', array_fill(0, count($ch), '?')) . ')', $ch) as $r) self::$pre['students'][$r['id']] = json_decode((string) $r['data'], true) ?: [];
+        $byKey = [];
+        foreach (array_unique(array_column($classes, 'schoolYear')) as $sy) foreach (Schedules::list(['school_year' => $sy]) as $m) $byKey[$m['school_year'] . '|' . $m['term'] . '|' . $m['section_doc_id'] . '|' . $m['subject_doc_id']][] = $m;
+        foreach ($classes as $c) self::$pre['meetings'][$c['id']] = $byKey[$c['schoolYear'] . '|' . $c['term'] . '|' . $c['sectionId'] . '|' . $c['subjectId']] ?? [];
+        self::$pre['ids'] = array_fill_keys($ids, true);
+    }
+    /** Turned-in work waiting to be graded, per class (one query for all classes). */
+    public static function toGrade(array $c): int
+    {
+        if (self::pre('counts', $c['id']) !== null) return (int) (self::$pre['counts'][$c['id']]['to_grade'] ?? 0);
+        return (int) Db::val("SELECT COUNT(*) FROM lms_submissions s JOIN lms_work w ON w.id = s.work_id WHERE w.class_id = ? AND w.deleted_at IS NULL AND s.status = 'SUBMITTED'", [$c['id']]);
+    }
+
     public static function roster(array $c): array
     {
         $out = [];
         $docs = [];
-        foreach (array_chunk($c['studentIds'], 500) as $chunk) // v62: one query instead of one per student
+        if (self::pre('ids', $c['id']) !== null) foreach ($c['studentIds'] as $sid) { if (isset(self::$pre['students'][$sid])) $docs[$sid] = self::$pre['students'][$sid]; }
+        else foreach (array_chunk($c['studentIds'], 500) as $chunk) // v62: one query instead of one per student
             foreach (Db::all("SELECT id, data FROM docs WHERE col = 'students' AND id IN (" . implode(',', array_fill(0, count($chunk), '?')) . ')', $chunk) as $r) $docs[$r['id']] = json_decode((string) $r['data'], true) ?: [];
         foreach ($c['studentIds'] as $sid) {
             $s = $docs[$sid] ?? [];
@@ -167,7 +207,7 @@ final class Lms
 
     public static function settings(string $classId): array
     {
-        $r = Db::one('SELECT * FROM lms_class_settings WHERE class_id = ?', [$classId]);
+        $p = self::pre('settings', $classId); $r = $p === null ? Db::one('SELECT * FROM lms_class_settings WHERE class_id = ?', [$classId]) : ($p ?: null);
         $w = $r && $r['weights'] !== '' ? (json_decode($r['weights'], true) ?: []) : self::DEFAULT_WEIGHTS;
         return ['weights' => $w, 'count_missing' => $r ? (bool) $r['count_missing'] : true, 'description' => (string) ($r['description'] ?? '')];
     }
@@ -652,6 +692,7 @@ final class Lms
     /** Meetings of the class from the SIS class schedule (days and times), for labels and the weekly view. */
     public static function meetings(array $c): array
     {
+        $p = self::pre('meetings', $c['id']); if ($p !== null) return array_values(array_filter($p));
         return array_values(array_filter(Schedules::list(['school_year' => $c['schoolYear'], 'term' => $c['term'], 'section' => $c['sectionId'], 'subject' => $c['subjectId']])));
     }
 
@@ -717,9 +758,9 @@ final class Lms
     public static function gradebook(array $c): array
     {
         $set = self::settings($c['id']);
-        $works = Db::all("SELECT * FROM lms_work WHERE class_id = ? AND deleted_at IS NULL AND status = 'PUBLISHED' ORDER BY due_at IS NULL, due_at, id", [$c['id']]);
+        $works = self::pre('works', $c['id']) ?? Db::all("SELECT * FROM lms_work WHERE class_id = ? AND deleted_at IS NULL AND status = 'PUBLISHED' ORDER BY due_at IS NULL, due_at, id", [$c['id']]);
         $subs = [];
-        foreach (Db::all('SELECT s.* FROM lms_submissions s JOIN lms_work w ON w.id = s.work_id WHERE w.class_id = ?', [$c['id']]) as $s) $subs[$s['work_id']][$s['student_doc_id']] = $s;
+        foreach (self::pre('subs', $c['id']) ?? Db::all('SELECT s.* FROM lms_submissions s JOIN lms_work w ON w.id = s.work_id WHERE w.class_id = ?', [$c['id']]) as $s) $subs[$s['work_id']][$s['student_doc_id']] = $s;
         $rows = [];
         foreach (self::roster($c) as $sid => $st) {
             $cat = []; $cells = [];
@@ -992,10 +1033,12 @@ final class Lms
         $gs = GradeScale::current();
         $passing = count(array_filter($book['rows'], fn($r) => $r['grade'] !== null && stripos($gs->remarksFor((float) $r['grade']), 'pass') === 0));
         $n = count($book['rows']); $works = count($book['works']);
-        $handed = $works && $n ? (int) Db::val("SELECT COUNT(*) FROM lms_submissions s JOIN lms_work w ON w.id = s.work_id WHERE w.class_id = ? AND w.deleted_at IS NULL AND w.status = 'PUBLISHED' AND s.status IN ('SUBMITTED','RETURNED')", [$c['id']]) : 0;
-        $late = (int) Db::val("SELECT COUNT(*) FROM lms_submissions s JOIN lms_work w ON w.id = s.work_id WHERE w.class_id = ? AND w.deleted_at IS NULL AND s.is_late = 1 AND s.status <> 'DRAFT'", [$c['id']]);
+        $pc = self::pre('counts', $c['id']);
+        $handed = $works && $n ? ($pc !== null ? (int) ($pc['handed'] ?? 0) : (int) Db::val("SELECT COUNT(*) FROM lms_submissions s JOIN lms_work w ON w.id = s.work_id WHERE w.class_id = ? AND w.deleted_at IS NULL AND w.status = 'PUBLISHED' AND s.status IN ('SUBMITTED','RETURNED')", [$c['id']])) : 0;
+        $late = $pc !== null ? (int) ($pc['late'] ?? 0) : (int) Db::val("SELECT COUNT(*) FROM lms_submissions s JOIN lms_work w ON w.id = s.work_id WHERE w.class_id = ? AND w.deleted_at IS NULL AND s.is_late = 1 AND s.status <> 'DRAFT'", [$c['id']]);
         $missing = 0; foreach ($book['rows'] as $r) foreach ($r['cells'] as $x) $missing += $x['missing'] ? 1 : 0;
-        $att = Db::one("SELECT SUM(a.status IN ('PRESENT','LATE','EXCUSED')) ok, COUNT(*) n, COUNT(DISTINCT s.id) meetings FROM lms_attendance_sessions s LEFT JOIN lms_attendance a ON a.session_id = s.id WHERE s.class_id = ?", [$c['id']]);
+        $pa = self::pre('att', $c['id']);
+        $att = $pa !== null ? ($pa ?: ['ok' => 0, 'n' => 0, 'meetings' => 0]) : Db::one("SELECT SUM(a.status IN ('PRESENT','LATE','EXCUSED')) ok, COUNT(*) n, COUNT(DISTINCT s.id) meetings FROM lms_attendance_sessions s LEFT JOIN lms_attendance a ON a.session_id = s.id WHERE s.class_id = ?", [$c['id']]);
         return ['students' => $n, 'works' => $works, 'handed' => $handed, 'expected' => $works * $n, 'late' => $late, 'missing' => $missing,
             'average' => $pct ? round(array_sum($pct) / count($pct), 2) : null, 'passing' => $passing, 'graded' => count($pct),
             'meetings' => (int) $att['meetings'], 'attendance' => (int) $att['n'] ? round((int) $att['ok'] * 100 / (int) $att['n'], 1) : null];

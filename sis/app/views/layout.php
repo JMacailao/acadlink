@@ -271,6 +271,7 @@ function layout_start(string $title, bool $bare = false): void
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="<?= $system === 'portal' ? '#2b1866' : '#123D70' ?>">
 <title><?= h($title) ?> · <?= h($school) ?></title>
+<script src="../js/no-inspect.js?v=64.6" defer></script>
 <link rel="icon" type="image/png" sizes="32x32" href="../icons/favicon-32.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>

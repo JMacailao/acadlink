@@ -3,6 +3,7 @@
 declare(strict_types=1);
 $sy = lms_year();
 $classes = Lms::myClasses($sy);
+Lms::preload($classes); // v64.6
 $teach = lms_teaches($classes);
 if (isset($_GET['class'])) { $c = Lms::classFor((string) $_GET['class']); redirect('class', ['id' => $c['id'], 'tab' => 'grades']); }
 layout_start('Gradebook');
