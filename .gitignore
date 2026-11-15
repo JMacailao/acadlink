@@ -5,3 +5,7 @@ api/config.php
 backups/*
 !backups/.htaccess
 !backups/index.html
+
+# v63.18: browser checks (sis/tests/browser-smoke.mjs) write screenshots here; Playwright is installed only in CI
+browser-smoke/
+node_modules/

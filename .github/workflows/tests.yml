@@ -75,3 +75,69 @@ jobs:
 
       - name: Test suites
         run: bash sis/tests/all.sh
+
+  browser:
+    name: Browser (every role, every system)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    services:
+      mariadb:
+        image: mariadb:10.11
+        env:
+          MARIADB_ROOT_PASSWORD: ci-only-password
+        ports: ['3306:3306']
+        options: >-
+          --health-cmd="healthcheck.sh --connect --innodb_initialized"
+          --health-interval=5s --health-timeout=5s --health-retries=30
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.3'
+          extensions: pdo_mysql, mbstring, intl, gd, curl, openssl, fileinfo, iconv, simplexml
+          coverage: none
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: A throwaway AcadLink (sample data, one account per role)
+        run: |
+          cat > api/config.php <<'PHP'
+          <?php
+          return [
+            "db_host" => "127.0.0.1",
+            "db_port" => 3306,
+            "db_name" => "acadlink",
+            "db_user" => "root",
+            "db_pass" => "ci-only-password",
+            "session_name" => "GSSESSION",
+            "allowed_hosts" => [],
+            "backup_dir" => "",
+          ];
+          PHP
+          ACADLINK_CI=1 php sis/tests/ci-seed.php
+
+      - name: Start AcadLink
+        run: |
+          php -S 127.0.0.1:8090 > /tmp/php-server.log 2>&1 &
+          for i in $(seq 1 30); do curl -sf -o /dev/null http://127.0.0.1:8090/sis/index.php?r=login && break; sleep 1; done
+
+      - name: Install the browser (Playwright 1.63.0, Chromium)
+        run: |
+          npm install --no-save --no-package-lock playwright@1.63.0
+          npx playwright install --with-deps chromium
+
+      - name: Open every system as each role
+        run: node sis/tests/browser-smoke.mjs browser-smoke
+
+      - name: Screenshots of pages with problems
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: browser-smoke-screenshots
+          path: |
+            browser-smoke/
+            /tmp/php-server.log
+          if-no-files-found: ignore
