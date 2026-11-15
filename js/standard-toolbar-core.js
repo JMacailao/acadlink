@@ -74,9 +74,11 @@
       e.stopPropagation();
       if (openMenu && openMenu._opener === more) { closeMenu(); return; }
       closeMenu();
-      const items = (opts.more ? opts.more() : []).filter((it) => it && it.text);
+      // v64.8: items may be grouped: {header: true, text} starts a group; a group with nothing under it is not shown
+      const items = (opts.more ? opts.more() : []).filter((it) => it && it.text).filter((it, i, arr) => !it.header || (arr[i + 1] && !arr[i + 1].header));
       const menu = document.createElement('div'); menu.className = 'std-tb-menu'; menu.setAttribute('role', 'menu'); menu._opener = more;
       items.forEach((it) => {
+        if (it.header) { const h = document.createElement('div'); h.className = 'std-tb-menu-head'; h.setAttribute('role', 'presentation'); h.textContent = it.text; menu.append(h); return; }
         const mi = document.createElement('button'); mi.type = 'button'; mi.setAttribute('role', 'menuitem');
         mi.innerHTML = '<i class="bi bi-' + (it.icon || 'chevron-right') + '" aria-hidden="true"></i>'; mi.append(document.createTextNode(it.text));
         if (it.disabled) { mi.disabled = true; mi.title = it.title || 'Not available for this selection'; }

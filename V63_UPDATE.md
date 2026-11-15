@@ -506,3 +506,13 @@ Files: `sis/app/pages/curriculum.php`, `sis/assets/curriculum-picker.js` (new), 
 **"Inspect is restricted on AcadLink."** Right-click (outside text boxes), F12, Ctrl+Shift+I / J / C and Ctrl+U (view source) are blocked with that message on every page (SIS, Finance, Canteen, Library, LMS, Student Portal, Grading System, sign-in). Copy and paste in text boxes still work. Note: this only discourages casual looking. Chrome's own menu (More tools → Developer tools) cannot be blocked by any website. AcadLink's real protection is on the server, which checks every permission.
 
 Files: `lms/lib/lms.php`, `lms/pages/{classes,schedule,gradebook,reports,settings}.php`, `js/no-inspect.js` (new), `sis/app/views/layout.php`, `portal/views/layout.php`, `index.html`, `pages/*.html`, tests in `sis/tests/v61-lms.php` and `v63-fixes.php`.
+
+## v64.8 — Actions in More Actions; Create account for one student
+
+**No more "Actions" button or side panel.** About 40 SIS and Finance pages had an "Actions" bar that opened a side panel (Quick Actions, Record Actions, Tools, Payment Setup, Related Modules). It is gone; pages use the full width. Everything that was in it is in the toolbar's **More Actions** dropdown, under the same group names, without duplicates. Each item still clicks the original control, so permissions and confirmations are unchanged (checked: Fee Labels "Activate / Deactivate", Teachers "Create account", Registration "Subjects" pop-up).
+
+**Tools fixed.** The panel also ran on the LMS, Library and Canteen pages named Settings and Reports, where it did not belong: LMS Settings showed a "Tools" list with one bare "Edit" per class (1,280). It now runs only in the SIS and Finance.
+
+**Create account from a student's row.** On Students, a Power User sees **Create account** in a student's row menu (…) when the student has no sign-in. After confirming, the account is created with the Student ID as username and a temporary password (shown once, valid 7 days, must be changed at first sign-in), and it is linked to the student at once. The same checks as Bulk create accounts apply (duplicate Student ID, an existing or legacy account, a usable username). Students who already have a sign-in show **Manage account** instead.
+
+Files: `sis/assets/{sis-actions.js,sis-actions.css,standard-toolbar.js}`, `js/standard-toolbar-core.js`, `css/standard-toolbar.css`, `sis/app/pages/students.php`, `sis/app/views/layout.php`, `pages/*.html`, tests in `sis/tests/v63-fixes.php`.

@@ -2,6 +2,9 @@
 (function(register){register('sis-actions',function(scope){
  'use strict';
  const main=document.querySelector('.app-shell #main');if(!main||document.body.classList.contains('bare')||document.documentElement.dataset.system==='portal')return;
+ // v64.8: only the SIS and Finance (their toolbar has More Actions). LMS, Library and Canteen have their own pages named
+ // Settings and Reports, which this used to catch: LMS Settings got a "Tools" list of one "Edit" per class.
+ if(!['sis','finance'].includes(document.documentElement.dataset.app))return;
  const route=document.body.dataset.route;if(!['students','teachers','sections','yearlevels','curriculum','assessment','discounts','users','bulkaccounts','migration','admission','registration','cashier','accounting','enrollment','balance','eligibility','reports','activity','history','settings','help'].includes(route))return;
  const results=main.querySelector('.sis-record-scroll')||main;
  const labelStatus=main.querySelector('[data-label-status-form]');

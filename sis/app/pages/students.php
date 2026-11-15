@@ -3,6 +3,23 @@
 declare(strict_types=1);
 /** @var bool $isPost Set by index.php: true when a form was submitted (POST). */
 $canEdit = Auth::can('students.edit');
+// v64.8: a Power User can create a student's sign-in from the student's row; it is linked to the student at once
+$canManageAccounts = Auth::can('users.manage') && Auth::central()->group((int) Auth::centralId()) === 'POWER_USER';
+if ($isPost && ($_POST['action'] ?? '') === 'create_account') {
+    if (!$canManageAccounts) throw new Forbidden('Only a Power User can create student accounts.');
+    $docId = In::str($_POST, 'student_doc_id', 191);
+    try {
+        require_once SIS_ROOT . '/app/lib/bulk-accounts.php';
+        $bulk = new BulkAccounts(Auth::central(), (int) Auth::centralId());
+        $check = $bulk->preview('STUDENT', [$docId])[0];
+        if ($check['status'] !== 'Ready') throw new AppError(trim(($check['name'] !== '' ? $check['name'] . ': ' : '') . ($check['message'] ?: $check['status'])) . ' Use Users and Groups for this student.');
+        $password = 'Stud-' . bin2hex(random_bytes(6)) . '-A1';
+        $made = $bulk->create('STUDENT', $check, $password, 7);
+        if (($made['status'] ?? '') !== 'Created') throw new AppError($made['message'] ?: 'The account was not created. Try again.');
+    } catch (CentralAccountError $ex) { throw new AppError($ex->getMessage()); }
+    $_SESSION['student_account_created'] = ['account_id' => (int) $made['account_id'], 'name' => $made['name'], 'number' => $made['number'], 'username' => $made['username'], 'temporary_password' => $password, 'actor_id' => (int) Auth::centralId(), 'expires_at' => time() + 300];
+    redirect('students');
+}
 if ($isPost) {
     $id = GS::saveStudent(In::str($_POST, 'id', 191), $_POST);
     flash('success', 'Student saved in the grading system.');
@@ -32,9 +49,26 @@ if (!RecordList::applied()) $_GET['apply'] = '1'; // the Enrolled list shows at 
 $rows = RecordList::applied()?array_filter(GS::students(), fn($s) => (!$sy || ($s['schoolYear'] ?? '') === $sy) && (!$sec || ($s['sectionId'] ?? '') === $sec)
     && (!$year || ($s['yearLevel'] ?? '') === $year) && ($program === '' || strtoupper((string) GS::programOf((string) ($s['sectionName'] ?? ''))) === $program)
     && ($status === '' || $statusKey($s) === ($status === 'regular' ? '' : $status)) && ($enrollF === 'all' || ($enrollOf[$s['id']] ?? '') === $enrollF) && ($q === '' || str_contains(mb_strtolower(($s['studentId'] ?? '') . ' ' . ($s['studentName'] ?? '') . ' ' . ($s['email'] ?? '')), $q))):[];
+// v64.8: who already has a sign-in (by student record or Student ID), and the details of an account just created (shown once)
+$studentAccounts = [];
+if ($canManageAccounts) foreach (Db::all("SELECT p.student_doc_id, p.student_number, a.id, a.status, i.identifier AS username FROM central_person_links p JOIN central_accounts a ON a.id = p.account_id LEFT JOIN central_login_identifiers i ON i.account_id = a.id AND i.is_primary = 1 WHERE p.student_doc_id IS NOT NULL OR p.student_number IS NOT NULL") as $l) {
+    if ($l['student_doc_id']) $studentAccounts['d:' . $l['student_doc_id']] = $l;
+    if ($l['student_number']) $studentAccounts['n:' . $l['student_number']] = $l;
+}
+$created = $_SESSION['student_account_created'] ?? null; unset($_SESSION['student_account_created']);
+if (!$canManageAccounts || !$created || (int) $created['actor_id'] !== (int) Auth::centralId() || (int) $created['expires_at'] < time()) $created = null;
 layout_start('Students');
 page_title('Students', $canEdit ? '<a class="btn btn-primary" href="#addStudent"><i class="bi bi-plus-lg me-1"></i>Add student</a>' : '', 'Manage student records and enrollment details.');
 ?>
+<?php if ($created): ?>
+<section class="form-section border-success mb-3" id="studentAccountCredentials" role="status" aria-labelledby="studentCredentialTitle">
+<h2 class="h5" id="studentCredentialTitle">Student account created</h2>
+<p><strong><?= h($created['name']) ?></strong> (<?= h($created['number']) ?>) can now sign in to the Student Portal and the LMS. The account is linked to this student.</p>
+<dl class="row mb-2"><dt class="col-sm-3">Username</dt><dd class="col-sm-9"><code><?= h($created['username']) ?></code></dd><dt class="col-sm-3">Temporary password</dt><dd class="col-sm-9"><code><?= h($created['temporary_password']) ?></code></dd></dl>
+<p class="small mb-2">Copy these details now and give them to the student securely. The temporary password is shown once, works for 7 days, and must be changed at first sign-in.</p>
+<a class="btn btn-sm btn-outline-primary" href="<?= url('users', ['edit' => $created['account_id']]) ?>">Manage account</a>
+</section>
+<?php endif; ?>
 <?php $canGrades = StudentHistory::canViewAllGrades(); $canAssessments = Auth::can('registration', 'accounting', 'payments.view'); ?>
 <nav class="sis-student-shortcuts d-print-none" aria-label="Student tasks">
   <?php if (Auth::can('registration')): ?><a href="<?= url('registration', ['new' => 1]) ?>"><i class="bi bi-journal-plus" aria-hidden="true"></i>New registration</a><?php endif; ?>
@@ -67,7 +101,7 @@ page_title('Students', $canEdit ? '<a class="btn btn-primary" href="#addStudent"
     <?php foreach (array_slice($rows, 0, 500) as $s): ?><tr><td class="font-monospace"><?= h($s['studentId'] ?? '') ?></td><td><?= h($s['studentName'] ?? '') ?></td><td><?= h((string) GS::programOf((string) ($s['sectionName'] ?? ''))) ?></td>
       <td><?= h($s['yearLevel'] ?? '') ?></td><td><?= h($s['sectionName'] ?? '') ?></td><td><?= h($s['schoolYear'] ?? '') ?></td><td data-status><?= h($STATUS[$statusKey($s)]) ?></td>
       <td><?= ['confirmed' => '<span class="badge text-bg-success">Enrolled</span>', 'pending' => '<span class="badge text-bg-warning">Pending</span>'][$enrollOf[$s['id']] ?? ''] ?? '<span class="text-muted small">—</span>' ?></td>
-      <td class="text-end"><a class="btn btn-sm btn-outline-primary" href="<?= url('student', ['id' => $s['id']]) ?>" data-icon="eye">View</a><?php if ($canEdit): ?> <a class="btn btn-sm btn-outline-primary" href="<?= url('student', ['id' => $s['id']]) ?>#studentEdit" data-icon="pencil-square">Edit Student</a><?php endif; ?><?php if ($canGrades): ?> <a class="btn btn-sm btn-outline-primary" href="<?= url('history', ['id' => $s['id'], 'tab' => 'grades']) ?>" data-icon="journal-text">History of Grades</a><?php endif; ?><?php if ($canAssessments): ?> <a class="btn btn-sm btn-outline-primary" href="<?= url('history', ['id' => $s['id'], 'tab' => 'assessments']) ?>" data-icon="receipt">History of Assessments</a><?php endif; ?></td></tr>
+      <td class="text-end"><a class="btn btn-sm btn-outline-primary" href="<?= url('student', ['id' => $s['id']]) ?>" data-icon="eye">View</a><?php if ($canEdit): ?> <a class="btn btn-sm btn-outline-primary" href="<?= url('student', ['id' => $s['id']]) ?>#studentEdit" data-icon="pencil-square">Edit Student</a><?php endif; ?><?php if ($canGrades): ?> <a class="btn btn-sm btn-outline-primary" href="<?= url('history', ['id' => $s['id'], 'tab' => 'grades']) ?>" data-icon="journal-text">History of Grades</a><?php endif; ?><?php if ($canAssessments): ?> <a class="btn btn-sm btn-outline-primary" href="<?= url('history', ['id' => $s['id'], 'tab' => 'assessments']) ?>" data-icon="receipt">History of Assessments</a><?php endif; ?><?php if ($canManageAccounts): $acct = $studentAccounts['d:' . $s['id']] ?? $studentAccounts['n:' . ($s['studentId'] ?? '')] ?? null; ?><?php if ($acct): ?> <a class="btn btn-sm btn-outline-primary" href="<?= url('users', ['edit' => $acct['id']]) ?>" data-icon="person-gear">Manage account</a><?php elseif (($s['studentId'] ?? '') !== ''): ?> <form method="post" action="<?= url('students') ?>" class="d-inline" data-confirm="<?= h('Create a Student sign-in for ' . ($s['studentName'] ?? '') . ' with username ' . strtolower((string) $s['studentId']) . '? It is linked to this student at once. A temporary password is shown once; the student changes it at first sign-in.') ?>"><?= csrf_field() ?><input type="hidden" name="action" value="create_account"><input type="hidden" name="student_doc_id" value="<?= h($s['id']) ?>"><button class="btn btn-sm btn-outline-primary" data-icon="person-plus">Create account</button></form><?php endif; ?><?php endif; ?></td></tr>
     <?php endforeach; if (!$rows): ?><tr><td colspan="9" class="text-center text-muted py-4"><?= $enrollF === 'confirmed' ? 'No confirmed enrollments match. Students still being processed are under Pending confirmation; every record is under All records.' : ($enrollF === 'pending' ? 'No students are waiting for enrollment confirmation.' : 'No students found. Adjust your filters or choose Add student.') ?></td></tr><?php endif; ?>
   </tbody></table></div>
   <?php if (count($rows) > 500): ?><p class="small text-muted mt-3"><?= count($rows) ?> students match; the first 500 are shown. Narrow the filters to see the rest.</p><?php endif; ?>

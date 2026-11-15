@@ -136,11 +136,32 @@
    accounting.filter(b=>!ACC_SLOT[b.dataset.accountingAction]).forEach(b=>add(b));
    if(tr)rowControls(tr).forEach(el=>add(el));
    rowTools.forEach(el=>add(el));
-   if(old)[...old.querySelectorAll('a[href],button')].filter(el=>!el.closest('.std-tb')&&!el.matches('.sis-more,[data-theme-edit],[data-theme-delete],[data-theme-select-all],[data-list-search] *')&&!el.closest('[data-accounting-toolbar]')&&!rowTools.includes(el)).forEach(el=>add(el,el.matches('.sis-actions-toggle')?'Actions panel':el.matches('[data-list-print]')?'Print List':null));
+   if(old)[...old.querySelectorAll('a[href],button')].filter(el=>!el.closest('.std-tb')&&!el.matches('.sis-more,.sis-actions-toggle,[data-theme-edit],[data-theme-delete],[data-theme-select-all],[data-list-search] *')&&!el.closest('[data-accounting-toolbar]')&&!rowTools.includes(el)).forEach(el=>add(el,el.matches('.sis-actions-toggle')?'Actions panel':el.matches('[data-list-print]')?'Print List':null));
    const head=main.querySelector('.sis-page-heading .page-head, .sis-toolbar-header .page-head');
    if(head)[...head.querySelectorAll('a[href],button')].filter(el=>el!==newSource).forEach(el=>add(el));
    if(detail)pageControls().filter(el=>!el.closest('.sis-actions-panel')&&(!el.closest('form')||(el.closest('form').getAttribute('method')||'get').toLowerCase()==='get'&&el.tagName==='A')&&!el.matches('.sis-actions-toggle')).forEach(el=>add(el));
-   if(!old){const tg=document.querySelector('.sis-actions-toggle');if(tg)add(tg,'Actions panel');}
+   // v64.8: the page's other actions (Quick Actions, Record Actions, Tools, Related Modules…) used to sit in a side
+   // panel opened with an "Actions" button. They are listed here instead, under their group name; the panel stays hidden
+   // in the page and each item clicks its original control, so permissions and confirmations are unchanged.
+   const panel=document.querySelector('.sis-actions-panel');
+   if(items.length&&panel)items.unshift({header:true,text:'Actions'});
+   const printList=items.some(it=>/^print list$/i.test(it.text));
+   if(panel){
+     const groups=[...panel.querySelectorAll(':scope > section, :scope .or-side > .or-panel, :scope > .or-side:not(:has(> .or-panel))')];
+     groups.forEach(g=>{
+       const name=(g.querySelector(':scope > h2, :scope > .sis-panel-head, :scope > .or-panel-title, :scope > header')?.textContent||'').replace(/\s+/g,' ').trim()||'More';
+       const before=items.length;items.push({header:true,text:name});
+       [...g.querySelectorAll('a[href],button')].filter(el=>!el.matches('.sis-panel-toggle,.btn-close,[data-bs-dismiss]')&&!el.closest('.sis-panel-head,.sis-year-card,.or-panel-title')).forEach(el=>{
+         const text=visibleLabel(el);if(!text||seen.has(text.toLowerCase())||used.has(el)||(printList&&/^print\b.*\blist$/i.test(text))||/^more actions\b/i.test(text))return;
+         // the toolbar's own buttons (View, New/Add, Edit, Delete, Void, Post) are not repeated here
+         if(T.slotOf(text)||/^(view|open|edit|add|new)\b/i.test(text)&&g.matches('.sis-record-actions,.sis-legacy-record-actions,.sis-quick'))return;
+         seen.add(text.toLowerCase());
+         const icon=[...(el.querySelector('.bi')?.classList||[])].find(c=>c.startsWith('bi-'))?.slice(3);
+         items.push({text,icon:icon||T.iconFor(text),disabled:!T.usable(el),title:el.title,run:()=>el.click()});
+       });
+       if(items.length===before+1)items.pop();
+     });
+   }
    return items;
  }
 

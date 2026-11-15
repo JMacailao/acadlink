@@ -93,6 +93,23 @@ test('v64.6: "Inspect" is restricted on every kind of page (SIS family, Portal, 
     ok(str_contains($js, "'F12'") && str_contains($js, 'contextmenu') && str_contains($js, 'input, textarea'), 'shortcuts or the text-box exception missing');
 });
 
+test('v64.8: no "Actions" side panel; its actions are in More Actions; LMS, Library and Canteen are left alone', function () {
+    $root = dirname(SIS_ROOT);
+    $css = (string) file_get_contents(SIS_ROOT . '/assets/sis-actions.css');
+    ok(str_contains($css, '.sis-actions-toggle, .sis-actions-drawer { display:none!important; }') && str_contains($css, '.sis-actions-panel { display:none!important; }'), 'panel or button still shown');
+    ok(str_contains((string) file_get_contents(SIS_ROOT . '/assets/sis-actions.js'), "['sis','finance'].includes(document.documentElement.dataset.app)"), 'panel would run in LMS / Library / Canteen');
+    $tb = (string) file_get_contents(SIS_ROOT . '/assets/standard-toolbar.js');
+    ok(str_contains($tb, "document.querySelector('.sis-actions-panel')") && str_contains($tb, '{header:true,text:name}'), 'More Actions does not list the panel groups');
+    ok(str_contains((string) file_get_contents("$root/js/standard-toolbar-core.js"), 'std-tb-menu-head'), 'menu has no group headings');
+});
+
+test('v64.8: Students row has Create account (Power User), linked to the student; Manage account once linked', function () {
+    $p = (string) file_get_contents(SIS_ROOT . '/app/pages/students.php');
+    ok(str_contains($p, "\$bulk->preview('STUDENT', [\$docId])") && str_contains($p, "\$bulk->create('STUDENT', \$check"), 'does not use the bulk-account checks');
+    ok(str_contains($p, "Auth::central()->group((int) Auth::centralId()) === 'POWER_USER'") && str_contains($p, "throw new Forbidden('Only a Power User can create student accounts.')"), 'not limited to Power Users');
+    ok(str_contains($p, 'data-icon="person-plus">Create account') && str_contains($p, 'data-icon="person-gear">Manage account'), 'row items missing');
+});
+
 $server->exec("DROP DATABASE IF EXISTS `$name`");
 echo "$pass passed, $fail failed\n";
 exit($fail ? 1 : 0);
