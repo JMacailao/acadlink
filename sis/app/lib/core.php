@@ -76,6 +76,16 @@ final class Db
         return $out;
     }
 
+    /** v63.21: does the table exist? Asks the table itself (instant) instead of information_schema (slow on shared hosting); a yes is remembered for this connection. */
+    public static function tableExists(string $table): bool
+    {
+        static $yes = null; $yes ??= new WeakMap(); $pdo = self::pdo();
+        if (isset($yes[$pdo][$table])) return true;
+        try { $pdo->query('SELECT 1 FROM `' . str_replace('`', '', $table) . '` LIMIT 0'); }
+        catch (PDOException $e) { if ((int) ($e->errorInfo[1] ?? 0) === 1146 || str_contains($e->getMessage(), '1146')) return false; throw $e; }
+        $known = $yes[$pdo] ?? []; $known[$table] = true; $yes[$pdo] = $known; return true;
+    }
+
     public static function pdo(): PDO
     {
         if (!self::$pdo) throw new RuntimeException('Database not connected');

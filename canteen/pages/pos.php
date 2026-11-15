@@ -128,5 +128,5 @@ layout_start('Canteen Cashier');
     <button type="button" class="btn btn-primary" id="cposConfirm">Confirm payment</button></div>
 </div></div></div>
 <script type="application/json" id="cposCatalog"><?= json_encode($catalog, JSON_HEX_TAG | JSON_HEX_AMP | JSON_THROW_ON_ERROR) ?></script>
-<script src="assets/pos.js?v=59b" defer></script>
+<script src="assets/pos.js?v=63.21" defer></script>
 <?php layout_end();
