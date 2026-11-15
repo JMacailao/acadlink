@@ -206,6 +206,18 @@ test('v65.3: Fee templates list on their own; View opens a template with only it
     ok(substr_count($v, 'data-plain-table') === 2 && str_contains((string) file_get_contents(SIS_ROOT . '/assets/theme.js'), "!t.matches('[data-plain-table]')"), 'fee tables would become selectable lists');
 });
 
+test('v65.4: Subject pricing page sets several subject prices at once', function () {
+    $pg = (string) file_get_contents(SIS_ROOT . '/app/pages/subjectfees.php');
+    ok(str_contains($pg, "\$action === 'bulk'") && str_contains($pg, "\$_POST['p_subject']") && str_contains($pg, 'Db::tx(function () use ($subs, $fees, $rates'), 'bulk save missing or not in one transaction');
+    ok(str_contains($pg, "require SIS_ROOT . '/app/views/subject-pricing.php'") && !str_contains($pg, 'id="subjectPrice"'), 'Set a subject price / Edit do not open the pricing page');
+    $v = (string) file_get_contents(SIS_ROOT . '/app/views/subject-pricing.php');
+    foreach (['Select subjects', 'Price per unit', 'Set as default', 'Charge in fee templates', 'Choose templates', 'Only selected templates will be charged.', 'Selected subjects', 'Total amount', 'Save prices', 'name="templates[]"', 'type="application/json" id="spData"'] as $needle)
+        ok(str_contains($v, $needle), "missing: $needle");
+    $js = (string) file_get_contents(SIS_ROOT . '/assets/subject-pricing.js');
+    ok(str_contains($js, "inp.name='p_rate[]'") && str_contains($js, "h1.name='p_subject[]'") && str_contains($js, "h2.name='p_fee[]'"), 'rows are not posted as flat lists (kept after a refused save)');
+    ok(str_contains($js, 'Add at least one subject.') && str_contains($js, "'beforeunload'"), 'empty save or leaving unsaved is not handled');
+});
+
 $server->exec("DROP DATABASE IF EXISTS `$name`");
 echo "$pass passed, $fail failed\n";
 exit($fail ? 1 : 0);

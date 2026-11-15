@@ -595,3 +595,95 @@ html body .cur-table { min-width: 0 !important; }
   html body .cur-table .cur-code { white-space: nowrap !important; }
   html body .cur-table .cur-act { min-width: 0 !important; white-space: nowrap; }
 }
+
+/* ==========================================================================================================
+   v65.4: Subject pricing page (Assessment → Subject Fees → Set a subject price / Edit), as in the design
+   ========================================================================================================== */
+html body .sp-page .sp-card h3 { font-size: 20px !important; display: flex; align-items: center; gap: 10px; margin-bottom: 12px !important; }
+.sp-top { display: grid; grid-template-columns: minmax(0, 2fr) minmax(0, 1.3fr) auto; gap: 14px; align-items: end; }
+.sp-top:has(.sp-basis) { grid-template-columns: minmax(0, 2fr) minmax(0, 1fr) minmax(0, 1.2fr) auto; }
+.sp-peso { position: relative; }
+.sp-peso > span { position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: #475569; font-weight: 600; pointer-events: none; }
+html body .sp-page .sp-peso > .form-control { padding-left: 28px !important; }
+html body .sp-page .sp-peso-sm > .form-control { height: 34px; border-radius: 6px; border: 1px solid #B9C5D4; max-width: 150px; font-size: 14px; }
+.sp-peso-sm > span { left: 10px; font-size: 14px; }
+.sp-default-wrap { display: flex; align-items: center; gap: 8px; }
+html body .sp-page .sp-default { height: 42px; padding: 0 16px; border-radius: 8px; border: 1px solid #1D5BE0; background: #fff; color: #1D5BE0; font-weight: 700; white-space: nowrap; }
+html body .sp-page .sp-default:hover { background: #EEF4FF; }
+.sp-default-msg { font-size: 13px; color: #475569; }
+.sp-hint { font-size: 13px; color: #5F6E82; margin: 8px 0 12px; }
+.sp-added { background: none; border: 0; color: #15803D; font-weight: 700; font-size: 14px; display: inline-flex; align-items: center; gap: 6px; }
+.sp-added:disabled { opacity: 1; color: #15803D; }
+.sp-templates { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; margin-top: 14px; }
+.sp-tlabel { font-weight: 700; color: #123D70; font-size: 14.5px; }
+.sp-chips { display: inline-flex; flex-wrap: wrap; gap: 8px; }
+.sp-chip { display: inline-flex; align-items: center; gap: 6px; background: #DCE8FB; color: #123D70; font-size: 13.5px; font-weight: 600; padding: 4px 6px 4px 12px; border-radius: 6px; }
+.sp-chip > button { background: none; border: 0; color: #123D70; padding: 0 4px; line-height: 1; font-size: 12px; border-radius: 4px; }
+.sp-chip > button:hover { background: #C3D6F6; }
+.sp-chip-none { font-size: 13.5px; color: #93400A; font-weight: 600; }
+html body .sp-page .sp-choose { height: 34px; padding: 0 14px; border-radius: 8px; font-size: 13.5px; font-weight: 700; border-color: #1D5BE0 !important; color: #1D5BE0 !important; }
+.sp-summary { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); margin: 0 0 14px; background: #E8F0FC; border: 1px solid #C9DAF5; border-radius: 12px; padding: 14px 0; }
+.sp-summary > div { padding: 2px 22px; border-left: 1px solid #C9DAF5; min-width: 0; }
+.sp-summary > div:first-child { border-left: 0; }
+.sp-summary span { display: block; font-size: 14px; font-weight: 600; color: #123D70; }
+.sp-summary strong { display: block; font-size: 28px; font-weight: 800; color: #123D70; line-height: 1.2; overflow-wrap: anywhere; }
+.sp-summary > div:last-child strong { font-size: 31px; }
+.sp-badge { display: inline-flex; align-items: center; justify-content: center; min-width: 28px; height: 24px; padding: 0 8px; border-radius: 999px; background: #DCE8FB; color: #1D4ED8; font-size: 13.5px; font-weight: 700; }
+html body .sp-selected > tfoot > tr > th { background: #F3F6FA; color: #123D70; font-weight: 800; padding: 11px 16px; border-top: 1px solid #DCE3EC; border-bottom: 0; }
+html body .sp-selected .is-invalid { border-color: #B42318 !important; box-shadow: 0 0 0 2px rgba(180, 35, 24, .15); }
+.sp-tdialog { width: min(560px, calc(100vw - 24px)); }
+.sp-tlist { display: flex; flex-direction: column; border: 1px solid #DCE3EC; border-radius: 10px; max-height: 340px; overflow: auto; }
+.sp-titem { display: flex; align-items: center; gap: 12px; padding: 11px 14px; border-bottom: 1px solid #E6EBF2; margin: 0; cursor: pointer; font-size: 14.5px; }
+.sp-titem:last-child { border-bottom: 0; }
+.sp-titem:has(input:checked) { background: #EEF4FF; }
+.sp-titem .form-check-input { width: 18px; height: 18px; margin: 0; flex: 0 0 18px; }
+.sp-alert { margin: 14px 0 0; }
+@media (max-width: 991.98px) {
+  .sp-top, .sp-top:has(.sp-basis) { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
+  .sp-top .sp-fee { grid-column: 1 / -1; }
+  .sp-summary { grid-template-columns: repeat(2, minmax(0, 1fr)); row-gap: 12px; }
+  .sp-summary > div:nth-child(3) { border-left: 0; }
+  .sp-summary strong, .sp-summary > div:last-child strong { font-size: 22px; }
+}
+@media (max-width: 575.98px) {
+  .sp-top, .sp-top:has(.sp-basis) { grid-template-columns: minmax(0, 1fr); }
+  .sp-default-wrap { flex-wrap: wrap; }
+  .sp-summary > div { padding: 2px 14px; }
+  html body .sp-page .sp-peso-sm > .form-control { max-width: 110px; }
+  html body .sp-selected > :is(thead,tbody,tfoot) > tr > :is(th,td) { padding: 8px 6px !important; font-size: 13.5px; }
+}
+@media (max-width: 575.98px) {
+  html body .sp-page { padding-left: 12px; padding-right: 12px; }
+  html body .sp-selected .sp-feecol { display: none; }
+  html body .sp-page .cur-avail .cur-table > thead > tr > th { white-space: nowrap !important; }
+  html body .sp-page .cur-table-wrap:has(.sp-selected) { overflow-x: auto; }
+  html body .sp-selected > :is(thead,tbody,tfoot) > tr > :is(th,td) { padding: 8px 5px !important; }
+  html body .sp-page .sp-peso-sm > .form-control { width: 84px; max-width: 84px; padding-left: 20px !important; padding-right: 4px; font-size: 13.5px; }
+  html body .sp-page .sp-peso-sm > span { left: 7px; font-size: 13px; }
+  html body .sp-selected .cur-trash { padding: 2px 4px; }
+}
+@media (max-width: 575.98px) {
+  html body .sp-page .sp-card { padding-left: 12px; padding-right: 12px; }
+  html body .sp-selected .sp-unitcol { display: none; }
+  html body .sp-selected > thead > tr > th { white-space: nowrap !important; }
+}
+/* v65.4e: phones — each selected subject is a two-line card: code · name · bin, then price box and amount */
+@media (max-width: 575.98px) {
+  html body .sp-page .cur-table-wrap:has(.sp-selected) { overflow: hidden; }
+  html body .sp-selected, html body .sp-selected > tbody, html body .sp-selected > tfoot { display: block; width: 100%; }
+  html body .sp-selected > thead { display: none; }
+  html body .sp-selected > tbody > tr { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; grid-template-areas: "code name trash" "price price amount"; align-items: center; gap: 6px 10px; padding: 10px 12px; border-bottom: 1px solid #E6EBF2; }
+  html body .sp-selected > tbody > tr > td { padding: 0 !important; border: 0 !important; background: transparent !important; }
+  html body .sp-selected > tbody > tr > td:nth-child(1) { grid-area: code; }
+  html body .sp-selected > tbody > tr > td:nth-child(2) { grid-area: name; }
+  html body .sp-selected > tbody > tr > td:nth-child(3), html body .sp-selected > tbody > tr > td:nth-child(4) { display: none; }
+  html body .sp-selected > tbody > tr > td:nth-child(5) { grid-area: price; }
+  html body .sp-selected > tbody > tr > td:nth-child(6) { grid-area: amount; font-weight: 700; }
+  html body .sp-selected > tbody > tr > td:nth-child(7) { grid-area: trash; }
+  html body .sp-selected > tbody > tr > td[colspan] { grid-column: 1 / -1; grid-area: auto; }
+  html body .sp-selected > tbody > tr:has(> td[colspan]) { display: block; }
+  html body .sp-selected > tfoot > tr { display: flex; justify-content: space-between; padding: 10px 12px; background: #F3F6FA; }
+  html body .sp-selected > tfoot > tr > th { padding: 0 !important; border: 0 !important; background: transparent !important; }
+  html body .sp-selected > tfoot > tr > th:last-child { display: none; }
+  html body .sp-page .sp-peso-sm > .form-control { width: 130px; max-width: 130px; }
+}

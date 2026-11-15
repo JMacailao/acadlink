@@ -15,7 +15,27 @@ if ($isPost) {
     $action = (string) ($_POST['action'] ?? 'save');
     if ($action === 'delete') { $r = SubjectFees::delete((int) ($_POST['id'] ?? 0)); flash('success', 'Subject price removed. The subject now shows ₱0.00.' . $recomputeNote(['recomputed' => $r[0], 'skipped' => $r[1]])); }
     elseif ($action === 'default_label') { SubjectFees::setDefaultLabel((int) ($_POST['label_id'] ?? 0)); flash('success', 'Default fee saved. New subject prices use it.'); }
+    elseif ($action === 'bulk') {
+        // v65.4: Subject pricing page: one fee, several subjects, each with its own price per unit, charged in the chosen templates
+        $subs = array_values((array) ($_POST['p_subject'] ?? [])); $fees = array_values((array) ($_POST['p_fee'] ?? [])); $rates = array_values((array) ($_POST['p_rate'] ?? []));
+        if (!$subs) throw new AppError('Add at least one subject.');
+        if (count($subs) > 500 || count($subs) !== count($rates)) throw new AppError('The list of subjects was not sent completely. Reload the page and try again.');
+        $sum = ['recomputed' => 0, 'skipped' => 0]; $saved = 0;
+        Db::tx(function () use ($subs, $fees, $rates, &$sum, &$saved) {
+            foreach ($subs as $i => $sid) {
+                $in = ['subject_doc_id' => (string) $sid, 'label_id' => (string) ($_POST['label_id'] ?? ''), 'rate' => (string) ($rates[$i] ?? ''), 'templates' => (array) ($_POST['templates'] ?? []), 'templates_sent' => '1'];
+                if (isset($_POST['unit_basis'])) $in['unit_basis'] = (string) $_POST['unit_basis'];
+                if (ctype_digit((string) ($fees[$i] ?? ''))) $in['id'] = (string) $fees[$i];
+                $subject = GS::get('subjects', (string) $sid);
+                try { $r = SubjectFees::save($in); }
+                catch (AppError $e) { throw new AppError(($subject['subjectCode'] ?? 'A subject') . ': ' . $e->getMessage()); }
+                $sum['recomputed'] += (int) $r['recomputed']; $sum['skipped'] += (int) $r['skipped']; $saved++;
+            }
+        });
+        flash('success', $saved . ' subject price' . ($saved === 1 ? '' : 's') . ' saved (Units × Price per Unit).' . $recomputeNote($sum));
+    }
     else { $r = SubjectFees::save($_POST + ['templates_sent' => '1']); flash('success', 'Subject price saved (Units × Price per Unit).' . $recomputeNote($r)); }
+    if ($action === 'default_label' && !empty($_POST['ajax'])) { header('Content-Type: application/json'); echo json_encode(['ok' => true]); exit; }
     redirect('subjectfees');
 }
 $rows = SubjectFees::management();
@@ -31,8 +51,10 @@ $fq = trim((string) ($_GET['q'] ?? ''));
 $shown = $fq === '' ? $rows : array_values(array_filter($rows, fn($r) => str_contains(mb_strtolower($r['subject_code'] . ' ' . $r['subject_name'] . ' ' . ($r['fee']['label_name'] ?? '')), mb_strtolower($fq))));
 $pageRows = RecordList::slice($shown, $win);
 $split = LecLab::on(); // v56.2: Settings → Separate lecture and laboratory units
+$pricing = $canEdit && ($editFee || $editSubject || isset($_GET['new']));
+if ($pricing) { require SIS_ROOT . '/app/views/subject-pricing.php'; return; }
 layout_start('Subject Fees');
-page_title('Subject Fees', $canEdit ? '<a class="btn btn-primary" href="' . h(url('subjectfees', ['new' => 1]) . '#subjectPrice') . '"><i class="bi bi-plus-lg me-1"></i>Set a subject price</a>' : '',
+page_title('Subject Fees', $canEdit ? '<a class="btn btn-primary" href="' . h(url('subjectfees', ['new' => 1])) . '"><i class="bi bi-plus-lg me-1"></i>Set a subject price</a>' : '',
     'Every subject is listed with its Price per Unit. Total = Subject Units × Price per Unit. A new subject starts at ₱0.00 and still shows on assessments. Tick the fee templates that charge each price.');
 ?>
 <div class="row g-3">
@@ -52,50 +74,15 @@ page_title('Subject Fees', $canEdit ? '<a class="btn btn-primary" href="' . h(ur
       <td class="text-end fw-semibold">₱<?= Money::fmt($r['total_cents']) ?></td>
       <td class="small"><?php if (!$f): ?><span class="text-muted">—</span><?php elseif (!$f['templates']): ?><span class="text-warning-emphasis">None ticked</span> <span class="text-muted">(charged only without a template)</span><?php else: ?><?= h(implode(', ', array_column($f['templates'], 'name'))) ?><?php endif; ?></td>
       <td class="text-end text-nowrap d-print-none"><?php if ($canEdit): ?>
-        <?php if ($f): ?><a class="btn btn-sm btn-outline-secondary" href="<?= h(url('subjectfees', ['edit' => $f['id']]) . '#subjectPrice') ?>"><i class="bi bi-pencil me-1"></i>Edit</a>
+        <?php if ($f): ?><a class="btn btn-sm btn-outline-secondary" href="<?= h(url('subjectfees', ['edit' => $f['id']])) ?>"><i class="bi bi-pencil me-1"></i>Edit</a>
           <form method="post" class="d-inline" data-confirm="Remove the <?= h($f['label_name']) ?> price of <?= h($r['subject_code'] ?: $r['subject_name']) ?>? The subject goes back to ₱0.00."><?= csrf_field() ?><input type="hidden" name="action" value="delete"><input type="hidden" name="id" value="<?= (int) $f['id'] ?>"><button class="btn btn-sm btn-outline-danger" aria-label="Remove price"><i class="bi bi-x-lg"></i></button></form>
-        <?php else: ?><a class="btn btn-sm btn-outline-primary" href="<?= h(url('subjectfees', ['subject' => $r['subject_doc_id']]) . '#subjectPrice') ?>"><i class="bi bi-pencil me-1"></i>Edit</a><?php endif; ?>
+        <?php else: ?><a class="btn btn-sm btn-outline-primary" href="<?= h(url('subjectfees', ['subject' => $r['subject_doc_id']])) ?>"><i class="bi bi-pencil me-1"></i>Edit</a><?php endif; ?>
       <?php endif; ?></td>
     </tr><?php endforeach; if (!$pageRows && $fq !== ''): ?><tr><td colspan="<?= $split ? 8 : 7 ?>" class="text-center text-muted py-4">No subject matches “<?= h($fq) ?>”.</td></tr><?php endif; if (!$rows): ?><tr><td colspan="<?= $split ? 8 : 7 ?>" class="text-center text-muted py-4">No subjects yet. Add subjects in Curriculum → Subjects (or in Grading → Subjects); they appear here at ₱0.00.</td></tr><?php endif; ?>
     </tbody></table></div>
     <?= RecordList::pagerHtml($win, 'subjectfees', ['q' => $fq], 'subjects') ?>
     <p class="small text-muted mt-2">Confirmed enrollments keep the assessment they were confirmed with. Open assessments without payments are recalculated when a price changes; the rest are recalculated when the registrar saves them.</p>
   </div>
-  <?php if ($canEdit): ?>
-  <div class="col-lg-7 d-print-none">
-    <form method="post" class="form-section" id="subjectPrice" data-price-form><?= csrf_field() ?><input type="hidden" name="action" value="save">
-      <?php if ($editFee): ?><input type="hidden" name="id" value="<?= (int) $editFee['id'] ?>"><?php endif; ?>
-      <h2 class="h6"><?= $editFee ? 'Edit subject price' : 'Set a subject price' ?></h2>
-      <label class="form-label small" for="sfSubject">Subject *</label>
-      <?php if ($editFee): ?><input class="form-control mb-2" id="sfSubject" value="<?= h(($editSubject['subjectCode'] ?? '') . ' · ' . ($editSubject['subjectName'] ?? 'Subject no longer exists')) ?>" disabled><?php $es = $editSubject ? LecLab::ofSubject($editSubject) : [0, 0, 0]; ?><input type="hidden" data-units value="<?= h((string) (float) ($editSubject['units'] ?? 0)) ?>" data-lec="<?= h((string) $es[0]) ?>" data-lab="<?= h((string) $es[1]) ?>">
-      <?php else: ?><select class="form-select mb-2" id="sfSubject" name="subject_doc_id" required data-units-select><option value="">— choose —</option>
-        <?php foreach (GS::subjects() as $s): ?><?php $ss = LecLab::ofSubject($s); ?><option value="<?= h($s['id']) ?>" data-units="<?= h((string) (float) ($s['units'] ?? 0)) ?>" data-lec="<?= h((string) $ss[0]) ?>" data-lab="<?= h((string) $ss[1]) ?>"<?= ($editSubject['id'] ?? '') === $s['id'] ? ' selected' : '' ?>><?= h(($s['subjectCode'] ?? '') . ' · ' . ($s['subjectName'] ?? '') . ' (' . (float) ($s['units'] ?? 0) . ' units)') ?></option><?php endforeach; ?></select><?php endif; ?>
-      <label class="form-label small" for="sfLabel">Fee</label>
-      <select class="form-select mb-1" id="sfLabel" name="label_id"><?php foreach ($labels as $l): ?><option value="<?= (int) $l['id'] ?>"<?= (int) ($editFee['label_id'] ?? $defaultLabel) === (int) $l['id'] ? ' selected' : '' ?>><?= h($l['category_name'] . ' · ' . $l['name']) ?></option><?php endforeach; ?></select>
-      <p class="form-text mt-0">Fees come from Assessment → Labels.</p>
-      <?php if ($split): ?><label class="form-label small" for="sfBasis">Charged per</label>
-      <select class="form-select mb-2" id="sfBasis" name="unit_basis" data-basis><?php foreach (LecLab::BASIS as $bk => $bl): ?><option value="<?= $bk ?>"<?= ($editFee['unit_basis'] ?? 'ALL') === $bk ? ' selected' : '' ?>><?= h($bl) ?></option><?php endforeach; ?></select>
-      <p class="form-text mt-0">Example: Laboratory fee per laboratory unit; Tuition per lecture unit or all units.</p><?php endif; ?>
-      <label class="form-label small" for="sfRate">Price per unit (₱)</label>
-      <input class="form-control mb-1" id="sfRate" name="rate" inputmode="decimal" placeholder="0.00" value="<?= h($editFee ? Money::fmt(Money::cents($editFee['rate'])) : '0.00') ?>">
-      <p class="fee-total small mb-2" data-price-total aria-live="polite"></p>
-      <fieldset class="mb-3"><legend class="form-label small mb-1">Charge in these fee templates</legend>
-        <?php if ($templates): ?><div class="border rounded p-2" style="max-height:180px;overflow:auto">
-          <?php foreach ($templates as $t): ?><label class="form-check small mb-1"><input class="form-check-input" type="checkbox" name="templates[]" value="<?= (int) $t['id'] ?>"<?= in_array((int) $t['id'], $editTicks, true) ? ' checked' : '' ?>> <span class="form-check-label"><?= h($t['name']) ?><?= $t['is_active'] ? '' : ' <span class="text-muted">(inactive)</span>' ?></span></label><?php endforeach; ?>
-        </div><p class="form-text mb-0">Only ticked templates charge this price. You can also tick prices while managing a fee template.</p>
-        <?php else: ?><p class="small text-muted mb-0">No fee templates yet (Assessment → Fee Templates).</p><?php endif; ?>
-      </fieldset>
-      <button class="btn btn-primary">Save price</button><?php if ($editFee || $editSubject): ?> <a class="btn btn-link" href="<?= url('subjectfees') ?>">Cancel</a><?php endif; ?>
-    </form>
-  </div>
-  <div class="col-lg-5 d-print-none">
-    <form method="post" class="form-section"><?= csrf_field() ?><input type="hidden" name="action" value="default_label">
-      <h2 class="h6">Default fee for subject prices</h2>
-      <select class="form-select form-select-sm mb-2" name="label_id" aria-label="Default fee"><?php foreach ($labels as $l): ?><option value="<?= (int) $l['id'] ?>"<?= (int) $defaultLabel === (int) $l['id'] ? ' selected' : '' ?>><?= h($l['category_name'] . ' · ' . $l['name']) ?></option><?php endforeach; ?></select>
-      <button class="btn btn-sm btn-outline-primary">Save default</button>
-    </form>
-  </div>
-  <?php endif; ?>
 </div>
 <script src="assets/fee-manage.js?v=56b" defer></script>
 <?php layout_end();
