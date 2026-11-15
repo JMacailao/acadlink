@@ -23,10 +23,10 @@ final class CurriculumAssignments
         $s=$this->db->prepare('SELECT data FROM docs WHERE col=? AND id=?');$s->execute([$col,$id]);$v=$s->fetchColumn();return $v===false?null:json_decode($v,true,512,JSON_THROW_ON_ERROR);
     }
     private function put(string $col,string $id,array $data): void {
-        $s=$this->db->prepare('INSERT INTO docs(col,id,data) VALUES(?,?,?) ON DUPLICATE KEY UPDATE data=VALUES(data)');$s->execute([$col,$id,json_encode($data,JSON_THROW_ON_ERROR)]);
+        if(class_exists('Db',false))Db::changed(); $s=$this->db->prepare('INSERT INTO docs(col,id,data) VALUES(?,?,?) ON DUPLICATE KEY UPDATE data=VALUES(data)');$s->execute([$col,$id,json_encode($data,JSON_THROW_ON_ERROR)]);
     }
     public function defaultTeacher(): string {
-        $s=$this->db->prepare("INSERT IGNORE INTO docs(col,id,data) VALUES('teachers',?,?)");
+        if(class_exists('Db',false))Db::changed(); $s=$this->db->prepare("INSERT IGNORE INTO docs(col,id,data) VALUES('teachers',?,?)");
         $s->execute([self::PLACEHOLDER,json_encode(['teacherId'=>'PROF-X','teacherName'=>'Professor X','isPlaceholder'=>true])]);
         $d=$this->get('teachers',self::PLACEHOLDER);
         if (($d['isPlaceholder']??false)!==true || ($d['teacherName']??'')!=='Professor X') throw new RuntimeException('The reserved Professor X record conflicts with an existing record.');

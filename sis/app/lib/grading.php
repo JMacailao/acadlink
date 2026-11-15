@@ -44,7 +44,7 @@ final class GS
 
     public static function get(string $col, string $id): ?array
     {
-        $raw = Db::val('SELECT data FROM docs WHERE col = ? AND id = ?', [$col, $id]);
+        $raw = Db::memo("gs.get\0$col\0$id", fn() => Db::val('SELECT data FROM docs WHERE col = ? AND id = ?', [$col, $id])); // v63.22
         if ($raw === null) return null;
         return ['id' => $id] + (json_decode((string) $raw, true) ?: []);
     }
@@ -52,9 +52,11 @@ final class GS
     /** Every record of a collection (with 'id'). */
     public static function all(string $col): array
     {
-        $out = [];
-        foreach (Db::all('SELECT id, data FROM docs WHERE col = ?', [$col]) as $r) $out[] = ['id' => $r['id']] + (json_decode((string) $r['data'], true) ?: []);
-        return $out;
+        return Db::memo("gs.all\0$col", function () use ($col) { // v63.22: read once per request until something is written
+            $out = [];
+            foreach (Db::all('SELECT id, data FROM docs WHERE col = ?', [$col]) as $r) $out[] = ['id' => $r['id']] + (json_decode((string) $r['data'], true) ?: []);
+            return $out;
+        });
     }
 
     private static function put(string $col, string $id, array $data): void
@@ -447,7 +449,7 @@ final class GS
 
     public static function schoolYears(): array
     {
-        $ys = Db::col("SELECT DISTINCT f_schoolYear FROM docs WHERE col IN ('sections','students') AND f_schoolYear IS NOT NULL AND f_schoolYear <> ''");
+        $ys = Db::memo('gs.schoolYears', fn() => Db::col("SELECT DISTINCT f_schoolYear FROM docs WHERE col IN ('sections','students') AND f_schoolYear IS NOT NULL AND f_schoolYear <> ''")); // v63.22
         rsort($ys);
         return $ys;
     }

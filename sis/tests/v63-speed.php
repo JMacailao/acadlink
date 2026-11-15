@@ -82,6 +82,39 @@ test('file routes: session released, year-long caching only for the exact versio
     foreach ($lazy as $f => $needle) ok(str_contains((string) file_get_contents("$root/$f"), $needle), "$f: photos are not lazy-loaded");
 });
 
+test('request cache: a repeated read is remembered, and any write drops it', function () {
+    $n = 0; $load = function () use (&$n) { $n++; return Db::val('SELECT COUNT(*) FROM sis_settings'); };
+    $a = Db::memo('t.count', $load); $b = Db::memo('t.count', $load); ok($n === 1 && $a === $b, 'read twice');
+    Db::q("INSERT INTO sis_settings (skey, svalue) VALUES ('speed_test_key', '1') ON DUPLICATE KEY UPDATE svalue = '2'");
+    $c = Db::memo('t.count', $load); ok($n === 2, 'not dropped after a write'); ok((int) $c >= (int) $a, 'stale value');
+    Db::changed(); Db::memo('t.count', $load); ok($n === 3, 'Db::changed() does not drop it');
+    // Grading System lists: a new section is seen in the same request
+    $before = count(GS::all('sections'));
+    Db::q("INSERT INTO docs (col, id, data) VALUES ('sections', 'speedtestsection', ?)", [json_encode(['schoolYear' => '2026-2027', 'yearLevel' => '1st Year', 'sectionName' => 'SPEED 1A'])]);
+    ok(count(GS::all('sections')) === $before + 1, 'GS::all() stale after a write');
+    ok(in_array('2026-2027', GS::schoolYears(), true), 'school years stale');
+});
+test('signed-in user built once per request, rebuilt after an account change', function () {
+    $c = Auth::central(); $owner = (int) $c->q("SELECT account_id FROM central_login_identifiers WHERE identifier_key = 'power.admin'")->fetchColumn();
+    $legacy = (int) $c->legacyId($owner, 'SIS'); ok($legacy > 0, 'power.admin has no SIS link');
+    Auth::actAs($legacy); $q0 = (int) Db::pdo()->query("SHOW SESSION STATUS LIKE 'Questions'")->fetch(PDO::FETCH_NUM)[1];
+    for ($i = 0; $i < 50; $i++) Auth::user();
+    $q1 = (int) Db::pdo()->query("SHOW SESSION STATUS LIKE 'Questions'")->fetch(PDO::FETCH_NUM)[1];
+    ok($q1 - $q0 <= 3, '50 Auth::user() calls sent ' . ($q1 - $q0 - 1) . ' queries (was 2 each)');
+    $name = (string) Auth::user()['full_name'];
+    Db::q('UPDATE sis_users SET full_name = ? WHERE id = ?', ['Speed Renamed', $legacy]);
+    ok((string) Auth::user()['full_name'] === 'Speed Renamed', 'user not rebuilt after a change'); Db::q('UPDATE sis_users SET full_name = ? WHERE id = ?', [$name, $legacy]);
+    for ($i = 0; $i < 20; $i++) $c->legacyId($owner, 'SIS');
+    $q2 = (int) Db::pdo()->query("SHOW SESSION STATUS LIKE 'Questions'")->fetch(PDO::FETCH_NUM)[1]; ok($q2 - $q1 <= 6, 'legacyId not remembered');
+    Auth::actAs(null);
+});
+test('sign-in check: "last seen" written at most once a minute; temporary-password check only when one is set', function () {
+    $src = (string) file_get_contents(dirname(SIS_ROOT) . '/shared/central-accounts.php');
+    $at = strpos($src, 'public function current(): ?array'); $body = substr($src, $at, (int) strpos($src, "\n    }", $at) - $at);
+    ok(str_contains($body, "(int)\$s['seen_ago'] >= 60") && str_contains($body, "(int)\$s['must_change_password'] && \$this->temporaryExpired"), 'current() not throttled');
+    ok(str_contains($body, 's.revoked_at IS NULL') && str_contains($body, 's.account_auth_version=a.auth_version') && str_contains($body, 's.policy_version=p.policy_version'), 'revocation no longer checked on every request');
+});
+
 $server->exec("DROP DATABASE IF EXISTS `$name`");
 echo "$pass passed, $fail failed\n";
 exit($fail ? 1 : 0);
