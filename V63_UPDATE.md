@@ -470,3 +470,9 @@ Files: `sis/app/views/layout.php`, `sis/assets/blue-theme.css`, `sis/assets/card
 - **Finance:** "Overview" heading over **Dashboard** in the side menu, like the SIS (the first link was named "Overview"). Title in the header, toolbar, cards and bottom menu were already in place from v64.2.
 
 Files: `sis/app/views/layout.php`, `sis/assets/blue-theme.css`. Press Ctrl+F5 once.
+
+## v64.5 — No page title in the desktop header
+
+The page title next to the search box ("Dashboard", "Students"…) is removed on desktop in every module (SIS, Finance, Library, LMS, Canteen). The breadcrumb under the header still names the page. On phones the title stays in the header, where it replaces the school name.
+
+File: `sis/assets/blue-theme.css`. Press Ctrl+F5 once.
