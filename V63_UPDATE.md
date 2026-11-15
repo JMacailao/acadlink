@@ -498,3 +498,11 @@ With about 1,000 subjects and 1,000 teachers, the Curriculum form wrote the full
 Saving also sends only the ticked subjects' teachers. Before, a large form sent over 2,000 values, and PHP's default limit is 1,000, so teacher choices could be silently lost.
 
 Files: `sis/app/pages/curriculum.php`, `sis/assets/curriculum-picker.js` (new), `js/curriculum.js`, `pages/curriculum.html`.
+
+## v64.7 — Faster LMS lists for coordinators; "Inspect" restricted
+
+**Speed (measured on the live site with every page of every system).** Most pages open in under a second. The LMS lists were slow for coordinators and admins, who see every class (1,280 on the test site): My Classes 4.8 s, Schedule 4.6 s, Reports 3.0 s, Gradebook 2.5 s, Settings 1.9 s. They ran 5–7 database queries per class (6,000+ per page). Now they load what they need for all classes in about ten queries (`Lms::preload`). The results are exactly the same; a test compares them class by class.
+
+**"Inspect is restricted on AcadLink."** Right-click (outside text boxes), F12, Ctrl+Shift+I / J / C and Ctrl+U (view source) are blocked with that message on every page (SIS, Finance, Canteen, Library, LMS, Student Portal, Grading System, sign-in). Copy and paste in text boxes still work. Note: this only discourages casual looking. Chrome's own menu (More tools → Developer tools) cannot be blocked by any website. AcadLink's real protection is on the server, which checks every permission.
+
+Files: `lms/lib/lms.php`, `lms/pages/{classes,schedule,gradebook,reports,settings}.php`, `js/no-inspect.js` (new), `sis/app/views/layout.php`, `portal/views/layout.php`, `index.html`, `pages/*.html`, tests in `sis/tests/v61-lms.php` and `v63-fixes.php`.

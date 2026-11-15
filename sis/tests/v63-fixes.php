@@ -85,6 +85,14 @@ test('v64.6: Curriculum does not write every teacher into every subject (froze t
     ok(str_contains((string) file_get_contents(SIS_ROOT . '/assets/curriculum-picker.js'), 's.disabled=true'), 'unticked subjects would still be sent (input limit)');
 });
 
+test('v64.6: "Inspect" is restricted on every kind of page (SIS family, Portal, Grading System)', function () {
+    $root = dirname(SIS_ROOT);
+    foreach (['sis/app/views/layout.php', 'portal/views/layout.php', 'index.html'] as $f) ok(str_contains((string) file_get_contents("$root/$f"), 'no-inspect.js'), "$f does not load it");
+    foreach (glob("$root/pages/*.html") as $f) ok(str_contains((string) file_get_contents($f), 'no-inspect.js'), basename($f) . ' does not load it');
+    $js = (string) file_get_contents("$root/js/no-inspect.js");
+    ok(str_contains($js, "'F12'") && str_contains($js, 'contextmenu') && str_contains($js, 'input, textarea'), 'shortcuts or the text-box exception missing');
+});
+
 $server->exec("DROP DATABASE IF EXISTS `$name`");
 echo "$pass passed, $fail failed\n";
 exit($fail ? 1 : 0);

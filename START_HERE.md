@@ -1,4 +1,4 @@
-**Updating to v64.6?** Deploy (Hostinger does it from GitHub), then press Ctrl+F5. Readable recent activity, a 7-day enrollment chart, phone fixes (Canteen Cashier width), faster dashboards; no database step.
+**Updating to v64.7?** Hostinger deploys from GitHub; press Ctrl+F5 once. LMS lists are faster for coordinators, and right-click / F12 / Inspect show "Inspect is restricted"; no database step.
 
 **Updating to v63.24?** Deploy or upload the changed files (see V63_UPDATE.md) and press Ctrl+F5 once. No database change.
 
