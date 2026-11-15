@@ -173,7 +173,7 @@ $docFeesWaiting = (int) Db::val("SELECT COUNT(*) FROM sis_document_requests WHER
       <form id="orFilters" data-record-filters method="get" class="or-filters d-print-none<?= $showFilters ? '' : ' d-none' ?>"><input type="hidden" name="r" value="cashier"><input type="hidden" name="apply" value="1">
         <div class="or-filters-title">Filter Preferences</div>
         <div class="fp-grid">
-          <?= fp_row('O.R. Date Range', '<input class="form-control form-control-sm" type="date" name="from" value="' . h($from) . '" aria-label="From"><span>–</span><input class="form-control form-control-sm" type="date" name="to" value="' . h($to) . '" aria-label="To">', true, true) ?>
+          <?= fp_row('O.R. Date Range', date_range_controls($from, $to), true, true) ?>
           <?= fp_row('O.R. Status', '<select class="form-select form-select-sm" name="status" aria-label="O.R. status"><option value="POSTED"' . ($fStatus === 'POSTED' ? ' selected' : '') . '>Posted</option><option value="VOIDED"' . ($fStatus === 'VOIDED' ? ' selected' : '') . '>Voided</option></select>', $fStatus !== '') ?>
           <?= fp_row('Payment Method', '<select class="form-select form-select-sm" name="method" aria-label="Payment method">' . list_options(PAYMENT_METHODS, $fMethod ?: PAYMENT_METHODS[0]) . '</select>', $fMethod !== '') ?>
           <?= fp_row('O.R. No.', '<input class="form-control form-control-sm" name="or" value="' . h($fOr) . '" placeholder="e.g. 0000012" aria-label="O.R. number">', $fOr !== '') ?>

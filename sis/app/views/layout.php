@@ -303,7 +303,7 @@ function layout_start(string $title, bool $bare = false): void
 <?php if ($route === 'assessment' && ($_GET['tab'] ?? '') === 'names'): ?><script src="<?= sis_web() ?>assets/fee-templates.js?v=1" defer></script><?php endif; ?>
 <?php if ($route === 'documents' && ($_GET['tab'] ?? '') === 'settings'): ?><script src="<?= sis_web() ?>assets/documents-template-preview.js?v=1" defer></script><?php endif; ?>
 <?php if ($route === 'admission'): ?><link rel="stylesheet" href="<?= sis_web() ?>assets/admission-form.css?v=1"><?php endif; ?>
-<?php if ($system === 'sis' && !$bare && $u): ?><link rel="stylesheet" href="<?= sis_web() ?>assets/easy-navigation.css?v=6"><link rel="stylesheet" href="<?= sis_web() ?>assets/dashboard.css?v=2"><link rel="stylesheet" href="<?= sis_web() ?>assets/blue-theme.css?v=64.6"><?php endif; // v64: the blue and orange design, loaded last ?>
+<?php if ($system === 'sis' && !$bare && $u): ?><link rel="stylesheet" href="<?= sis_web() ?>assets/easy-navigation.css?v=6"><link rel="stylesheet" href="<?= sis_web() ?>assets/dashboard.css?v=2"><link rel="stylesheet" href="<?= sis_web() ?>assets/blue-theme.css?v=64.10b"><?php endif; // v64: the blue and orange design, loaded last ?>
 </head>
 <?php $embedFlashes = $bare && isset($_GET['embed']) ? take_flashes() : []; // pop-up pages show their own messages ?>
 <body data-client-scope="<?= h($u ? acadlink_client_scope(Auth::central()) : '') ?>" class="<?= $bare ? 'bare' : ('sis-theme' . ($system === 'sis' && $u ? ' sis-easy' : '')) ?>" data-user-id="<?= h((string) ($u['id'] ?? 'guest')) ?>" data-route="<?= h((string) $route) ?>"<?= array_filter($embedFlashes, fn($f) => $f[0] === 'success') ? ' data-changed="1"' : '' ?>>
@@ -423,10 +423,10 @@ function layout_end(bool $bare = false): void
 <script src="<?= sis_web() ?>assets/record-list.js?v=48" defer></script>
 <script src="<?= sis_web() ?>assets/fixed-shell.js?v=31" defer></script>
 <script src="<?= sis_web() ?>assets/accounting-ui.js?v=31" defer></script>
-<script src="<?= sis_web() ?>assets/app.js?v=62.2"></script>
+<script src="<?= sis_web() ?>assets/app.js?v=64.10"></script>
 <script src="<?= sis_web() ?>assets/friendly-ui.js?v=48"></script>
 <script src="<?= sis_web() ?>assets/sis-actions.js?v=64.8"></script>
-<script src="<?= sis_web() ?>assets/theme.js?v=64.2"></script>
+<script src="<?= sis_web() ?>assets/theme.js?v=64.9"></script>
 <script src="../js/standard-toolbar-core.js?v=64.8"></script>
 <script src="<?= sis_web() ?>assets/standard-toolbar.js?v=69"></script>
 <script src="<?= sis_web() ?>assets/card-labels.js?v=64.6"></script>
@@ -444,6 +444,14 @@ function layout_end(bool $bare = false): void
  * One line of Filter Preferences: a tick box, its label and the controls. Unticked = the controls are
  * disabled (so they are not sent) and the filter is off. $locked = always on (e.g. the date range).
  */
+/** v64.10: From–To date inputs for a filter, with quick choices (Today, Last 7 days, This month). */
+function date_range_controls(?string $from, ?string $to): string
+{
+    $today = date('Y-m-d');
+    return '<input class="form-control form-control-sm" type="date" name="from" value="' . h((string) ($from ?? $today)) . '" aria-label="From"><span>–</span><input class="form-control form-control-sm" type="date" name="to" value="' . h((string) ($to ?? $from ?? $today)) . '" aria-label="To">'
+        . '<span class="al-date-presets"><button type="button" class="btn btn-sm btn-link" data-date-preset="today">Today</button><button type="button" class="btn btn-sm btn-link" data-date-preset="7">Last 7 days</button><button type="button" class="btn btn-sm btn-link" data-date-preset="month">This month</button></span>';
+}
+
 function fp_row(string $label, string $controls, bool $on, bool $locked = false): string
 {
     static $n = 0;

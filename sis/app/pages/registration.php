@@ -660,17 +660,22 @@ $fLevel = in_array($_GET['level']??'',YEAR_LEVELS,true)?$_GET['level']:'';
 $fPay = in_array($_GET['pay'] ?? '', ['UNPAID', 'PARTIAL', 'PAID'], true) ? $_GET['pay'] : '';
 $showVoided = ($_GET['show_voided'] ?? '') === '1';
 $q = trim((string) ($_GET['q'] ?? ''));
+// v64.10: date registered (From–To), when that filter is ticked
+$dFrom = In::date($_GET, 'from'); $dTo = $dFrom !== null ? (In::date($_GET, 'to') ?? $dFrom) : null;
+if ($dFrom !== null && $dTo < $dFrom) [$dFrom, $dTo] = [$dTo, $dFrom];
 $where = ['r.school_year = ?']; $p = [$sy];
 if (!$showVoided && $fState !== 'VOIDED') $where[] = "r.status <> 'CANCELLED'";
 if ($term) { $where[] = 'r.term = ?'; $p[] = $term; }
 if ($fLevel) { $where[] = 'r.year_level = ?'; $p[] = $fLevel; }
 if ($fSection !== '') { $where[] = 'r.section_name = ?'; $p[] = $fSection; }
+if ($dFrom !== null) { $where[] = 'r.created_at >= ? AND r.created_at < DATE_ADD(?, INTERVAL 1 DAY)'; array_push($p, $dFrom, $dTo); }
 if ($fState === 'VOIDED') $where[] = "r.status = 'CANCELLED'";
 if ($fState === 'OPEN') $where[] = "r.status <> 'CANCELLED' AND r.locked_at IS NULL";
 if ($fState === 'DONE') $where[] = "r.status <> 'CANCELLED' AND r.locked_at IS NOT NULL";
 if ($q !== '') { $where[] = '(r.reg_no LIKE ? OR r.student_number LIKE ? OR r.student_name LIKE ?)'; array_push($p, "%$q%", "%$q%", "%$q%"); }
-$rows = RecordList::query('SELECT r.*, u.full_name AS created_by_name FROM sis_registrations r LEFT JOIN sis_users u ON u.id = r.created_by WHERE ' . implode(' AND ', $where) . ' ORDER BY r.id DESC LIMIT 2000', $p);
+$rows = RecordList::query('SELECT r.*, u.full_name AS created_by_name FROM sis_registrations r LEFT JOIN sis_users u ON u.id = r.created_by WHERE ' . implode(' AND ', $where) . ' ORDER BY r.id DESC LIMIT 20000', $p);
 if ($fPay) $rows = array_values(array_filter($rows, fn($r) => Registration::payStatus($r) === $fPay));
+$pageRows = RecordList::slice($rows, $win); // v64.9: totals use every row; only this page is drawn
 $sum = ['n' => 0, 'total' => 0, 'paid' => 0, 'bal' => 0, 'OPEN' => 0, 'DONE' => 0, 'VOIDED' => 0];
 foreach ($rows as $r) {
     $st = Registration::state($r); $sum[$st]++;
@@ -679,7 +684,7 @@ foreach ($rows as $r) {
 }
 $sectionNames = array_values(array_unique(array_map(fn($x) => $x['sectionName'], GS::sections($sy))));
 sort($sectionNames);
-$keep = array_filter(['sy' => $sy, 'term' => $term, 'state' => $fState, 'pay' => $fPay, 'section' => $fSection, 'level' => $fLevel, 'show_voided' => $showVoided ? '1' : '', 'q' => $q], fn($v) => $v !== '');
+$keep = array_filter(['sy' => $sy, 'term' => $term, 'state' => $fState, 'pay' => $fPay, 'section' => $fSection, 'level' => $fLevel, 'show_voided' => $showVoided ? '1' : '', 'q' => $q, 'from' => (string) $dFrom, 'to' => (string) $dTo], fn($v) => $v !== '');
 if(RecordList::applied())$keep['apply']='1';
 $showFilters = ($_GET['filters'] ?? '') !== 'hide';
 $back = url('registration', $keep);
@@ -708,6 +713,7 @@ echo NotificationCenter::banner('registration');
         <div class="or-filters-title">Filter Preferences</div>
         <div class="fp-grid">
           <?= fp_row('School Year', '<select class="form-select form-select-sm" name="sy" aria-label="School year">' . sy_options($sy) . '</select>', true, true) ?>
+          <?= fp_row('Date Registered', date_range_controls($dFrom, $dTo), $dFrom !== null) ?>
           <?= fp_row('Term', '<select class="form-select form-select-sm" name="term" aria-label="Term">' . list_options(TERMS, $term ?: TERMS[0]) . '</select>', $term !== '') ?>
           <?= fp_row('Year Level', '<select class="form-select form-select-sm" name="level" aria-label="Year level">' . list_options(YEAR_LEVELS, $fLevel ?: YEAR_LEVELS[0]) . '</select>', $fLevel !== '') ?>
           <?= fp_row('Section', '<select class="form-select form-select-sm" name="section" aria-label="Section">' . list_options($sectionNames, $fSection) . '</select>', $fSection !== '') ?>
@@ -720,10 +726,10 @@ echo NotificationCenter::banner('registration');
       </form>
       <div class="print-only"><?php $docTitle = 'Registrations · ' . $sy . ($term ? ' · ' . $term : ''); $docRight = ''; require __DIR__ . '/../views/print_header.php'; ?></div>
       <div class="or-grid-wrap">
-        <table class="or-grid" id="regGrid" data-select>
+        <table class="or-grid" id="regGrid" data-select<?= RecordList::pagesAttr($win) ?>>
           <thead><tr><th>Registration Number</th><th>Date</th><th>Student ID</th><th>Student Name</th><th>Section</th><th>Year Level</th><th>Term</th><th class="n">Units</th><th class="n">Assessment</th><th class="n">Paid</th><th class="n">Balance</th><th>Status</th><th>Payment</th><th>Registered By</th></tr></thead>
           <tbody>
-          <?php foreach ($rows as $r): $st = Registration::state($r); $bal = Registration::balance($r); ?>
+          <?php foreach ($pageRows as $r): $st = Registration::state($r); $bal = Registration::balance($r); ?>
             <tr class="<?= $st === 'VOIDED' ? 'is-void' : '' ?>" tabindex="0" data-id="<?= (int) $r['id'] ?>"
                 data-view="<?= h(url('registration', ['id' => $r['id'], 'embed' => 1])) ?>" data-open="<?= h(url('registration', ['id' => $r['id']])) ?>"
                 data-pay="<?= h(url('cashier', ['reg' => $r['id'], 'embed' => 1])) ?>" data-payable="<?= $st !== 'VOIDED' && $bal > 0 ? '1' : '0' ?>"

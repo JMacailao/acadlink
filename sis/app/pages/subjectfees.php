@@ -26,6 +26,10 @@ $editFee = isset($_GET['edit']) && ctype_digit((string) $_GET['edit']) ? Db::one
 $editSubject = $editFee ? GS::get('subjects', (string) $editFee['subject_doc_id']) : (isset($_GET['subject']) ? GS::get('subjects', (string) $_GET['subject']) : null);
 $editTicks = $editFee ? array_map('intval', Db::col('SELECT assessment_name_id FROM sis_assessment_name_subject_fees WHERE subject_fee_id = ?', [(int) $editFee['id']])) : [];
 $priced = count(array_filter($rows, fn($r) => $r['fee'] !== null));
+// v64.9: search runs on the server (all subjects), and only one page of the list is drawn
+$fq = trim((string) ($_GET['q'] ?? ''));
+$shown = $fq === '' ? $rows : array_values(array_filter($rows, fn($r) => str_contains(mb_strtolower($r['subject_code'] . ' ' . $r['subject_name'] . ' ' . ($r['fee']['label_name'] ?? '')), mb_strtolower($fq))));
+$pageRows = RecordList::slice($shown, $win);
 $split = LecLab::on(); // v56.2: Settings → Separate lecture and laboratory units
 layout_start('Subject Fees');
 page_title('Subject Fees', $canEdit ? '<a class="btn btn-primary" href="' . h(url('subjectfees', ['new' => 1]) . '#subjectPrice') . '"><i class="bi bi-plus-lg me-1"></i>Set a subject price</a>' : '',
@@ -34,12 +38,12 @@ page_title('Subject Fees', $canEdit ? '<a class="btn btn-primary" href="' . h(ur
 <div class="row g-3">
   <div class="col-12">
     <div class="d-flex flex-wrap gap-2 align-items-center mb-2">
-      <input class="form-control form-control-sm" style="max-width:320px" data-filter="#subjectPrices" placeholder="Search subject code, name or fee" aria-label="Search subject prices">
+      <form method="get" class="d-flex gap-2" role="search"><input type="hidden" name="r" value="subjectfees"><input class="form-control form-control-sm" style="max-width:320px" type="search" name="q" value="<?= h($fq) ?>" placeholder="Search subject code, name or fee" aria-label="Search subject prices"><button class="btn btn-sm btn-outline-primary">Search</button><?php if ($fq !== ''): ?><a class="btn btn-sm btn-link" href="<?= url('subjectfees') ?>">Clear</a><?php endif; ?></form>
       <span class="small text-muted"><?= count($rows) ?> row(s) · <?= $priced ?> priced · <?= count($rows) - $priced ?> at ₱0.00</span>
     </div>
     <div class="table-responsive bg-white border rounded"><table class="table table-sm align-middle mb-0" id="subjectPrices">
     <thead class="table-light"><tr><th>Subject</th><th class="text-end"><?= $split ? 'Lec / Lab / Units' : 'Units' ?></th><th>Fee</th><?php if ($split): ?><th>Charged per</th><?php endif; ?><th class="text-end">Price per unit</th><th class="text-end">Total</th><th>Charged in templates</th><th class="text-end">Actions</th></tr></thead><tbody>
-    <?php foreach ($rows as $r): $f = $r['fee']; ?><tr<?= $f && $editFee && (int) $f['id'] === (int) $editFee['id'] ? ' class="table-primary"' : '' ?>>
+    <?php foreach ($pageRows as $r): $f = $r['fee']; ?><tr<?= $f && $editFee && (int) $f['id'] === (int) $editFee['id'] ? ' class="table-primary"' : '' ?>>
       <td><span class="font-monospace"><?= h($r['subject_code'] ?: '—') ?></span><div class="small text-muted"><?= h($r['subject_name']) ?></div></td>
       <td class="text-end text-nowrap"><?= $split ? h(LecLab::text($r['lec']) . ' / ' . LecLab::text($r['lab']) . ' / ') : '' ?><?= h($r['units']) ?></td>
       <td class="small"><?= $f ? h($f['label_name']) . ' <span class="small text-muted">· ' . h($f['category_name']) . '</span>' . ($f['label_active'] ? '' : ' <span class="badge text-bg-secondary">fee turned off</span>') : '<span class="small text-muted">No price yet</span>' ?></td>
@@ -52,8 +56,9 @@ page_title('Subject Fees', $canEdit ? '<a class="btn btn-primary" href="' . h(ur
           <form method="post" class="d-inline" data-confirm="Remove the <?= h($f['label_name']) ?> price of <?= h($r['subject_code'] ?: $r['subject_name']) ?>? The subject goes back to ₱0.00."><?= csrf_field() ?><input type="hidden" name="action" value="delete"><input type="hidden" name="id" value="<?= (int) $f['id'] ?>"><button class="btn btn-sm btn-outline-danger" aria-label="Remove price"><i class="bi bi-x-lg"></i></button></form>
         <?php else: ?><a class="btn btn-sm btn-outline-primary" href="<?= h(url('subjectfees', ['subject' => $r['subject_doc_id']]) . '#subjectPrice') ?>"><i class="bi bi-pencil me-1"></i>Edit</a><?php endif; ?>
       <?php endif; ?></td>
-    </tr><?php endforeach; if (!$rows): ?><tr><td colspan="<?= $split ? 8 : 7 ?>" class="text-center text-muted py-4">No subjects yet. Add subjects in Curriculum → Subjects (or in Grading → Subjects); they appear here at ₱0.00.</td></tr><?php endif; ?>
+    </tr><?php endforeach; if (!$pageRows && $fq !== ''): ?><tr><td colspan="<?= $split ? 8 : 7 ?>" class="text-center text-muted py-4">No subject matches “<?= h($fq) ?>”.</td></tr><?php endif; if (!$rows): ?><tr><td colspan="<?= $split ? 8 : 7 ?>" class="text-center text-muted py-4">No subjects yet. Add subjects in Curriculum → Subjects (or in Grading → Subjects); they appear here at ₱0.00.</td></tr><?php endif; ?>
     </tbody></table></div>
+    <?= RecordList::pagerHtml($win, 'subjectfees', ['q' => $fq], 'subjects') ?>
     <p class="small text-muted mt-2">Confirmed enrollments keep the assessment they were confirmed with. Open assessments without payments are recalculated when a price changes; the rest are recalculated when the registrar saves them.</p>
   </div>
   <?php if ($canEdit): ?>

@@ -110,6 +110,35 @@ test('v64.8: Students row has Create account (Power User), linked to the student
     ok(str_contains($p, 'data-icon="person-plus">Create account') && str_contains($p, 'data-icon="person-gear">Manage account'), 'row items missing');
 });
 
+test('v64.9: long lists send one page (15 / 30 / 50 / 100 / All); totals still count every row', function () {
+    $saveGet = $_GET; $saveCookie = $_COOKIE;
+    $_GET = []; $_COOKIE = []; $w = RecordList::window(1003);
+    ok($w === ['offset' => 0, 'size' => 15, 'page' => 1, 'total' => 1003, 'all' => false], 'default window: ' . json_encode($w));
+    $_GET = ['pg' => '4']; ok(RecordList::window(1003)['offset'] === 45, 'page 4 offset');
+    $_GET = ['pg' => '999']; ok(RecordList::window(1003)['page'] === 67, 'page past the end is the last page');
+    $_GET = ['per' => '30', 'pg' => '2']; $w = RecordList::window(100); ok($w['size'] === 30 && $w['offset'] === 30, 'per 30');
+    $_GET = ['per' => '7']; ok(RecordList::window(100)['size'] === 15, 'only 15/30/50/100 are allowed');
+    $_GET = ['per' => 'all']; $w = RecordList::window(2001); ok($w['all'] && $w['size'] === 2001 && $w['offset'] === 0, 'All');
+    $_GET = []; $_COOKIE = ['sis_perpage' => '50']; ok(RecordList::window(500)['size'] === 50, 'remembered rows per page');
+    $_GET = ['pg' => '2']; $_COOKIE = []; $rows = range(1, 40); $page = RecordList::slice($rows, $w2); ok($page === range(16, 30) && $w2['total'] === 40, 'slice');
+    ok(RecordList::pagesAttr($w2) === ' data-server-pages="1,15,40"', 'table attribute');
+    $_GET = ['per' => 'all']; ok(str_contains(RecordList::pagesAttr(RecordList::window(9)), '"0,0,9"'), 'All attribute');
+    foreach (['admission.php' => 'RecordList::pagesAttr($win)', 'registration.php' => '$pageRows = RecordList::slice($rows, $win)', 'teachers.php' => '$pageTeachers = RecordList::slice($teachers, $win)', 'subjectfees.php' => "RecordList::pagerHtml(\$win, 'subjectfees'"] as $f => $needle)
+        ok(str_contains((string) file_get_contents(SIS_ROOT . '/app/pages/' . $f), $needle), "$f is not paged");
+    $_GET = $saveGet; $_COOKIE = $saveCookie;
+});
+
+test('v64.10: Admission and Registration filter by date (From–To); Cashier keeps its O.R. date range; quick choices on all three', function () {
+    $layout = (string) file_get_contents(SIS_ROOT . '/app/views/layout.php');
+    ok(str_contains($layout, 'function date_range_controls(?string $from, ?string $to): string') && substr_count($layout, 'data-date-preset=') === 3, 'date controls');
+    ok(str_contains((string) file_get_contents(SIS_ROOT . '/assets/app.js'), "b.dataset.datePreset === 'month'"), 'quick choices do nothing');
+    $adm = (string) file_get_contents(SIS_ROOT . '/app/pages/admission.php');
+    ok(str_contains($adm, "fp_row('Date Applied', date_range_controls(\$dFrom, \$dTo)") && str_contains($adm, 'a.created_at >= ? AND a.created_at < DATE_ADD(?, INTERVAL 1 DAY)'), 'Admission date filter');
+    $reg = (string) file_get_contents(SIS_ROOT . '/app/pages/registration.php');
+    ok(str_contains($reg, "fp_row('Date Registered', date_range_controls(\$dFrom, \$dTo)") && str_contains($reg, 'r.created_at >= ? AND r.created_at < DATE_ADD(?, INTERVAL 1 DAY)'), 'Registration date filter');
+    ok(str_contains((string) file_get_contents(SIS_ROOT . '/app/pages/cashier.php'), "fp_row('O.R. Date Range', date_range_controls(\$from, \$to), true, true)"), 'Cashier date range');
+});
+
 $server->exec("DROP DATABASE IF EXISTS `$name`");
 echo "$pass passed, $fail failed\n";
 exit($fail ? 1 : 0);

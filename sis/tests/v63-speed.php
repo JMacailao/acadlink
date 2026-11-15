@@ -63,7 +63,7 @@ test('Admission list: checklists of all applicants in one query, same result as 
     ok(count(EnrollmentDocs::requirements()) === $before + 1, 'new requirement not seen');
     $src = (string) file_get_contents(SIS_ROOT . '/app/pages/admission.php');
     ok(str_contains($src, 'EnrollmentDocs::submittedFor(') && str_contains($src, 'progress($r, $docsHave'), 'Admission list does not preload checklists');
-    ok(str_contains($src, 'GROUP BY a.status, a.applicant_type') && str_contains($src, 'Showing the newest'), 'Admission counters are not counted in the database');
+    ok(str_contains($src, 'GROUP BY a.status, a.applicant_type') && str_contains($src, 'RecordList::window($matching)') && str_contains($src, "' OFFSET ' . \$win['offset']"), 'Admission counters are not counted in the database, or the list is not paged by the database'); // v64.9
 });
 test('file routes: session released, year-long caching only for the exact version, 304 for a known copy', function () use ($root) {
     $bytes = random_bytes(500); $sha = sha1($bytes);

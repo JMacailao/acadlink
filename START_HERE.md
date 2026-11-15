@@ -1,4 +1,4 @@
-**Updating to v64.8?** Hostinger deploys from GitHub; press Ctrl+F5 once. Faster LMS lists, "Inspect is restricted", page actions moved to More Actions, and Create account in a student's row menu; no database step.
+**Updating to v64.10?** Hostinger deploys from GitHub; press Ctrl+F5 once. Long lists send one page at a time, and Admission / Registration can be filtered by date; no database step.
 
 **Updating to v63.24?** Deploy or upload the changed files (see V63_UPDATE.md) and press Ctrl+F5 once. No database change.
 

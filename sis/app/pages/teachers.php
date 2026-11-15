@@ -18,6 +18,7 @@ if ($isPost) {
     redirect('teachers');
 }
 $teachers = RecordList::rows(fn()=>GS::teachers());
+$pageTeachers = RecordList::slice($teachers, $win); // v64.9: only this page is drawn
 $accounts=array_column(Db::all('SELECT p.teacher_doc_id,a.id,a.status,i.identifier AS username FROM central_person_links p JOIN central_accounts a ON a.id=p.account_id LEFT JOIN central_login_identifiers i ON i.account_id=a.id AND i.is_primary=1 WHERE p.teacher_doc_id IS NOT NULL'),null,'teacher_doc_id');
 $credentials=$_SESSION['teacher_account_created']??null;
 unset($_SESSION['teacher_account_created']);
@@ -39,10 +40,10 @@ page_title('Teachers', $canEdit ? '<a class="btn btn-primary" href="#addTeacher"
 <?php endif; ?>
 <div class="row g-3">
 <div class="<?= $canEdit ? 'col-xl-8' : 'col-12' ?>">
-  <input class="form-control form-control-sm mb-2" data-filter="#teachers" placeholder="Search">
-  <div class="table-responsive bg-white border rounded"><table class="table table-sm table-hover mb-0" id="teachers" data-theme-row-icons="own"><?php /* v63.24: the page has its own Actions menu; no second column */ ?>
+  <?php /* v64.9: the toolbar search finds teachers on every page; this box only searched the rows on screen */ ?>
+  <div class="table-responsive bg-white border rounded"><table class="table table-sm table-hover mb-0" id="teachers" data-theme-row-icons="own"<?= RecordList::pagesAttr($win) ?>><?php /* v63.24: the page has its own Actions menu; no second column */ ?>
   <thead class="table-light"><tr><th>Teacher ID</th><th>Name</th><th>Classes</th><th>Account</th><th>Actions</th></tr></thead><tbody>
-  <?php foreach ($teachers as $t): ?><tr><td class="font-monospace"><?= h($t['teacherId'] ?? '') ?></td><td><?= h($t['teacherName'] ?? '') ?></td><td><?= $classes[$t['id']] ?? 0 ?></td>
+  <?php foreach ($pageTeachers as $t): ?><tr><td class="font-monospace"><?= h($t['teacherId'] ?? '') ?></td><td><?= h($t['teacherName'] ?? '') ?></td><td><?= $classes[$t['id']] ?? 0 ?></td>
     <td><?php $linked=$accounts[$t['id']]??null; if($linked): ?>
       <span class="badge <?= $linked['status']==='ACTIVE'?'text-bg-success':'text-bg-secondary' ?>"><?= $linked['status']==='ACTIVE'?'Linked':'Disabled / linked' ?></span>
       <?php if($canManageAccounts): ?><div class="small"><?= h($linked['username']) ?></div><?php endif; ?>

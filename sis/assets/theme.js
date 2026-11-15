@@ -178,7 +178,13 @@
 
  // List bar above the table: selection, "Showing 1–15 of N", numbered pages and rows per page. Printing shows every row.
  const SIZES=[15,30,50,100];let size=Number(store.get('sis.perpage'))||15;if(!SIZES.includes(size))size=15;
- let page=0;const pages=()=>Math.max(1,Math.ceil(all.length/size));
+ // v64.9: a list the server pages (data-server-pages="page,size,total" on the table) holds only the rows of this page;
+ // moving to another page or changing rows per page asks the server for it. Size 0 = every row ("All").
+ const srv=(tables[0]?.dataset.serverPages||'').split(',').map(Number);const server=srv.length===3&&srv.every(n=>Number.isFinite(n));
+ let page=0;if(server){page=srv[0];size=srv[1]||Math.max(1,srv[2]);}
+ const total=()=>server?srv[2]:all.length;
+ const pages=()=>Math.max(1,Math.ceil(total()/size));
+ const serverGo=params=>{const u=new URL(location.href);Object.entries(params).forEach(([k,v])=>u.searchParams.set(k,v));u.searchParams.set('apply','1');if(window.SISNavigation&&window.SISNavigation.navigate)window.SISNavigation.navigate(u.href);else location.assign(u.href);};
  const bar=document.createElement('div');bar.className='sis-list-bar d-print-none';
  const pick=document.createElement('label');pick.className='sis-list-pick';
  const pickBox=document.createElement('input');pickBox.type='checkbox';pickBox.className='form-check-input';pickBox.disabled=true;pickBox.setAttribute('aria-label','Selected rows');
@@ -187,8 +193,9 @@
  const right=document.createElement('div');right.className='sis-list-right';
  const range=document.createElement('span');range.className='sis-pager-range';
  const pager=document.createElement('nav');pager.className='sis-pager';pager.setAttribute('aria-label','Pages');
- const per=document.createElement('select');per.className='form-select form-select-sm sis-per-page';per.setAttribute('aria-label','Rows per page');SIZES.forEach(n=>{const o=document.createElement('option');o.value=n;o.textContent=n+' / page';o.selected=n===size;per.append(o);});
- per.addEventListener('change',()=>{size=Number(per.value);store.set('sis.perpage',String(size));page=0;show();});
+ const per=document.createElement('select');per.className='form-select form-select-sm sis-per-page';per.setAttribute('aria-label','Rows per page');SIZES.forEach(n=>{const o=document.createElement('option');o.value=n;o.textContent=n+' / page';o.selected=server?n===srv[1]:n===size;per.append(o);});
+ if(server){const o=document.createElement('option');o.value='all';o.textContent='All';o.selected=srv[1]===0;per.append(o);}
+ per.addEventListener('change',()=>{if(server){if(per.value!=='all'){document.cookie='sis_perpage='+per.value+';path=/;max-age=31536000;samesite=lax';store.set('sis.perpage',per.value);}serverGo({per:per.value,pg:'1'});return;}size=Number(per.value);store.set('sis.perpage',String(size));page=0;show();});
  right.append(range,pager,per);bar.append(pick,right);
  const pbtn=(html,label,to,cur)=>{const b=document.createElement('button');b.type='button';b.className='sis-pager-btn'+(cur?' is-current':'');b.innerHTML=html;b.setAttribute('aria-label',label);if(cur)b.setAttribute('aria-current','page');b.addEventListener('click',()=>go(to));return b;};
  function drawPager(){
@@ -200,15 +207,15 @@
  }
  function show(){
    page=Math.min(page,pages()-1);
-   all.forEach((tr,i)=>tr.classList.toggle('sis-off-page',Math.floor(i/size)!==page));
-   const a=all.length?page*size+1:0,b=Math.min(all.length,(page+1)*size);
-   const many=all.length===1?noun:plural(noun);
-   range.textContent=all.length?`Showing ${a}–${b} of ${all.length.toLocaleString()} ${many}`:`No ${plural(noun)}`;
+   if(!server)all.forEach((tr,i)=>tr.classList.toggle('sis-off-page',Math.floor(i/size)!==page));
+   const n=total(),a=n?page*size+1:0,b=Math.min(n,(page+1)*size);
+   const many=n===1?noun:plural(noun);
+   range.textContent=n?`Showing ${a}–${b} of ${n.toLocaleString()} ${many}`:`No ${plural(noun)}`;
    const picked=all.filter(tr=>tr.classList.contains('is-selected')).length;
    count.textContent=`${picked} selected`;pickBox.checked=picked>0;pickBox.disabled=!picked;
    drawPager();
  }
- const go=p=>{page=Math.min(pages()-1,Math.max(0,p));show();tables[0]?.closest('.sis-record-scroll')?.scrollTo({top:0});};
+ const go=p=>{if(server){serverGo({pg:String(Math.min(pages()-1,Math.max(0,p))+1),per:srv[1]?String(srv[1]):'all'});return;}page=Math.min(pages()-1,Math.max(0,p));show();tables[0]?.closest('.sis-record-scroll')?.scrollTo({top:0});};
  if(tables.length&&list&&list.dataset.applied==='1'&&!main.querySelector('.workspace-pagination,.pagination')){const t=tables[0];(t.closest('.table-responsive,.or-grid-wrap')||t).before(bar);}
  show();
 
