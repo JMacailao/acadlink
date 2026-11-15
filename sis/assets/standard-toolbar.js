@@ -1,4 +1,4 @@
-/* SIS standard toolbar: New · Edit · Void · Post · Select All | Filters · Apply Filter | Search · Refresh · More.
+/* SIS standard toolbar: View · New | Edit · Delete · Post · Void | Select All | Filters · Apply Filter | Search · Refresh · More.
    Shown on every staff page. Each slot clicks the module's own control (row links and buttons, the list's
    Add button, Accounting's action buttons), so permissions, confirmations and server checks are unchanged.
    The old toolbar stays in the page, hidden, because its controls are the ones being clicked. */
@@ -46,9 +46,9 @@
  const accounting=[...document.querySelectorAll('[data-accounting-action]')];
  const ACC_SLOT={reverse_posted:'void',post:'post'};
  // What each slot could ever do on this page (to say "has no Void action" instead of "select a row").
- const known={edit:false,void:false,post:false};
+ const ACT=T.ACTIONS,viewSource=q('.record-selection-action');const known=Object.fromEntries(ACT.map(k=>[k,false]));
  const note=el=>{const k=slotOf(visibleLabel(el));if(k)known[k]=true;};
- allRows().forEach(tr=>rowControls(tr).forEach(note));rowTools.forEach(note);accounting.forEach(b=>{const k=ACC_SLOT[b.dataset.accountingAction];if(k)known[k]=true;});
+ if(viewSource)known.view=true;allRows().forEach(tr=>rowControls(tr).forEach(note));rowTools.forEach(note);accounting.forEach(b=>{const k=ACC_SLOT[b.dataset.accountingAction];if(k)known[k]=true;});
  const params=new URLSearchParams(location.search);
  const registrationDetail=route==='registration'&&params.has('id');
  const registrationBar=registrationDetail?main.querySelector('.or-toolbar[aria-label="Registration"]'):null;
@@ -65,17 +65,18 @@
    const o=document.createElement('button');o.type='button';o.textContent=visibleLabel(b);o.disabled=b.disabled;
    o.addEventListener('click',()=>{if(window.bootstrap?.Modal)window.bootstrap.Modal.getOrCreateInstance(m).show();});return o;}));
  const pageSlot=k=>[...pageControls(),...modalOpeners].filter(el=>slotOf(visibleLabel(el))===k);
- if(detail)['edit','void','post'].forEach(k=>{if(pageSlot(k).length)known[k]=true;});
+ if(detail)ACT.forEach(k=>{if(pageSlot(k).length)known[k]=true;});
 
  function sourcesFor(k){
    const tr=selectedRow();const out=[];
    if(tr){rowControls(tr).forEach(el=>{if(slotOf(visibleLabel(el))===k)out.push(el);});}
    rowTools.forEach(el=>{if(slotOf(visibleLabel(el))===k)out.push(el);});
    accounting.forEach(b=>{if(ACC_SLOT[b.dataset.accountingAction]===k)out.push(b);});
+   if(k==='view'&&viewSource)out.push(viewSource);
    if(detail)out.push(...pageSlot(k));
    return out;
  }
- const WORD={edit:'Edit',void:'Void',post:'Post'};
+ const WORD={view:'View',edit:'Edit',delete:'Delete',void:'Void',post:'Post'};
 
  // Build
  const search=searchInput||pageSearch||null;
@@ -103,7 +104,7 @@
    makeHeaderAction('print','Print Assessment','printer');
    makeHeaderAction('confirm','Confirm Enrollment','check2-circle',true);
    makeHeaderAction('pay','Pay at Cashier','cash-coin');
-   ['new','edit','post','selectAll','filters','apply'].forEach(k=>{const control=tb.el.querySelector('[data-std-slot="'+k+'"]');if(control)control.hidden=true;});
+   ['view','new','edit','delete','post','selectAll','filters','apply'].forEach(k=>{const control=tb.el.querySelector('[data-std-slot="'+k+'"]');if(control)control.hidden=true;});
    const filterGroup=tb.el.querySelector('.std-tb-group-2');if(filterGroup)filterGroup.hidden=true;
    const group3=tb.el.querySelector('.std-tb-group-3');
    const localSearch=group3?.querySelector('.std-tb-search');
@@ -128,11 +129,10 @@
  function moreItems(){
    const items=[],seen=new Set(),used=new Set([newSource,toggle,apply,refresh].filter(Boolean));
    if(registrationBar)['back','print','confirm','pay','refresh'].forEach(k=>{if(registrationActions[k])used.add(registrationActions[k]);});
-   ['edit','void','post'].forEach(k=>sourcesFor(k).forEach(el=>used.add(el)));
+   ACT.forEach(k=>sourcesFor(k).forEach(el=>used.add(el)));
    const add=(el,text)=>{text=text||visibleLabel(el);if(!text||seen.has(text.toLowerCase())||used.has(el))return;seen.add(text.toLowerCase());
      items.push({text,icon:el.dataset.icon||T.iconFor(text),disabled:!T.usable(el),title:el.title,run:()=>el.click()});};
    const tr=selectedRow();
-   const view=q('.record-selection-action');if(view)add(view,'View');
    accounting.filter(b=>!ACC_SLOT[b.dataset.accountingAction]).forEach(b=>add(b));
    if(tr)rowControls(tr).forEach(el=>add(el));
    rowTools.forEach(el=>add(el));
@@ -152,7 +152,7 @@
    const tr=selectedRow();
    const s={};
    s.new=newSource?{enabled:T.usable(newSource),run:()=>newSource.click(),title:visibleLabel(newSource)}:{enabled:false,title:moduleName+' has no New action here'};
-   ['edit','void','post'].forEach(k=>{
+   ACT.forEach(k=>{
      const src=sourcesFor(k),ok=src.find(T.usable);
      if(ok)s[k]={enabled:true,run:()=>ok.click(),title:visibleLabel(ok)};
      else if(!known[k])s[k]={enabled:false,title:moduleName+' has no '+WORD[k]+' action'};
@@ -171,7 +171,7 @@
    // Staff SIS shows only actions the module supports. Selection-dependent actions
    // remain visible so users can discover them before selecting a record.
    if(document.body.classList.contains('sis-easy')){
-     const supported={new:!!newSource,edit:known.edit||!!s.edit?.enabled,void:known.void||!!s.void?.enabled,post:known.post||!!s.post?.enabled,selectAll:!!bulkAll,filters:!!(form||pageForm),apply:!!(apply||pageForm)};
+     const supported={new:!!newSource,...Object.fromEntries(ACT.map(k=>[k,known[k]||!!s[k]?.enabled])),selectAll:!!bulkAll,filters:!!(form||pageForm),apply:!!(apply||pageForm)};
      Object.entries(supported).forEach(([key,show])=>{const button=tb.el.querySelector('[data-std-slot="'+key+'"]');if(button)button.hidden=!show;});
      if(newSource)tb.set('new',{...s.new,label:visibleLabel(newSource)});
    }

@@ -4,41 +4,47 @@ declare(strict_types=1);
 require_once __DIR__ . '/bottom-nav.php'; // v61.2
 require_once dirname(__DIR__,3).'/shared/client-state.php';
 
-/** [route, label, icon, permissions, group, hint] — items of one group are listed together under a collapsible heading */
+/** v64.1: grouped as Student Services · Academics · Assessment · Fees · Administration.
+ * [route, label, icon, permissions, group, hint] — items of one group are listed together under a collapsible heading */
 const NAV = [
-    ['dashboard', 'Overview', 'house-door', [], '', ''],
+    ['dashboard', 'Dashboard', 'house-door', [], '', ''],
     ['notifications', 'Notifications', 'bell', ['admission', 'registration', 'payments.view', 'accounting'], '', 'Special-request approvals'],
     ['my', 'My Account', 'person-badge', ['self'], '', 'Grades, fees, receipts'],
-    ['enrollment', 'Enrollment Applications', 'clipboard-check', ['admission', 'admission.view'], 'Enrollment', 'Student Portal applications'],
-    ['admission', 'Admission', 'person-plus', ['admission', 'admission.view'], 'Enrollment', 'New applicants'],
-    ['registration', 'Registration', 'journal-check', ['registration', 'payments.view', 'registration.view'], 'Enrollment', 'Enroll for a term'],
-    ['clearance', 'Online Clearance', 'patch-check', ['clearance'], 'Enrollment', 'Sign and review student clearance'],
-    ['eligibility', 'Enrollment Eligibility', 'shield-check', ['registration', 'eligibility.view'], 'Enrollment', 'Checks, holds and prerequisites'],
-    ['students', 'Students', 'people', ['students'], 'Records', ''],
-    ['photos', 'Photo Approvals', 'person-bounding-box', ['students.edit'], 'Records', 'New photos students sent'],
-    ['privacy', 'Data Privacy', 'shield-lock', ['students.edit', 'settings.manage'], 'Records', 'Privacy notice and records to review'],
-    ['teachers', 'Teachers', 'person-video3', ['teachers'], 'Records', ''],
-    ['sections', 'Sections', 'collection', ['sections'], 'Records', ''],
-    ['yearlevels', 'Year Levels', 'bar-chart-steps', ['yearlevels'], 'Records', ''],
-    ['curriculum', 'Curriculum', 'list-check', ['curriculum'], 'Records', 'Subjects per term'],
-    ['history&tab=grades', 'History of Grades', 'clock-history', ['students', 'registration'], 'Records', 'Permanent grade records'],
-    ['history&tab=assessments', 'History of Assessments', 'receipt', ['registration', 'accounting', 'payments.view'], 'Records', 'Permanent assessment records'],
-    ['documents', 'TOR & Certificates', 'file-earmark-text', ['documents'], 'Records', 'Issue, sign, reprint and void'],
-    ['schedules', 'Class Schedules', 'calendar-week', ['schedules'], 'Records', 'Days, times, rooms and teachers'],
-    ['cashier', 'Cashier', 'cash-coin', ['payments.view'], '', 'Payments and receipts'],
+    ['enrollment', 'Enrollment Applications', 'clipboard-check', ['admission', 'admission.view'], 'Student Services', 'Student Portal applications'],
+    ['admission', 'Admission', 'person-plus', ['admission', 'admission.view'], 'Student Services', 'New applicants'],
+    ['registration', 'Registration', 'journal-check', ['registration', 'payments.view', 'registration.view'], 'Student Services', 'Enroll for a term'],
+    ['clearance', 'Online Clearance', 'patch-check', ['clearance'], 'Student Services', 'Sign and review student clearance'],
+    ['eligibility', 'Enrollment Eligibility', 'shield-check', ['registration', 'eligibility.view'], 'Student Services', 'Checks, holds and prerequisites'],
+    ['students', 'Students', 'people', ['students'], 'Student Services', ''],
+    ['photos', 'Photo Approvals', 'person-bounding-box', ['students.edit'], 'Student Services', 'New photos students sent'],
+    ['privacy', 'Data Privacy', 'shield-lock', ['students.edit', 'settings.manage'], 'Student Services', 'Privacy notice and records to review'],
+    ['documents', 'TOR & Certificates', 'file-earmark-text', ['documents'], 'Student Services', 'Issue, sign, reprint and void'],
+    ['history&tab=grades', 'History of Grades', 'clock-history', ['students', 'registration'], 'Student Services', 'Permanent grade records'],
+    ['history&tab=assessments', 'History of Assessments', 'receipt', ['registration', 'accounting', 'payments.view'], 'Student Services', 'Permanent assessment records'],
+    ['curriculum', 'Curriculum', 'list-check', ['curriculum'], 'Academics', 'Subjects per term'],
+    ['schedules', 'Class Schedules', 'calendar-week', ['schedules'], 'Academics', 'Days, times, rooms and teachers'],
+    ['sections', 'Sections', 'collection', ['sections'], 'Academics', ''],
+    ['yearlevels', 'Year Levels', 'bar-chart-steps', ['yearlevels'], 'Academics', ''],
+    ['teachers', 'Teachers', 'person-video3', ['teachers'], 'Academics', ''],
+    ['@GRADING', 'Grading', 'star', [], 'Academics', 'Open the Grading System'],
+    ['@LMS', 'LMS', 'display', [], 'Academics', 'Open the Learning Management System'],
     ['assessment&tab=categories', 'Fee categories', 'tags', ['assessment'], 'Assessment', 'Fee groups'],
     ['assessment&tab=labels', 'Fee labels', 'tag', ['assessment'], 'Assessment', 'Fee lines'],
     ['assessment&tab=names', 'Fee Templates', 'card-list', ['assessment'], 'Assessment', 'Fee templates'],
     ['subjectfees', 'Subject Fees', 'journal-plus', ['assessment'], 'Assessment', 'Fees of particular subjects, per unit'],
     ['discounts', 'Scholarships & Discounts', 'award', ['assessment', 'discounts.manage'], 'Assessment', 'Less on the fees'],
     ['assessment&tab=labels&plan=list', 'Payment Setup', 'calendar3', ['assessment'], 'Assessment', 'Installments, due dates and full-payment discount'],
-    ['docfees', 'Document Fees', 'file-earmark-text', ['payments.view'], 'Fees', 'TOR and certificate requests to pay'],
-    ['libfines', 'Library Fines', 'book', ['payments.view'], 'Fees', 'Overdue, lost and damage fines to pay'],
+    ['cashier', 'Cashiering', 'credit-card', ['payments.view'], 'Operations', 'Payments and receipts'],
+    ['docfees', 'Document Fees', 'file-earmark-text', ['payments.view'], 'Operations', 'TOR and certificate requests to pay'],
+    ['libfines', 'Library Fines', 'coin', ['payments.view'], 'Operations', 'Overdue, lost and damage fines to pay'],
+    ['@FINANCE', 'Accounting', 'database', [], 'Operations', 'Open Finance'],
+    ['@LIBRARY', 'Library', 'book', [], 'Operations', 'Open the Library'],
+    ['@CANTEEN', 'Canteen POS', 'cup-hot', [], 'Operations', 'Open the Canteen POS'],
     ['reports', 'Report Manager', 'printer', ['admission', 'registration', 'payments.view', 'accounting', 'reports'], 'Administration', 'Census, cashier reports'],
     ['users', 'Users and Groups', 'person-gear', ['users.manage'], 'Administration', 'Sign-in accounts'],
     ['settings', 'Settings', 'gear', ['settings.manage', 'users.manage', 'registration', 'accounting', 'curriculum.edit'], 'Administration', 'Printing, document requirements, email, backup, accounts and imports'],
     ['activity', 'Activity Log', 'clock-history', ['activity'], 'Administration', 'Who did what'],
-    ['help', 'Help', 'question-circle', [], '', 'How to use the SIS'],
+    ['help', 'Help', 'question-circle', [], 'Administration', 'How to use the SIS'],
 ];
 
 /** v58: the Finance system's menu (finance/index.php). Same item format as NAV. */
@@ -104,10 +110,22 @@ function app_bottom_nav(): void
 {
     global $route;
     $sys = app_system();
-    if (!in_array($sys, ['LMS', 'CANTEEN', 'LIBRARY'], true)) return;
-    $nav = []; foreach (app_nav() as [$r, $label, $icon, $perms]) if (!$perms || Auth::can(...$perms)) $nav[$r] = [$label, $icon];
+    if (!in_array($sys, ['LMS', 'CANTEEN', 'LIBRARY', 'SIS', 'FINANCE'], true)) return;
+    $nav = []; foreach (app_nav() as [$r, $label, $icon, $perms]) if ($r[0] !== '@' && (!$perms || Auth::can(...$perms))) $nav[$r] = [$label, $icon];
     $item = fn(string $r, ?string $label = null, ?string $icon = null, array $also = [], int $badge = 0) => ['href' => url($r), 'label' => $label ?? $nav[$r][0], 'icon' => $icon ?? $nav[$r][1], 'active' => $route === $r || in_array($route, $also, true), 'badge' => $badge];
     $more = ['label' => 'More', 'icon' => 'grid', 'sheet' => 'sidebar', 'active' => false];
+    if ($sys === 'SIS' || $sys === 'FINANCE') { // v64.2: Home · Admissions · Enrollment · Cashier · More (the first four this person may open)
+        $want = $sys === 'SIS'
+            ? [['dashboard', 'Home', 'house-door', []], ['admission', 'Admissions', 'file-earmark-plus', ['enrollment']], ['registration', 'Enrollment', 'layers', []], ['cashier', 'Cashier', 'credit-card', ['receipt']], ['students', 'Students', 'people', ['student']], ['my', 'My Account', 'person-badge', []], ['reports', 'Reports', 'bar-chart', []]]
+            : [['dashboard', 'Home', 'house-door', []], ['cashier', 'Cashier', 'credit-card', []], ['accounting&tab=review', 'Review', 'clipboard-check', []], ['reports', 'Reports', 'bar-chart', []], ['balance', 'Balances', 'wallet2', []]];
+        $picked = [];
+        foreach ($want as [$r, $label, $icon, $also]) { if (!isset($nav[$r]) || count($picked) >= 4) continue; [$rr, $qs] = array_pad(explode('&', $r, 2), 2, ''); parse_str($qs, $ps);
+            $picked[] = ['href' => url($rr, $ps), 'label' => $label, 'icon' => $icon, 'active' => $route === $rr || in_array($route, $also, true), 'badge' => 0]; }
+        if (count($picked) < 2) return;
+        $center = array_splice($picked, min(2, count($picked) - 1), 1)[0];
+        bottom_nav(array_slice($picked, 0, 2), $center, array_merge(array_slice($picked, 2), [$more]), 'Quick menu');
+        return;
+    }
     if ($sys === 'LMS') {
         if (!$nav) return;
         bottom_nav([$item('dashboard', 'Home', 'house-door'), $item('classes', 'Classes', 'people', ['class', 'work'])],
@@ -131,6 +149,15 @@ function app_bottom_nav(): void
     if (!$center) return;
     $side = array_map(fn($r) => $item($r, $short[$r]), array_slice($pick, 0, 3));
     bottom_nav(array_slice($side, 0, 2), $center, array_merge(array_slice($side, 2, 1), [$more]), 'Canteen menu');
+}
+
+/** v64.2: other AcadLink systems this account may open, for the menu links (Grading, LMS, Accounting, Library, Canteen POS). */
+const SYSTEM_LINKS = ['GRADING' => '../pages/dashboard.html', 'LMS' => '../lms/index.php', 'FINANCE' => '../finance/index.php', 'LIBRARY' => '../library/index.php', 'CANTEEN' => '../canteen/index.php'];
+function open_systems(): array
+{
+    static $systems = null;
+    if ($systems === null) { try { $a = Auth::central()->current(); $systems = $a ? ModuleAccess::systems(Auth::central()->permissions((int) $a['id'])) : []; } catch (Throwable) { $systems = []; } }
+    return $systems;
 }
 
 /** The menu of the system this page belongs to. */
@@ -198,7 +225,7 @@ function settings_hub_nav(): string
 }
 
 /** Icon shown beside each sidebar group heading. */
-const NAV_GROUP_ICONS = ['Enrollment' => 'clipboard-check', 'Records' => 'folder2-open', 'Assessment' => 'calculator', 'Fees' => 'cash-stack', 'Accounting' => 'journal-bookmark', 'Administration' => 'gear-wide-connected', 'Finance' => 'wallet2', 'Cashier' => 'cash-coin', 'Balances' => 'wallet2', 'Reports' => 'printer', 'Supervisor' => 'person-check', 'Inventory' => 'box-seam'];
+const NAV_GROUP_ICONS = ['Student Services' => 'people', 'Academics' => 'mortarboard', 'Assessment' => 'calculator', 'Operations' => 'briefcase', 'Fees' => 'cash-stack', 'Accounting' => 'journal-bookmark', 'Administration' => 'gear-wide-connected', 'Finance' => 'wallet2', 'Cashier' => 'cash-coin', 'Balances' => 'wallet2', 'Reports' => 'printer', 'Supervisor' => 'person-check', 'Inventory' => 'box-seam'];
 
 /** The sidebar group of the current route, used by the breadcrumb ("Home › Enrollment › Admission"). */
 function nav_group_of(string $route): string
@@ -265,17 +292,17 @@ function layout_start(string $title, bool $bare = false): void
 <link rel="stylesheet" href="<?= sis_web() ?>assets/people.css?v=63">
 <link rel="stylesheet" href="<?= sis_web() ?>assets/schedule-grid.css?v=63.4">
 <link rel="stylesheet" href="<?= sis_web() ?>assets/unified-toolbar.css?v=60">
-<link rel="stylesheet" href="../css/standard-toolbar.css?v=57">
+<link rel="stylesheet" href="../css/standard-toolbar.css?v=64.1">
 <link rel="stylesheet" href="<?= sis_web() ?>assets/registration-fees.css?v=4">
 <link rel="stylesheet" href="<?= sis_web() ?>assets/assessment-fee-templates.css?v=1">
 <?php if (app_system() === 'CANTEEN'): ?><link rel="stylesheet" href="assets/canteen.css?v=63.5"><?php endif; ?>
 <?php if (app_system() === 'LIBRARY'): ?><link rel="stylesheet" href="assets/library.css?v=63.6"><?php endif; ?>
 <?php if (app_system() === 'LMS'): ?><link rel="stylesheet" href="assets/lms.css?v=63.5"><?php endif; ?>
-<?php if (in_array(app_system(), ['LMS', 'CANTEEN', 'LIBRARY'], true)): ?><link rel="stylesheet" href="<?= sis_web() ?>assets/bottom-nav.css?v=63.2"><?php endif; ?>
+<?php if (in_array(app_system(), ['LMS', 'CANTEEN', 'LIBRARY', 'SIS', 'FINANCE'], true)): ?><link rel="stylesheet" href="<?= sis_web() ?>assets/bottom-nav.css?v=64.2"><?php endif; ?>
 <?php if ($route === 'assessment' && ($_GET['tab'] ?? '') === 'names'): ?><script src="<?= sis_web() ?>assets/fee-templates.js?v=1" defer></script><?php endif; ?>
 <?php if ($route === 'documents' && ($_GET['tab'] ?? '') === 'settings'): ?><script src="<?= sis_web() ?>assets/documents-template-preview.js?v=1" defer></script><?php endif; ?>
 <?php if ($route === 'admission'): ?><link rel="stylesheet" href="<?= sis_web() ?>assets/admission-form.css?v=1"><?php endif; ?>
-<?php if ($system === 'sis' && !$bare && $u): ?><link rel="stylesheet" href="<?= sis_web() ?>assets/easy-navigation.css?v=6"><link rel="stylesheet" href="<?= sis_web() ?>assets/dashboard.css?v=2"><link rel="stylesheet" href="<?= sis_web() ?>assets/blue-theme.css?v=64.1"><?php endif; // v64: the blue and orange design, loaded last ?>
+<?php if ($system === 'sis' && !$bare && $u): ?><link rel="stylesheet" href="<?= sis_web() ?>assets/easy-navigation.css?v=6"><link rel="stylesheet" href="<?= sis_web() ?>assets/dashboard.css?v=2"><link rel="stylesheet" href="<?= sis_web() ?>assets/blue-theme.css?v=64.2"><?php endif; // v64: the blue and orange design, loaded last ?>
 </head>
 <?php $embedFlashes = $bare && isset($_GET['embed']) ? take_flashes() : []; // pop-up pages show their own messages ?>
 <body data-client-scope="<?= h($u ? acadlink_client_scope(Auth::central()) : '') ?>" class="<?= $bare ? 'bare' : ('sis-theme' . ($system === 'sis' && $u ? ' sis-easy' : '')) ?>" data-user-id="<?= h((string) ($u['id'] ?? 'guest')) ?>" data-route="<?= h((string) $route) ?>"<?= array_filter($embedFlashes, fn($f) => $f[0] === 'success') ? ' data-changed="1"' : '' ?>>
@@ -290,6 +317,7 @@ function layout_start(string $title, bool $bare = false): void
 <header class="sis-appbar d-print-none" aria-label="School workspace">
   <button class="sis-appbar-menu d-lg-none" type="button" data-bs-toggle="offcanvas" data-bs-target="#sidebar" aria-controls="sidebar" aria-label="Open menu"><i class="bi bi-list" aria-hidden="true"></i></button>
   <a href="<?= url('dashboard') ?>" class="sis-appbar-brand"><img src="<?= h($logo ?: '../icons/acadlink-mark.png') ?>" alt=""><span class="sis-brand-text"><span class="sis-brand-name"><?= h(School::brand()) ?></span><span class="sis-brand-sub"><?= $system === 'portal' ? 'Student Portal' : h(app_title()) ?></span></span></a>
+  <?php if ($system === 'sis' && in_array(app_system(), ['SIS', 'FINANCE'], true)): ?><div class="sis-appbar-title" aria-hidden="true"><?= h($title) ?></div><?php endif; ?>
   <?php if (app_system() === 'CANTEEN'): ?><div class="cpos-appbar-title d-none d-md-flex"><img class="cpos-appbar-logo" src="<?= h($logo ?: '../icons/acadlink-mark.png') ?>" alt="">Canteen POS</div><?php endif; ?>
   <?php if (app_system() === 'LMS'): ?><div class="lms-appbar-title d-none d-md-flex"><?= h(School::brand()) ?> LMS</div><?php endif; ?>
   <?php if (app_system() === 'LIBRARY'): ?><div class="lib-appbar-title d-none d-md-flex"><i class="bi bi-book-half" aria-hidden="true"></i>Library</div><?php endif; ?>
@@ -328,8 +356,11 @@ function layout_start(string $title, bool $bare = false): void
       <div class="sis-sidebar-head d-lg-none"><span><?= h(School::brand()) ?> <?= $system === 'portal' ? 'Portal' : (['FINANCE' => 'Finance', 'CANTEEN' => 'Canteen', 'LIBRARY' => 'Library', 'LMS' => 'LMS'][app_system()] ?? 'SIS') ?></span><button type="button" class="btn-close" data-bs-dismiss="offcanvas" data-bs-target="#sidebar" aria-label="Close menu"></button></div>
       <nav class="pb-2"><?php if(app_system()==='SIS' && in_array(Auth::role(),['TEACHER','STUDENT'],true)): ?><a class="side-link" href="<?= url('history',['tab'=>'grades']) ?>"><i class="bi bi-clock-history"></i><span>History of Grades</span></a><?php if(Auth::role()==='STUDENT'): ?><a class="side-link" href="<?= url('history',['tab'=>'assessments']) ?>"><i class="bi bi-receipt"></i><span>History of Assessments</span></a><?php endif; endif; ?>
       <?php if(app_system()==='SIS' && Auth::can('self')): ?><a class="side-link" href="<?= url(Auth::studentNumber()?'myenrollment':'myadmission') ?>"><i class="bi bi-person-plus"></i><span><?= Auth::studentNumber()?'Apply for Enrollment':'My admission application' ?></span></a><?php endif; ?>
+      <?php if (app_system() === 'SIS'): ?><div class="nav-static-head" aria-hidden="true">Overview</div><?php endif; ?>
       <?php $group = ''; $groupN = 0; $here = $route . (isset($_GET['tab']) && is_string($_GET['tab']) ? '&tab=' . $_GET['tab'] : '') . ($route === 'assessment' && isset($_GET['plan']) ? '&plan=list' : '');
       foreach (app_nav() as [$r, $label, $icon, $perms, $g, $hint]):
+          $extern = $r[0] === '@' ? substr($r, 1) : ''; // v64.2: a link to another AcadLink system
+          if ($extern !== '' && !in_array($extern, open_systems(), true)) continue;
           if ($perms && !Auth::can(...$perms)) continue;
           if ($r === 'clearance' && !Clearance::on()) continue; // v55: hidden while online clearance is off
           if ($r === 'importall' && !ImportAll::can()) continue; // v56: needs both Curriculum and Assessment editing
@@ -344,7 +375,7 @@ function layout_start(string $title, bool $bare = false): void
               $group = $g;
               if ($g !== '') { $groupN++; echo '<div class="nav-group" data-nav-group="' . h($g) . '"><button type="button" class="nav-group-toggle" aria-expanded="true" aria-controls="navGroup' . $groupN . '"><i class="bi bi-' . (NAV_GROUP_ICONS[$g] ?? 'folder') . '" aria-hidden="true"></i><span>' . h($g) . '</span><i class="bi bi-chevron-up nav-group-chevron" aria-hidden="true"></i></button><div class="nav-group-items" id="navGroup' . $groupN . '">'; }
           } ?>
-        <a class="side-link<?= $active ? ' active' : '' ?>" href="<?= url($rr, $params) ?>"<?= $active ? ' aria-current="page"' : '' ?><?= $hint !== '' ? ' title="' . h($hint) . '"' : '' ?>><i class="bi bi-<?= $icon ?>" aria-hidden="true"></i><span><?= h($label) ?></span><?php if (app_system() === 'LMS' && $rr === 'messages' && function_exists('lms_unread') && ($lu = lms_unread())): ?><span class="sis-nav-badge" aria-label="<?= $lu ?> unread"><?= $lu > 99 ? '99+' : $lu ?></span><?php endif; ?><?php if ($rr === 'notifications' && $unread): ?><span class="sis-nav-badge" aria-label="<?= $unread ?> unread"><?= $unread > 99 ? '99+' : $unread ?></span><?php endif; ?></a>
+        <a class="side-link<?= $active ? ' active' : '' ?>" href="<?= $extern !== '' ? h(SYSTEM_LINKS[$extern]) : url($rr, $params) ?>"<?= $active ? ' aria-current="page"' : '' ?><?= $hint !== '' ? ' title="' . h($hint) . '"' : '' ?>><i class="bi bi-<?= $icon ?>" aria-hidden="true"></i><span><?= h($label) ?></span><?php if (app_system() === 'LMS' && $rr === 'messages' && function_exists('lms_unread') && ($lu = lms_unread())): ?><span class="sis-nav-badge" aria-label="<?= $lu ?> unread"><?= $lu > 99 ? '99+' : $lu ?></span><?php endif; ?><?php if ($rr === 'notifications' && $unread): ?><span class="sis-nav-badge" aria-label="<?= $unread ?> unread"><?= $unread > 99 ? '99+' : $unread ?></span><?php endif; ?></a>
       <?php endforeach; if ($group !== '') echo '</div></div>'; ?>
       </nav>
       <?php if ($system === 'sis'): ?><a class="sis-rail-profile" href="<?= url('profile') ?>"><span class="sis-user-avatar" aria-hidden="true"><?= h($initials) ?></span><span><strong><?= h($u['full_name']) ?></strong><small><?= h($u['role_name']) ?></small></span><i class="bi bi-chevron-right" aria-hidden="true"></i></a><?php endif; ?>
@@ -394,9 +425,9 @@ function layout_end(bool $bare = false): void
 <script src="<?= sis_web() ?>assets/app.js?v=62.2"></script>
 <script src="<?= sis_web() ?>assets/friendly-ui.js?v=48"></script>
 <script src="<?= sis_web() ?>assets/sis-actions.js?v=41"></script>
-<script src="<?= sis_web() ?>assets/theme.js?v=63.24"></script>
-<script src="../js/standard-toolbar-core.js?v=57"></script>
-<script src="<?= sis_web() ?>assets/standard-toolbar.js?v=67"></script>
+<script src="<?= sis_web() ?>assets/theme.js?v=64.2"></script>
+<script src="../js/standard-toolbar-core.js?v=64.1"></script>
+<script src="<?= sis_web() ?>assets/standard-toolbar.js?v=68"></script>
 <?php if ($route === 'admission'): ?><script src="<?= sis_web() ?>assets/admission-form.js?v=1" defer></script><?php endif; ?>
 <script src="<?= sis_web() ?>assets/eligibility.js?v=31"></script>
 <script src="<?= sis_web() ?>assets/workspaces.js?v=31"></script>

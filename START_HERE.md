@@ -1,4 +1,4 @@
-**Updating to v64?** Deploy or upload the changed files (`css/`, `pages/`, `portal/assets/portal.css`, `portal/views/layout.php`, `sis/assets/blue-theme.css`, `sis/app/views/layout.php`, `sis/app/pages/workspaces.php`), then press Ctrl+F5. Every system now has the same blue and orange design; nothing else changes.
+**Updating to v64.2?** Deploy or upload `sis/app/views/layout.php`, `sis/assets/blue-theme.css` and `sis/assets/theme.js` (plus the v64.1 files), then press Ctrl+F5. The SIS follows the design mockup on desktop and phone; nothing else changes.
 
 **Updating to v63.24?** Deploy or upload the changed files (see V63_UPDATE.md) and press Ctrl+F5 once. No database change.
 
