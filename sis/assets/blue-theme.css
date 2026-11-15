@@ -687,3 +687,5 @@ html body .sp-selected .is-invalid { border-color: #B42318 !important; box-shado
   html body .sp-selected > tfoot > tr > th:last-child { display: none; }
   html body .sp-page .sp-peso-sm > .form-control { width: 130px; max-width: 130px; }
 }
+/* v65.5: Class Schedules — the schedule's teacher differs from the class's teacher in Grading assignments */
+.sched-teacher-diff { display: inline-flex; align-items: center; gap: 4px; margin-left: 6px; padding: 1px 8px; border-radius: 999px; background: #FDF1E4; border: 1px solid #F0C9A0; color: #93400A; font-size: 12px; font-weight: 600; white-space: nowrap; }

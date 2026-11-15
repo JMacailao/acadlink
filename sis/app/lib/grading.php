@@ -427,6 +427,7 @@ final class GS
                 'schoolYear' => $section['schoolYear'], 'term' => $term, 'yearLevel' => $section['yearLevel'], 'sectionId' => $section['id'], 'sectionName' => $section['sectionName'],
                 'studentIds' => $ids, 'createdAt' => self::ts(), 'updatedAt' => self::ts()];
             self::put('gradingAssignments', $id, $data);
+            ScheduleTeacherSync::follow(Db::pdo(), $data, null); // v65.5
             Audit::log('teacher_assigned', 'grading_assignment', $id, ['subject' => $data['subjectCode'], 'teacher' => $data['teacherName'], 'section' => $data['sectionName'], 'term' => $term]);
             return $id;
         }));

@@ -1,4 +1,4 @@
-**Updating to v65.4?** Hostinger deploys from GitHub; press Ctrl+F5 once. New Subject pricing page (set or edit the price of several subjects at once) and the v65.3 Fee templates list/View; no database step.
+**Updating to v65.5?** Hostinger deploys from GitHub; press Ctrl+F5 once. Class schedules now follow the class teacher (Grading assignments / curriculum); no database step.
 
 **Updating to v63.24?** Deploy or upload the changed files (see V63_UPDATE.md) and press Ctrl+F5 once. No database change.
 

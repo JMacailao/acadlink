@@ -88,7 +88,8 @@ page_title('Class Schedules', '', 'Days, times, rooms and teachers of each secti
 <?php else: // schedules of a section
     $rows = $section !== '' ? Schedules::list($keep + ['section' => $section]) : [];
     $secRow = $section !== '' ? GS::get('sections', $section) : null;
-    $size = $section !== '' ? Schedules::sectionSize($section, $sy, $term) : 0; ?>
+    $size = $section !== '' ? Schedules::sectionSize($section, $sy, $term) : 0;
+    $classT = $section !== '' ? ScheduleTeacherSync::classTeachers(Db::pdo(), $section, $sy, $term) : []; // v65.5 ?>
 <form method="get" class="form-section d-flex flex-wrap gap-2 align-items-end" data-record-detail><input type="hidden" name="r" value="schedules">
   <div><label class="form-label small mb-0" for="sSy">School year</label><select class="form-select" id="sSy" name="school_year"><?php foreach ($years as $y): ?><option<?= $y === $sy ? ' selected' : '' ?>><?= h($y) ?></option><?php endforeach; ?></select></div>
   <div><label class="form-label small mb-0" for="sTerm">Term</label><select class="form-select" id="sTerm" name="term"><?php foreach (TERMS as $t): ?><option<?= $t === $term ? ' selected' : '' ?>><?= h($t) ?></option><?php endforeach; ?></select></div>
@@ -105,7 +106,8 @@ page_title('Class Schedules', '', 'Days, times, rooms and teachers of each secti
         <td><span class="font-monospace"><?= h($s['subject_code']) ?></span> <span class="small text-muted"><?= h(Schedules::KINDS[$s['kind']]) ?></span></td>
         <td><?= h(Schedules::daysText($s['days'])) ?></td><td class="text-nowrap"><?= h(Schedules::timeRange($s)) ?></td>
         <td><?= $s['room_code'] ? h($s['room_code']) . ($over ? ' <span class="badge text-bg-warning" title="' . $size . ' students, room holds ' . (int) $s['capacity'] . '">Over capacity</span>' : '') : '<span class="text-muted">—</span>' ?></td>
-        <td><?= $s['teacher_name'] !== '' ? h($s['teacher_name']) : '<span class="text-muted">—</span>' ?></td>
+        <td><?= $s['teacher_name'] !== '' ? h($s['teacher_name']) : '<span class="text-muted">—</span>' ?><?php $ct = $classT[$s['subject_doc_id']] ?? null; if ($ct && $ct['id'] !== '' && $ct['id'] !== (string) ($s['teacher_doc_id'] ?? '')): ?>
+          <span class="sched-teacher-diff" title="The class in Grading assignments has another teacher. Edit this schedule to use the same teacher."><i class="bi bi-exclamation-triangle" aria-hidden="true"></i> Grading teacher: <?= h($ct['name']) ?></span><?php endif; ?></td>
         <td class="text-end text-nowrap"><?php if ($canEdit): ?><a class="btn btn-sm btn-outline-secondary" href="<?= url('schedules', $keep + ['section' => $section, 'edit' => $s['id']]) ?>">Edit</a>
           <form method="post" class="d-inline" data-confirm="Remove this schedule?"><?= csrf_field() ?><input type="hidden" name="action" value="delete"><input type="hidden" name="id" value="<?= (int) $s['id'] ?>"><button class="btn btn-sm btn-outline-danger" aria-label="Remove"><i class="bi bi-x"></i></button></form><?php endif; ?></td>
       </tr><?php endforeach; if (!$rows): ?><tr><td colspan="6" class="text-center text-muted py-3">No schedule yet for this section and term.</td></tr><?php endif; ?>
@@ -124,8 +126,8 @@ page_title('Class Schedules', '', 'Days, times, rooms and teachers of each secti
         <div class="col-6"><label class="form-label small mb-0" for="scEnd">End *</label><input class="form-control" type="time" id="scEnd" name="end_time" required step="300" value="<?= h(substr((string) ($e['end_time'] ?? '08:30'), 0, 5)) ?>"></div></div>
       <label class="form-label small mb-0" for="scKind">Type</label><select class="form-select mb-2" id="scKind" name="kind"><?php foreach (Schedules::KINDS as $k => $l): ?><option value="<?= $k ?>"<?= ($e['kind'] ?? 'LEC') === $k ? ' selected' : '' ?>><?= $l ?></option><?php endforeach; ?></select>
       <label class="form-label small mb-0" for="scRoom">Room</label><select class="form-select mb-2" id="scRoom" name="room_id"><option value="">— none yet —</option><?= $opt(array_filter($rooms, fn($r) => $r['is_active']), 'id', fn($r) => $r['code'] . ' · holds ' . $r['capacity'] . ($r['building'] ? ' · ' . $r['building'] : ''), (string) ($e['room_id'] ?? '')) ?></select>
-      <label class="form-label small mb-0" for="scTeacher">Teacher</label><select class="form-select mb-3" id="scTeacher" name="teacher_doc_id"><option value="">— none yet —</option><?= $opt(array_filter($teachers, fn($t) => $t['id'] !== '_acadlink_professor_x'), 'id', fn($t) => $t['teacherName'], $e['teacher_doc_id'] ?? null) ?></select>
-      <p class="form-text mt-0">Leave the teacher empty to use the one in Grading assignments later.</p>
+      <label class="form-label small mb-0" for="scTeacher">Teacher</label><select class="form-select mb-1" id="scTeacher" name="teacher_doc_id" data-class-teachers="<?= h(json_encode(array_map(fn($c) => $c['id'], $classT), JSON_UNESCAPED_UNICODE)) ?>"><option value="">— none yet —</option><?= $opt(array_filter($teachers, fn($t) => $t['id'] !== '_acadlink_professor_x'), 'id', fn($t) => $t['teacherName'], $e['teacher_doc_id'] ?? null) ?></select>
+      <p class="form-text mt-0 mb-3" data-class-teacher-note>The teacher fills in from this section's class in Grading assignments. Leave it empty to use that teacher; a later change of the class's teacher also changes this schedule.</p>
       <button class="btn btn-primary">Save</button><?= $e ? ' <a class="btn btn-link" href="' . url('schedules', $keep + ['section' => $section]) . '">Cancel</a>' : '' ?>
     </form>
     <form method="post" class="form-section"><?= csrf_field() ?><input type="hidden" name="action" value="copy">
@@ -137,4 +139,5 @@ page_title('Class Schedules', '', 'Days, times, rooms and teachers of each secti
 </div>
 <?php endif; ?>
 <?php endif; ?>
+<script src="assets/schedule-teacher.js?v=65.5" defer></script>
 <?php layout_end();
