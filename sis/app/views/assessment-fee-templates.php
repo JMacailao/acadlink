@@ -1,7 +1,7 @@
 <?php
 $allNames = RecordList::rows(fn() => Assessment::names(), false);
 $names = RecordList::filter($allNames);
-if ($nid === null && $names) $nid = (int) $names[0]['id'];
+// v65.3: the page lists the templates only; a template's fees open on their own when it is clicked
 $n = $nid ? Db::one('SELECT * FROM sis_assessment_names WHERE id = ?', [$nid]) : null;
 $editor = !empty($_GET['editName']) && $n ? $n : null;
 $problems = Assessment::setupProblems();
@@ -13,7 +13,8 @@ $problems = Assessment::setupProblems();
   </div>
   <?php endif; ?>
 
-  <div class="fee-template-workspace">
+  <div class="fee-template-workspace is-single">
+    <?php if (!$n): ?>
     <section class="fee-template-list-card" aria-labelledby="feeTemplateListTitle">
       <header class="fee-template-card-head">
         <div><h2 id="feeTemplateListTitle">Templates</h2><p><?= count($names) ?> <?= count($names) === 1 ? 'template' : 'templates' ?></p></div>
@@ -25,7 +26,7 @@ $problems = Assessment::setupProblems();
       </label>
       <div class="table-responsive fee-template-table-wrap">
         <table id="feeTemplates" class="table fee-template-table mb-0">
-          <thead><tr><th scope="col">Template</th><th scope="col">Program / scope</th><th scope="col" class="text-end">Fees</th><th scope="col">Status</th></tr></thead>
+          <thead><tr><th scope="col">Template</th><th scope="col">Program / scope</th><th scope="col" class="text-end">Fees</th><th scope="col">Status</th><th scope="col" class="text-end">Actions</th></tr></thead>
           <tbody>
           <?php foreach ($names as $row): $rowId = (int) $row['id']; $isSelected = $n && $rowId === (int) $n['id']; ?>
             <tr class="<?= $isSelected ? 'is-selected' : '' ?>">
@@ -35,10 +36,11 @@ $problems = Assessment::setupProblems();
               <td><span class="fee-template-program"><?= h($row['program'] ?: 'Any program') ?></span><span class="fee-template-scope"><?= h($row['year_level'] ?: 'Any year level') ?> · <?= h($row['term'] ?: 'Any term') ?></span></td>
               <td class="text-end"><span class="fee-template-count"><?= (int) $row['items'] ?></span></td>
               <td><span class="fee-template-status <?= $row['is_active'] ? 'is-active' : 'is-inactive' ?>"><?= $row['is_active'] ? 'Active' : 'Inactive' ?></span></td>
+              <td class="text-end"><a class="btn btn-sm btn-outline-primary" href="<?= url('assessment', ['tab' => 'names', 'id' => $rowId]) ?>" aria-label="<?= h('View ' . $row['name']) ?>"><i class="bi bi-eye me-1" aria-hidden="true"></i>View</a></td>
             </tr>
           <?php endforeach; ?>
           <?php if (!$names): ?>
-            <tr><td colspan="4" class="fee-template-list-empty">
+            <tr><td colspan="5" class="fee-template-list-empty">
               <i class="bi bi-card-list" aria-hidden="true"></i>
               <strong><?= $allNames ? 'No templates match these filters' : 'No fee templates yet' ?></strong>
               <span><?= $allNames ? 'Clear the filters above or try a different search.' : 'Create a template to define the fees used during registration.' ?></span>
@@ -48,8 +50,10 @@ $problems = Assessment::setupProblems();
         </table>
       </div>
     </section>
+    <?php else: ?>
 
     <div class="fee-template-detail" data-record-detail>
+      <a class="fee-template-back" href="<?= url('assessment', ['tab' => 'names']) ?>"><i class="bi bi-arrow-left" aria-hidden="true"></i> Back to templates</a>
       <?php if ($n):
         $items = Assessment::items((int) $nid);
         $tplFees = SubjectFees::all((int) $nid);
@@ -69,14 +73,15 @@ $problems = Assessment::setupProblems();
           </div>
           <div class="fee-template-detail-actions">
             <?php if ($canEdit): ?><button type="button" class="btn btn-primary" data-open="tplManage"><i class="bi bi-sliders me-1" aria-hidden="true"></i>Manage fees</button>
-            <a class="btn btn-outline-secondary" href="<?= url('assessment', ['tab' => 'names', 'id' => $nid, 'editName' => '1']) ?>"><i class="bi bi-pencil me-1" aria-hidden="true"></i>Edit</a><?php endif; ?>
+            <a class="btn btn-outline-secondary" href="<?= url('assessment', ['tab' => 'names', 'id' => $nid, 'editName' => '1']) ?>"><i class="bi bi-pencil me-1" aria-hidden="true"></i>Edit</a>
+            <button type="button" class="btn btn-outline-secondary" data-open="tplCopy"><i class="bi bi-copy me-1" aria-hidden="true"></i>Copy template</button><?php endif; ?>
           </div>
         </header>
 
         <section class="fee-template-section" aria-labelledby="feeTemplateGeneralTitle">
-          <div class="fee-template-section-head"><h3 id="feeTemplateGeneralTitle">General fees</h3><span><?= count($items) ?> <?= count($items) === 1 ? 'fee line' : 'fee lines' ?></span></div>
+          <div class="fee-template-section-head"><h3 id="feeTemplateGeneralTitle">General fees</h3><span><?= count($items) ?> <?= count($items) === 1 ? 'fee line' : 'fee lines' ?></span><?php if ($canEdit): ?><button type="button" class="fee-template-add" data-open="tplManage"><i class="bi bi-plus-lg" aria-hidden="true"></i> Add fee</button><?php endif; ?></div>
           <div class="table-responsive">
-            <table class="table table-sm fee-template-detail-table mb-0">
+            <table class="table table-sm fee-template-detail-table mb-0" data-plain-table>
               <thead><tr><th scope="col">Category</th><th scope="col">Label</th><th scope="col">Charged</th><th scope="col" class="text-end">Amount</th></tr></thead>
               <tbody>
               <?php foreach ($items as $item): ?><tr><td><?= h($item['category_name']) ?></td><td class="fw-semibold"><?= h($item['label_name']) ?></td><td><?= h(CHARGE_TYPES[$item['charge_type']]) ?></td><td class="text-end fee-template-money"><?= Money::fmt(Money::cents($item['amount'])) ?></td></tr><?php endforeach; ?>
@@ -87,9 +92,9 @@ $problems = Assessment::setupProblems();
         </section>
 
         <section class="fee-template-section" aria-labelledby="feeTemplateSubjectTitle">
-          <div class="fee-template-section-head"><h3 id="feeTemplateSubjectTitle">Subject fees</h3><span><?= count($tplFees) + count($allFees) ?> <?= count($tplFees) + count($allFees) === 1 ? 'subject fee' : 'subject fees' ?></span></div>
+          <div class="fee-template-section-head"><h3 id="feeTemplateSubjectTitle">Subject fees</h3><span><?= count($tplFees) + count($allFees) ?> <?= count($tplFees) + count($allFees) === 1 ? 'subject fee' : 'subject fees' ?></span><?php if ($canEdit): ?><button type="button" class="fee-template-add" data-open="tplManage"><i class="bi bi-plus-lg" aria-hidden="true"></i> Add subject fee</button><?php endif; ?></div>
           <div class="table-responsive">
-            <table class="table table-sm fee-template-detail-table mb-0">
+            <table class="table table-sm fee-template-detail-table mb-0" data-plain-table>
               <thead><tr><th scope="col">Subject</th><th scope="col">Fee</th><th scope="col">Price</th><th scope="col" class="text-end">Per unit</th><th scope="col" class="text-end">For subject</th></tr></thead>
               <tbody>
               <?php foreach (array_merge($tplFees, $allFees) as $fee): $units = (float) ($fee['subject_units'] ?? 0); ?>
@@ -108,28 +113,6 @@ $problems = Assessment::setupProblems();
           <p class="fee-template-note">A subject fee applies only when a student takes that subject. The template price replaces the regular subject-fee price for the same fee.</p>
         </section>
 
-        <section class="fee-template-preview" aria-labelledby="feeTemplatePreviewTitle">
-          <header class="fee-template-preview-head">
-            <h3 id="feeTemplatePreviewTitle"><i class="bi bi-eye" aria-hidden="true"></i>Preview</h3>
-            <form method="get" class="fee-template-preview-controls">
-              <input type="hidden" name="r" value="assessment"><input type="hidden" name="tab" value="names"><input type="hidden" name="id" value="<?= (int) $nid ?>">
-              <label for="feePreviewUnits">Units</label><input id="feePreviewUnits" class="form-control form-control-sm" type="number" min="0" step="any" name="units" value="<?= h($pu) ?>">
-              <label for="feePreviewSubjects">Subjects</label><input id="feePreviewSubjects" class="form-control form-control-sm" type="number" min="0" step="1" name="subjects" value="<?= h($ps) ?>">
-              <button class="btn btn-sm btn-outline-secondary">Update</button>
-            </form>
-          </header>
-          <div class="table-responsive">
-            <table class="table table-sm fee-template-preview-table mb-0"><tbody>
-              <?php $category = null; foreach ($preview as $line): if ($line['category_name'] !== $category): $category = $line['category_name']; ?><tr class="fee-template-preview-category"><th colspan="2" scope="rowgroup"><?= h($category) ?></th></tr><?php endif; ?>
-              <tr><td><?= h($line['label_name']) ?><?= $line['charge_type'] !== 'FIXED' ? ' <span class="fee-template-preview-calculation">(' . h($line['quantity']) . ' × ' . Money::fmt($line['unit_cents']) . ')</span>' : '' ?></td><td class="text-end fee-template-money"><?= Money::fmt($line['amount_cents']) ?></td></tr><?php endforeach; ?>
-              <tr class="fee-template-total"><th scope="row">Total</th><td class="text-end">₱<?= Money::fmt(array_sum(array_column($preview, 'amount_cents'))) ?></td></tr>
-            </tbody></table>
-          </div>
-        </section>
-
-        <?php if ($canEdit): ?><form method="post" action="<?= url('assessment', ['tab' => 'names', 'id' => $nid]) ?>" class="fee-template-copy-form"><?= csrf_field() ?><input type="hidden" name="action" value="copy">
-          <label for="feeTemplateCopyName">Copy template</label><div><input id="feeTemplateCopyName" class="form-control form-control-sm" name="new_name" required maxlength="120" placeholder="Enter a name for the copy"><button class="btn btn-outline-primary text-nowrap"><i class="bi bi-copy me-1" aria-hidden="true"></i>Copy with fee lines</button></div>
-        </form><?php endif; ?>
       </article>
 
       <?php if ($canEdit): $tf = TemplateFees::rows((int) $nid); ?>
@@ -154,10 +137,17 @@ $problems = Assessment::setupProblems();
           <div class="fee-dialog-foot tf-foot"><span class="small me-auto" data-tf-count aria-live="polite"></span><button type="button" class="btn btn-outline-secondary" data-close>Close</button><button class="btn btn-primary"><i class="bi bi-check2 me-1" aria-hidden="true"></i>Save fees</button></div>
         </form>
       </dialog>
+      <dialog class="record-dialog fee-dialog fee-copy-dialog" id="tplCopy" aria-labelledby="tplCopyTitle">
+        <div class="record-dialog-head"><div><p class="record-eyebrow">Copy template</p><h2 id="tplCopyTitle"><?= h($n['name']) ?></h2></div><button type="button" class="btn-close" data-close aria-label="Close"></button></div>
+        <form method="post" action="<?= url('assessment', ['tab' => 'names', 'id' => $nid]) ?>" class="fee-dialog-body"><?= csrf_field() ?><input type="hidden" name="action" value="copy">
+          <label class="form-label" for="feeTemplateCopyName">Name of the copy</label><input id="feeTemplateCopyName" class="form-control mb-3" name="new_name" required maxlength="120" placeholder="e.g. BSIT 1st Year 2nd Semester 2026-2027">
+          <div class="fee-dialog-foot"><button type="button" class="btn btn-outline-secondary" data-close>Cancel</button><button class="btn btn-primary"><i class="bi bi-copy me-1" aria-hidden="true"></i>Copy with fee lines</button></div>
+        </form>
+      </dialog>
       <script src="assets/fee-manage.js?v=56b" defer></script>
       <?php endif; ?>
       <?php else: ?>
-        <section class="fee-template-empty-state" aria-labelledby="feeTemplateEmptyTitle">
+        <section class="fee-template-empty-state d-none" aria-labelledby="feeTemplateEmptyTitle">
           <i class="bi bi-card-checklist" aria-hidden="true"></i>
           <h2 id="feeTemplateEmptyTitle"><?= $allNames ? 'Choose a template' : 'Start with a fee template' ?></h2>
           <p><?= $allNames ? 'Select a template from the list to review its fees and preview the total.' : 'Create a template to organize the fees used during student registration.' ?></p>
@@ -165,6 +155,7 @@ $problems = Assessment::setupProblems();
         </section>
       <?php endif; ?>
     </div>
+    <?php endif; ?>
   </div>
 
   <?php if ($canEdit): ?>

@@ -195,6 +195,17 @@ test('v65.2: Add / Edit curriculum is its own page with the designed windows', f
     ok(str_contains($js, "'beforeunload'"), 'leaving with unsaved changes is not warned');
 });
 
+test('v65.3: Fee templates list on their own; View opens a template with only its fees', function () {
+    $v = (string) file_get_contents(SIS_ROOT . '/app/views/assessment-fee-templates.php');
+    ok(!str_contains($v, "\$nid = (int) \$names[0]['id']"), 'the first template still opens by itself');
+    ok(str_contains($v, '<?php if (!$n): ?>') && str_contains($v, 'Back to templates'), 'list and template are not separate');
+    ok(substr_count($v, '>View</a>') === 1 && str_contains($v, "aria-label=\"<?= h('View ' . \$row['name']) ?>\""), 'rows have no View action for the toolbar');
+    ok(!str_contains($v, 'fee-template-preview'), 'preview is back on the template page');
+    ok(substr_count($v, 'class="fee-template-add" data-open="tplManage"') === 2, 'Add fee / Add subject fee missing');
+    ok(str_contains($v, 'id="tplCopy"') && str_contains($v, 'name="new_name"'), 'Copy template lost');
+    ok(substr_count($v, 'data-plain-table') === 2 && str_contains((string) file_get_contents(SIS_ROOT . '/assets/theme.js'), "!t.matches('[data-plain-table]')"), 'fee tables would become selectable lists');
+});
+
 $server->exec("DROP DATABASE IF EXISTS `$name`");
 echo "$pass passed, $fail failed\n";
 exit($fail ? 1 : 0);
