@@ -25,8 +25,65 @@ final class Db
             PDO::ATTR_EMULATE_PREPARES   => false,
             PDO::ATTR_STRINGIFY_FETCHES  => false,
         ]);
+        // v63.19: one text-comparison rule (collation) for the whole connection. Some hosts (e.g. Hostinger) set the server's
+        // collation_connection to utf8mb4_unicode_ci while sent values get utf8mb4_general_ci: "Illegal mix of collations".
+        self::$pdo->exec('SET NAMES utf8mb4 COLLATE ' . self::COLLATION);
         self::$pdo->exec("SET SESSION sql_mode = 'STRICT_ALL_TABLES,NO_ZERO_DATE,NO_ZERO_IN_DATE,ERROR_FOR_DIVISION_BY_ZERO,NO_ENGINE_SUBSTITUTION'");
         self::$pdo->exec("SET time_zone = '" . date('P') . "'");
+    }
+
+    /** v63.19: the text-comparison rule (collation) of every connection and of AcadLink's tables. */
+    public const COLLATION = 'utf8mb4_unicode_ci';
+
+    /**
+     * v63.20: makes the database and its tables use one text-comparison rule, so a comparison between two tables can
+     * never fail with "Illegal mix of collations" (e.g. tables a host created with utf8mb4_general_ci or
+     * utf8mb4_uca1400_ai_ci). Converts only tables whose text columns are all utf8mb4 and none is utf8mb4_bin
+     * (binary tables, e.g. the Grading System's docs, and ascii token columns are left as they are on purpose).
+     * Returns ['converted' => [...], 'skipped' => [table => reason], 'database' => bool].
+     */
+    public static function alignCollation(): array
+    {
+        $want = self::COLLATION; $out = ['converted' => [], 'skipped' => [], 'database' => false];
+        $pdo = self::pdo();
+        $dbColl = (string) $pdo->query('SELECT default_collation_name FROM information_schema.schemata WHERE schema_name = DATABASE()')->fetchColumn();
+        if ($dbColl !== $want) {
+            try { $pdo->exec('ALTER DATABASE `' . str_replace('`', '``', (string) $pdo->query('SELECT DATABASE()')->fetchColumn()) . "` CHARACTER SET utf8mb4 COLLATE $want"); $out['database'] = true; }
+            catch (PDOException $e) { error_log('AcadLink collation (database): ' . $e->getMessage()); }
+        }
+        $rows = $pdo->query("SELECT t.table_name AS t, t.table_collation AS tc,
+                SUM(c.collation_name IS NOT NULL AND c.collation_name NOT LIKE 'utf8mb4\\_%') AS other_charset,
+                SUM(c.collation_name = 'utf8mb4_bin') AS bin_cols,
+                SUM(c.collation_name LIKE 'utf8mb4\\_%' AND c.collation_name NOT IN ('$want', 'utf8mb4_bin')) AS wrong_cols
+            FROM information_schema.tables t LEFT JOIN information_schema.columns c ON c.table_schema = t.table_schema AND c.table_name = t.table_name
+            WHERE t.table_schema = DATABASE() AND t.table_type = 'BASE TABLE'
+            GROUP BY t.table_name, t.table_collation")->fetchAll(PDO::FETCH_ASSOC);
+        $todo = [];
+        foreach ($rows as $r) {
+            if ($r['tc'] === $want && (int) $r['wrong_cols'] === 0) continue;   // already right
+            if ($r['tc'] === 'utf8mb4_bin' && (int) $r['wrong_cols'] === 0) continue; // binary on purpose
+            if ((int) $r['other_charset'] > 0 || (int) $r['bin_cols'] > 0) { $out['skipped'][$r['t']] = 'has ascii or binary columns'; continue; }
+            $todo[] = $r['t'];
+        }
+        if (!$todo) return $out;
+        $pdo->exec('SET FOREIGN_KEY_CHECKS = 0');
+        try {
+            foreach ($todo as $t) {
+                try { $pdo->exec('ALTER TABLE `' . str_replace('`', '``', $t) . "` CONVERT TO CHARACTER SET utf8mb4 COLLATE $want"); $out['converted'][] = $t; }
+                catch (PDOException $e) { $out['skipped'][$t] = $e->getMessage(); error_log("AcadLink collation ($t): " . $e->getMessage()); }
+            }
+        } finally { $pdo->exec('SET FOREIGN_KEY_CHECKS = 1'); }
+        return $out;
+    }
+
+    /** v63.21: does the table exist? Asks the table itself (instant) instead of information_schema (slow on shared hosting); a yes is remembered for this connection. */
+    public static function tableExists(string $table): bool
+    {
+        static $yes = null; $yes ??= new WeakMap(); $pdo = self::pdo();
+        if (isset($yes[$pdo][$table])) return true;
+        try { $pdo->query('SELECT 1 FROM `' . str_replace('`', '', $table) . '` LIMIT 0'); }
+        catch (PDOException $e) { if ((int) ($e->errorInfo[1] ?? 0) === 1146 || str_contains($e->getMessage(), '1146')) return false; throw $e; }
+        $known = $yes[$pdo] ?? []; $known[$table] = true; $yes[$pdo] = $known; return true;
     }
 
     public static function pdo(): PDO
@@ -35,8 +92,34 @@ final class Db
         return self::$pdo;
     }
 
+    /** v63.22: number of writes sent in this request; request caches (memo) are dropped whenever it changes. */
+    private static int $writes = 0;
+    private static array $memo = [];
+    private static int $memoAt = -1;
+    private static ?WeakReference $memoDb = null;
+
+    /** A write that did not go through Db::q (another connection wrapper): drop the request caches. */
+    public static function changed(): void { self::$writes++; }
+    /** The write counter (a request cache keyed by it is dropped by any write). */
+    public static function writes(): int { return self::$writes; }
+
+    /**
+     * v63.22: a value read once per request: the same read again returns the remembered value, until any write is sent
+     * (INSERT, UPDATE, DELETE, ALTER … through Db::q, or Db::changed()), which drops every remembered value.
+     */
+    public static function memo(string $key, callable $load): mixed
+    {
+        $pdo = self::pdo();
+        if (self::$memoAt !== self::$writes || self::$memoDb?->get() !== $pdo) { self::$memo = []; self::$memoAt = self::$writes; self::$memoDb = WeakReference::create($pdo); }
+        if (array_key_exists($key, self::$memo)) return self::$memo[$key];
+        $v = $load();
+        if (self::$memoAt === self::$writes) self::$memo[$key] = $v; // not remembered when loading it wrote something
+        return $v;
+    }
+
     public static function q(string $sql, array $params = []): PDOStatement
     {
+        if (!preg_match('/^\s*(SELECT|SHOW|SET|DESCRIBE|EXPLAIN)\b/i', $sql)) self::$writes++;
         $st = self::pdo()->prepare($sql);
         $st->execute($params);
         return $st;
@@ -573,6 +656,9 @@ function sis_web(): string
 
 function redirect(string $route, array $params = []): never
 {
+    // v63.24: messages of this request belong to the page it goes to (not to whatever page another tab opens next)
+    if (!empty($_SESSION['flash'])) foreach ($_SESSION['flash'] as &$f) if (!isset($f['to'])) $f['to'] = app_system() . '|' . $route;
+    unset($f);
     if(class_exists('RecordList'))$params=RecordList::redirectParams($route,$params);
     header('Location: ' . url($route, $params));
     exit;
@@ -580,7 +666,7 @@ function redirect(string $route, array $params = []): never
 
 function flash(string $type, string $message): void
 {
-    $_SESSION['flash'][] = [$type, $message];
+    $_SESSION['flash'][] = [$type, $message, 'at' => time()];
 }
 
 /** A refused form keeps what was typed: saved for the next page load, which fills the form in again. */
@@ -606,11 +692,22 @@ function take_old_input(): ?string
     return json_encode(['action' => $o['action'], 'fields' => $o['fields']], JSON_HEX_TAG | JSON_HEX_AMP | JSON_UNESCAPED_UNICODE);
 }
 
+/**
+ * The messages for this page. v63.24: a message meant for another page (see redirect()) waits for that page, so a
+ * second tab of the same account does not show it; unseen messages are dropped after two minutes.
+ */
 function take_flashes(): array
 {
-    $f = $_SESSION['flash'] ?? [];
-    unset($_SESSION['flash']);
-    return $f;
+    $r = $GLOBALS['route'] ?? null; // the page the app resolved (the Student Portal starts on 'my' or 'children')
+    $here = app_system() . '|' . (is_string($r) ? $r : (is_string($_GET['r'] ?? null) ? $_GET['r'] : 'dashboard'));
+    $show = []; $keep = [];
+    foreach ($_SESSION['flash'] ?? [] as $f) {
+        if (!is_array($f) || !isset($f[0], $f[1])) continue;
+        if ((int) ($f['at'] ?? time()) < time() - 120) continue;
+        if (!isset($f['to']) || $f['to'] === $here) $show[] = [$f[0], $f[1]]; else $keep[] = $f;
+    }
+    if ($keep) $_SESSION['flash'] = $keep; else unset($_SESSION['flash']);
+    return $show;
 }
 
 function student_name(array $s): string
@@ -660,7 +757,7 @@ const PAYMENT_METHODS = ['CASH', 'GCASH', 'MAYA', 'BANK', 'CARD', 'CHECK'];
  */
 final class FormOnce
 {
-    private const TABLE = 'CREATE TABLE IF NOT EXISTS sis_form_once (token CHAR(32) NOT NULL PRIMARY KEY, created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP, KEY (created_at)) ENGINE=InnoDB';
+    private const TABLE = 'CREATE TABLE IF NOT EXISTS sis_form_once (token CHAR(32) NOT NULL PRIMARY KEY, created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP, KEY (created_at)) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci';
 
     public static function token(): string { return bin2hex(random_bytes(16)); }
 

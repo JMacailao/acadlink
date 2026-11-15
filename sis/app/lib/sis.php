@@ -104,7 +104,7 @@ final class Assessment
             Db::q('INSERT INTO sis_assessment_name_items (assessment_name_id, label_id, charge_type, amount)
                    SELECT ?, label_id, charge_type, amount FROM sis_assessment_name_items WHERE assessment_name_id = ?', [$id, $nameId]);
             // v56: the copy charges the same ticked subject fees and the same own subject prices
-            if (Db::val("SELECT 1 FROM information_schema.tables WHERE table_schema = DATABASE() AND table_name = 'sis_assessment_name_subject_fees'"))
+            if (Db::tableExists('sis_assessment_name_subject_fees'))
                 Db::q('INSERT INTO sis_assessment_name_subject_fees (assessment_name_id, subject_fee_id) SELECT ?, subject_fee_id FROM sis_assessment_name_subject_fees WHERE assessment_name_id = ?', [$id, $nameId]);
             if (LecLab::ready('sis_subject_fees')) Db::q('INSERT INTO sis_subject_fees (subject_doc_id, assessment_name_id, label_id, rate, unit_basis, created_by) SELECT subject_doc_id, ?, label_id, rate, unit_basis, ? FROM sis_subject_fees WHERE assessment_name_id = ?', [$id, Auth::id(), $nameId]);
             else Db::q('INSERT INTO sis_subject_fees (subject_doc_id, assessment_name_id, label_id, rate, created_by) SELECT subject_doc_id, ?, label_id, rate, ? FROM sis_subject_fees WHERE assessment_name_id = ?', [$id, Auth::id(), $nameId]);

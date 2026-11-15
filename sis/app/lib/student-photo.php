@@ -165,7 +165,7 @@ final class StudentPhoto
     /** <img> of a photo through the photo route, or a placeholder with initials. */
     public static function html(?int $id, string $name, string $size = 'md'): string
     {
-        if ($id) return '<img class="st-photo st-photo-' . h($size) . '" src="' . h(url('photo', ['id' => $id])) . '" alt="Photo of ' . h($name) . '">';
+        if ($id) return '<img class="st-photo st-photo-' . h($size) . '" src="' . h(url('photo', ['id' => $id])) . '" alt="Photo of ' . h($name) . '" loading="lazy" decoding="async">';
         $parts = preg_split('/[\s,]+/', trim($name)) ?: [];
         $ini = mb_strtoupper(mb_substr($parts[0] ?? '?', 0, 1) . mb_substr($parts[1] ?? '', 0, 1));
         return '<span class="st-photo st-photo-' . h($size) . ' st-photo-none" aria-label="No photo">' . h($ini) . '</span>';
