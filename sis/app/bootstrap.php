@@ -10,6 +10,7 @@ define('FINANCE_ROOT', dirname(SIS_ROOT) . '/finance'); // v58: the Finance syst
 date_default_timezone_set('Asia/Manila');
 
 require SIS_ROOT . '/app/lib/core.php';
+require SIS_ROOT . '/app/lib/binary-response.php';
 require SIS_ROOT . '/app/lib/record-list.php';
 require dirname(SIS_ROOT) . '/shared/central-accounts.php';
 require_once dirname(SIS_ROOT) . '/shared/curriculum-assignments.php';
@@ -112,7 +113,7 @@ function sis_boot(): void
     sis_upgrade();
     // v62: library reminders and canteen low-stock alerts (at most every 10 minutes), then queued emails, after the page is sent
     if (PHP_SAPI !== 'cli') register_shutdown_function(function () {
-        try { if (!Auth::id()) return; if (function_exists('fastcgi_finish_request')) @fastcgi_finish_request(); Notify::scan(); Notify::flushEmails(25); }
+        try { if (BinaryResponse::active() || !Auth::id()) return; if (function_exists('fastcgi_finish_request')) @fastcgi_finish_request(); Notify::scan(); Notify::flushEmails(25); }
         catch (Throwable $e) { error_log('AcadLink notifications: ' . $e->getMessage()); }
     });
 }
@@ -121,9 +122,21 @@ function sis_boot(): void
  * Adds tables of newer SIS versions to an existing install (CREATE TABLE IF NOT EXISTS only;
  * nothing is changed or deleted). Checked once per session.
  */
+/**
+ * v63.21: the version of the tables this code expects. Raise it whenever sis_upgrade() (or an install() it calls) gains
+ * a new step, so every school's database runs the upgrade once more; otherwise sis_upgrade() is one small query.
+ */
+const SIS_SCHEMA_VERSION = 35;
+
 function sis_upgrade(): void
 {
-    if (PHP_SAPI !== 'cli' && ($_SESSION['sis_schema'] ?? 0) >= 33) return;
+    if (PHP_SAPI !== 'cli' && ($_SESSION['sis_schema'] ?? 0) >= SIS_SCHEMA_VERSION) return;
+    // v63.21: the database remembers that it is up to date, so a new session (every sign-in, every new visitor) costs one
+    // query instead of ~50 information_schema checks, which are slow on shared hosting. The command line always checks.
+    if (PHP_SAPI !== 'cli') {
+        try { $done = (int) Db::val("SELECT svalue FROM sis_settings WHERE skey = 'schema_version'"); } catch (PDOException) { $done = 0; }
+        if ($done >= SIS_SCHEMA_VERSION) { $_SESSION['sis_schema'] = SIS_SCHEMA_VERSION; return; }
+    }
     $have = array_map('strtolower', Db::col("SELECT table_name FROM information_schema.tables WHERE table_schema = DATABASE() AND table_name LIKE 'sis\\_%'"));
     if (!in_array('sis_registrations', $have, true) || !in_array('sis_fee_labels', $have, true)) return; // not installed yet
     // Tables of newer versions: created from schema.sql (CREATE TABLE IF NOT EXISTS only)
@@ -199,5 +212,12 @@ function sis_upgrade(): void
     Privacy::install(Db::pdo());       // v62: privacy consents and reviews
     ParentAccess::install(Db::pdo());  // v62: parent links
     FirstSetup::install();             // v63.3: retire the old published starting password
-    if (PHP_SAPI !== 'cli') $_SESSION['sis_schema'] = 33; // v63.3
+    // v63.21: lists look up "the latest registration of this student" per row (Admission, Students): index it
+    if (!Db::val("SELECT 1 FROM information_schema.statistics WHERE table_schema = DATABASE() AND table_name = 'sis_registrations' AND index_name = 'k_sis_reg_student'"))
+        Db::q('ALTER TABLE sis_registrations ADD KEY k_sis_reg_student (student_number, id)');
+    // v63.20: one text-comparison rule for the database and its tables (never "Illegal mix of collations")
+    try { $c = Db::alignCollation(); if ($c['converted'] || $c['database']) error_log('AcadLink: text rule set to ' . Db::COLLATION . ' for ' . ($c['database'] ? 'the database' : '') . ($c['converted'] ? ' tables ' . implode(', ', $c['converted']) : '')); }
+    catch (Throwable $e) { error_log('AcadLink collation: ' . $e->getMessage()); }
+    Db::q("INSERT INTO sis_settings (skey, svalue) VALUES ('schema_version', ?) ON DUPLICATE KEY UPDATE svalue = VALUES(svalue)", [(string) SIS_SCHEMA_VERSION]);
+    if (PHP_SAPI !== 'cli') $_SESSION['sis_schema'] = SIS_SCHEMA_VERSION;
 }

@@ -40,7 +40,7 @@ page_title('Teachers', $canEdit ? '<a class="btn btn-primary" href="#addTeacher"
 <div class="row g-3">
 <div class="<?= $canEdit ? 'col-xl-8' : 'col-12' ?>">
   <input class="form-control form-control-sm mb-2" data-filter="#teachers" placeholder="Search">
-  <div class="table-responsive bg-white border rounded"><table class="table table-sm table-hover mb-0" id="teachers">
+  <div class="table-responsive bg-white border rounded"><table class="table table-sm table-hover mb-0" id="teachers" data-theme-row-icons="own"><?php /* v63.24: the page has its own Actions menu; no second column */ ?>
   <thead class="table-light"><tr><th>Teacher ID</th><th>Name</th><th>Classes</th><th>Account</th><th>Actions</th></tr></thead><tbody>
   <?php foreach ($teachers as $t): ?><tr><td class="font-monospace"><?= h($t['teacherId'] ?? '') ?></td><td><?= h($t['teacherName'] ?? '') ?></td><td><?= $classes[$t['id']] ?? 0 ?></td>
     <td><?php $linked=$accounts[$t['id']]??null; if($linked): ?>

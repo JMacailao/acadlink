@@ -214,7 +214,7 @@ final class Backup
     public static function auto(): array
     {
         $out = self::AUTO_DEFAULTS;
-        try { foreach (Db::all("SELECT skey, svalue FROM sis_settings WHERE skey LIKE 'autobackup\\_%'") as $r) if (array_key_exists($r['skey'], $out)) $out[$r['skey']] = (string) $r['svalue']; }
+        try { foreach (Db::memo('backup.auto', fn() => Db::all("SELECT skey, svalue FROM sis_settings WHERE skey LIKE 'autobackup\\_%'")) as $r) if (array_key_exists($r['skey'], $out)) $out[$r['skey']] = (string) $r['svalue']; } // v63.22
         catch (Throwable) {}
         if (!isset(self::AUTO_EVERY[$out['autobackup_every']])) $out['autobackup_every'] = 'daily';
         return $out;

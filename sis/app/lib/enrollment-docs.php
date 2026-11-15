@@ -14,6 +14,10 @@ declare(strict_types=1);
  */
 final class EnrollmentDocs
 {
+    /** @var array<int|string,array> requirements per $activeOnly, for this request */
+    private static array $cache = [];
+    public static function forget(): void { self::$cache = []; }
+
     /** Default requirements of a fresh installation (and of an upgrade without any requirements yet). */
     public const DEFAULTS = [
         ['Form 137 / Permanent Student Record', 'NEW', 1],
@@ -61,13 +65,16 @@ final class EnrollmentDocs
 
     public static function requirements(bool $activeOnly = false): array
     {
+        // v63.21: one query for the list and one for the counts, remembered for this request (lists call this once per row)
+        if (isset(self::$cache[$activeOnly])) return self::$cache[$activeOnly];
         $rows = Db::all('SELECT * FROM sis_document_requirements' . ($activeOnly ? ' WHERE is_active = 1' : '') . ' ORDER BY sort_order, name');
+        $used = array_column(Db::all('SELECT requirement_id, COUNT(*) AS n FROM sis_admission_documents GROUP BY requirement_id'), 'n', 'requirement_id');
         foreach ($rows as &$r) {
             $r['types'] = array_values(array_filter(explode(',', (string) $r['applies_to'])));
-            $r['used'] = (int) Db::val('SELECT COUNT(*) FROM sis_admission_documents WHERE requirement_id = ?', [$r['id']]);
+            $r['used'] = (int) ($used[$r['id']] ?? 0);
         }
         unset($r);
-        return $rows;
+        return self::$cache[$activeOnly] = $rows;
     }
 
     /** Active requirements that apply to one classification. */
@@ -85,6 +92,7 @@ final class EnrollmentDocs
         if (!$types) throw new AppError('Tick at least one student classification this document applies to.');
         $d = ['name' => $name, 'description' => In::str($in, 'description', 255), 'applies_to' => implode(',', $types),
             'is_required' => !empty($in['is_required']) ? 1 : 0, 'sort_order' => In::int($in, 'sort_order', false, 'Order', 1, 999) ?? 100, 'is_active' => !empty($in['is_active']) ? 1 : 0];
+        self::$cache = [];
         return Db::tx(function () use ($id, $d) {
             $dup = Db::val('SELECT id FROM sis_document_requirements WHERE name = ?', [$d['name']]);
             if ($dup && (int) $dup !== (int) $id) throw new AppError('A document requirement with this name already exists. Edit that one instead.');
@@ -101,6 +109,7 @@ final class EnrollmentDocs
     public static function removeRequirement(int $id): string
     {
         Auth::require('settings.manage');
+        self::$cache = [];
         return Db::tx(function () use ($id) {
             $r = Db::one('SELECT * FROM sis_document_requirements WHERE id = ? FOR UPDATE', [$id]);
             if (!$r) throw new AppError('Document requirement not found.');
@@ -116,6 +125,16 @@ final class EnrollmentDocs
     }
 
     /** Submitted documents of an applicant: requirement id => ['submitted_at', 'received_by_name']. */
+    /** v63.21: the submitted documents of many applicants in one query: [admission id => [requirement id => true]]. */
+    public static function submittedFor(array $admissionIds): array
+    {
+        $ids = array_values(array_unique(array_map('intval', $admissionIds))); $out = array_fill_keys($ids, []);
+        foreach (array_chunk($ids, 1000) as $chunk)
+            foreach (Db::all('SELECT admission_id, requirement_id FROM sis_admission_documents WHERE admission_id IN (' . implode(',', array_fill(0, count($chunk), '?')) . ')', $chunk) as $d)
+                $out[(int) $d['admission_id']][(int) $d['requirement_id']] = true;
+        return $out;
+    }
+
     public static function submitted(int $admissionId): array
     {
         $out = [];
@@ -128,6 +147,7 @@ final class EnrollmentDocs
     public static function saveChecklist(int $admissionId, array $requirementIds): void
     {
         Auth::require('admission');
+        self::$cache = [];
         Db::tx(function () use ($admissionId, $requirementIds) {
             $a = Db::one('SELECT * FROM sis_admissions WHERE id = ? FOR UPDATE', [$admissionId]);
             if (!$a) throw new AppError('Admission not found.');
@@ -156,9 +176,10 @@ final class EnrollmentDocs
     }
 
     /** "3 of 5 required" for lists, plus the missing names. */
-    public static function progress(array $admission): array
+    /** @param array|null $have the applicant's submitted documents, when the caller loaded them for a whole list (submittedFor) */
+    public static function progress(array $admission, ?array $have = null): array
     {
-        $have = self::submitted((int) $admission['id']);
+        $have ??= self::submitted((int) $admission['id']);
         $req = array_filter(self::forType((string) $admission['applicant_type']), fn($r) => (int) $r['is_required']);
         $done = count(array_filter($req, fn($r) => isset($have[(int) $r['id']])));
         return ['done' => $done, 'required' => count($req), 'missing' => array_values(array_map(fn($r) => $r['name'], array_filter($req, fn($r) => !isset($have[(int) $r['id']]))))];

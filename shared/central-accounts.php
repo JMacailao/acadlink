@@ -12,14 +12,18 @@ final class CentralSessionConflict extends RuntimeException {
 final class CentralAccounts
 {
     public const COOKIE = 'ACADLINK_AUTH';
-    private array $accountCache=[], $groupCache=[], $permissionCache=[];
+    private array $accountCache=[], $groupCache=[], $permissionCache=[], $legacyCache=[];
+    /** v63.22: goes up whenever the remembered account data is dropped (a change to accounts), so callers holding a copy reload it. */
+    public int $generation=0;
     private ?array $currentCache=null;
     private bool $currentChecked=false;
     private string $checkedToken='';
     private ?array $policyCache=null;
     public function __construct(private PDO $db, private bool $forceSecureCookie=false) {}
     public function clearCache(): void {
-        $this->accountCache=$this->groupCache=$this->permissionCache=[];
+        $this->accountCache=$this->groupCache=$this->permissionCache=$this->legacyCache=[];
+        $this->generation++;
+        if (class_exists('Db', false)) Db::changed(); // v63.22: SIS request caches see account changes
         $this->currentChecked=false;
         $this->policyCache=null;
     }
@@ -31,8 +35,17 @@ final class CentralAccounts
         $s=$this->db->prepare($sql); $s->execute($args); return $s;
     }
     public function one(string $sql, array $args = []): ?array { return $this->q($sql, $args)->fetch(PDO::FETCH_ASSOC) ?: null; }
+    /** v63.21: asks the table itself (instant) instead of information_schema (slow on shared hosting); a yes is remembered. */
     public function installed(): bool {
-        return (bool)$this->q("SELECT 1 FROM information_schema.tables WHERE table_schema=DATABASE() AND table_name='central_sessions'")->fetchColumn();
+        static $yes = null; $yes ??= new WeakMap(); // per connection (a test that switches databases gets a new one)
+        if (isset($yes[$this->db])) return true;
+        if (!$this->tableExists('central_sessions')) return false;
+        $yes[$this->db] = true; return true;
+    }
+    /** True when the table exists: a zero-row read that fails only with "table doesn't exist" (1146). */
+    private function tableExists(string $table): bool {
+        try { $this->db->query('SELECT 1 FROM `' . str_replace('`', '', $table) . '` LIMIT 0'); return true; }
+        catch (PDOException $e) { if ((int) ($e->errorInfo[1] ?? 0) === 1146 || str_contains($e->getMessage(), '1146')) return false; throw $e; }
     }
     public function install(): void {
         $sql = preg_replace('/^\s*--.*$/m', '', (string)file_get_contents(__DIR__.'/database/central-accounts.sql'));
@@ -44,7 +57,8 @@ final class CentralAccounts
     }
     public function installModuleAccess(): void { ModuleAccess::install($this->db); }
     public function temporaryExpired(int $id): bool {
-        if (!$this->q("SELECT 1 FROM information_schema.tables WHERE table_schema=DATABASE() AND table_name='central_temporary_password_expiry'")->fetchColumn()) return false;
+        static $has = null; $has ??= new WeakMap();
+        if (!isset($has[$this->db])) { if (!$this->tableExists('central_temporary_password_expiry')) return false; $has[$this->db] = true; }
         return (bool)$this->q('SELECT 1 FROM central_temporary_password_expiry e JOIN central_accounts a ON a.id=e.account_id WHERE e.account_id=? AND a.must_change_password=1 AND e.expires_at<=NOW()',[$id])->fetchColumn();
     }
     public static function passwordProblem(string $pw): ?string {
@@ -84,8 +98,10 @@ final class CentralAccounts
     }
     public function can(int $id,string $permission): bool { return isset($this->permissions($id)[$permission]); }
     public function legacyId(int $id,string $system): ?string {
+        // v63.22: asked ~80 times per page (every permission check); remembered for this request until an account changes
+        $k=$id."\0".$system; if (array_key_exists($k,$this->legacyCache)) return $this->legacyCache[$k];
         $v=$this->q('SELECT source_key FROM central_legacy_links WHERE account_id=? AND source_system=?',[$id,$system])->fetchColumn();
-        return $v===false ? null : (string)$v;
+        return $this->legacyCache[$k] = $v===false ? null : (string)$v;
     }
     private function token(): string { return (string)($_COOKIE[self::COOKIE] ?? $_SESSION['central_token'] ?? ''); }
     private function cookie(string $token): void {
@@ -98,9 +114,11 @@ final class CentralAccounts
         if ($this->currentChecked && $this->checkedToken===$token) return $this->currentCache;
         $this->checkedToken=$token; $this->currentChecked=true; $this->currentCache=null;
         if (!preg_match('/^[a-f0-9]{64}$/D',$token) || !$this->installed()) return null;
-        $s=$this->one("SELECT s.account_id FROM central_sessions s JOIN central_accounts a ON a.id=s.account_id JOIN central_security_policy p ON p.id=1 WHERE s.token_hash=? AND s.revoked_at IS NULL AND s.expires_at>NOW() AND s.last_seen_at>NOW()-INTERVAL ? MINUTE AND a.status='ACTIVE' AND s.account_auth_version=a.auth_version AND s.policy_version=p.policy_version",[hash('sha256',$token),$this->idleWindow()]);
-        if (!$s || $this->temporaryExpired((int)$s['account_id'])) return null;
-        $this->q('UPDATE central_sessions SET last_seen_at=NOW() WHERE token_hash=?',[hash('sha256',$token)]);
+        $s=$this->one("SELECT s.account_id, a.must_change_password, TIMESTAMPDIFF(SECOND, s.last_seen_at, NOW()) AS seen_ago FROM central_sessions s JOIN central_accounts a ON a.id=s.account_id JOIN central_security_policy p ON p.id=1 WHERE s.token_hash=? AND s.revoked_at IS NULL AND s.expires_at>NOW() AND s.last_seen_at>NOW()-INTERVAL ? MINUTE AND a.status='ACTIVE' AND s.account_auth_version=a.auth_version AND s.policy_version=p.policy_version",[hash('sha256',$token),$this->idleWindow()]);
+        // v63.22: the temporary-password check only for accounts that still have one (it ran two queries on every request)
+        if (!$s || ((int)$s['must_change_password'] && $this->temporaryExpired((int)$s['account_id']))) return null;
+        // v63.22: "last seen" at most once a minute (the sign-in window is hours); it was a write on every request
+        if ((int)$s['seen_ago'] >= 60) $this->q('UPDATE central_sessions SET last_seen_at=NOW() WHERE token_hash=?',[hash('sha256',$token)]);
         $this->currentChecked=true;
         return $this->currentCache=$this->account((int)$s['account_id']);
     }
@@ -129,7 +147,7 @@ final class CentralAccounts
         if ($this->policyCache!==null) return $this->policyCache;
         $out=['single'=>true];
         try {
-            if (!$this->q("SELECT 1 FROM information_schema.tables WHERE table_schema=DATABASE() AND table_name='docs'")->fetchColumn()) return $this->policyCache=['single'=>false];
+            if (!$this->tableExists('docs')) return $this->policyCache=['single'=>false];
             $raw=$this->q("SELECT data FROM docs WHERE col='settings' AND id='security'")->fetchColumn();
             $d=$raw===false ? [] : (json_decode((string)$raw,true) ?: []);
             if (array_key_exists('singleSession',$d)) $out['single']=!empty($d['singleSession']);
@@ -195,7 +213,7 @@ final class CentralAccounts
     }
     /** An unused, unexpired emailed temporary password: makes it the account's password (must be changed now). */
     private function useTemporary(int $id,string $password): bool {
-        if (!$this->q("SELECT 1 FROM information_schema.tables WHERE table_schema=DATABASE() AND table_name='central_password_resets'")->fetchColumn()) return false;
+        if (!$this->tableExists('central_password_resets')) return false;
         foreach ($this->q('SELECT id,temp_hash FROM central_password_resets WHERE account_id=? AND sent=1 AND used_at IS NULL AND expires_at>NOW() ORDER BY id DESC LIMIT 5',[$id])->fetchAll(PDO::FETCH_ASSOC) as $t) {
             if (!password_verify($password,(string)$t['temp_hash'])) continue;
             $this->transaction(function() use($id,$t) {
@@ -229,9 +247,9 @@ final class CentralAccounts
             if (!$this->account($id)) throw new CentralAccountError('Account not found.');
             $this->q('INSERT INTO central_credentials(account_id,password_hash) VALUES(?,?) ON DUPLICATE KEY UPDATE password_hash=VALUES(password_hash),password_changed_at=NOW()',[$id,password_hash($password,PASSWORD_DEFAULT)]);
             $this->q('UPDATE central_accounts SET must_change_password=?,auth_version=auth_version+1,failed_logins=0,locked_until=NULL WHERE id=?',[(int)$temporary,$id]);
-            if ($this->q("SELECT 1 FROM information_schema.tables WHERE table_schema=DATABASE() AND table_name='central_temporary_password_expiry'")->fetchColumn()) $this->q('DELETE FROM central_temporary_password_expiry WHERE account_id=?',[$id]);
+            if ($this->tableExists('central_temporary_password_expiry')) $this->q('DELETE FROM central_temporary_password_expiry WHERE account_id=?',[$id]);
             // A new password cancels emailed temporary passwords that were not used
-            if ($this->q("SELECT 1 FROM information_schema.tables WHERE table_schema=DATABASE() AND table_name='central_password_resets'")->fetchColumn()) $this->q('UPDATE central_password_resets SET used_at=NOW() WHERE account_id=? AND used_at IS NULL',[$id]);
+            if ($this->tableExists('central_password_resets')) $this->q('UPDATE central_password_resets SET used_at=NOW() WHERE account_id=? AND used_at IS NULL',[$id]);
             $this->audit($actor,$id,$temporary?'password_reset':'password_changed',[]);
         });
     }

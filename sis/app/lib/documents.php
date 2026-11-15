@@ -276,7 +276,7 @@ final class Documents
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci");
         Db::q('CREATE TABLE IF NOT EXISTS sis_document_counters (
             prefix VARCHAR(10) NOT NULL, yr SMALLINT UNSIGNED NOT NULL, last_no INT UNSIGNED NOT NULL DEFAULT 0, PRIMARY KEY (prefix, yr)
-        ) ENGINE=InnoDB');
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci');
         // Access: Documents module (View / Issue / Reissue or void); Registrars and Power Users get it once
         if (!$db->query("SELECT 1 FROM information_schema.tables WHERE table_schema=DATABASE() AND table_name='central_permissions'")->fetchColumn()) return;
         $db->exec("INSERT IGNORE INTO central_permissions(code,workspace,label) VALUES

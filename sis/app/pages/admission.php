@@ -194,11 +194,17 @@ if ($fLevel) { $where[] = 'a.year_level = ?'; $p[] = $fLevel; }
 if ($q !== '') { $where[] = '(a.admission_no LIKE ? OR a.last_name LIKE ? OR a.first_name LIKE ? OR a.student_number LIKE ? OR CONCAT(a.last_name, \', \', a.first_name) LIKE ?)'; array_push($p, "%$q%", "%$q%", "%$q%", "%$q%", "%$q%"); }
 $rows = RecordList::query("SELECT a.*, $regSub AS reg_id, u.full_name AS created_by_name FROM sis_admissions a LEFT JOIN sis_users u ON u.id = a.created_by
                   WHERE " . implode(' AND ', $where) . ' ORDER BY FIELD(a.status, "PENDING", "ADMITTED", "REJECTED", "CANCELLED"), a.id DESC LIMIT 2000', $p);
+// v63.21: the counters count every matching applicant in the database (the list itself shows the newest 2,000)
 $sum = ['PENDING' => 0, 'ADMITTED' => 0, 'REJECTED' => 0, 'CANCELLED' => 0, 'toReg' => 0] + array_fill_keys(array_keys(Admission::TYPES), 0);
-foreach ($rows as $r) {
-    $sum[$r['status']]++; $sum[$r['applicant_type']]++;
-    if ($r['status'] === 'ADMITTED' && !$r['reg_id']) $sum['toReg']++;
+$matching = 0;
+if (RecordList::applied()) {
+    foreach (Db::all("SELECT a.status, a.applicant_type, COUNT(*) AS n, SUM(a.status = 'ADMITTED' AND $regSub IS NULL) AS to_reg FROM sis_admissions a
+                      WHERE " . implode(' AND ', $where) . ' GROUP BY a.status, a.applicant_type', $p) as $c) {
+        $sum[$c['status']] = ($sum[$c['status']] ?? 0) + (int) $c['n']; $sum[$c['applicant_type']] = ($sum[$c['applicant_type']] ?? 0) + (int) $c['n'];
+        $sum['toReg'] += (int) $c['to_reg']; $matching += (int) $c['n'];
+    }
 }
+$docsHave = EnrollmentDocs::submittedFor(array_column($rows, 'id')); // v63.21: one query for the whole list
 $years = Db::all('SELECT DISTINCT school_year FROM sis_admissions ORDER BY school_year DESC');
 $years = array_values(array_unique(array_merge([selected_sy()], array_column($years, 'school_year'))));
 $programs = array_column(Db::all("SELECT DISTINCT program FROM sis_admissions WHERE program IS NOT NULL AND program <> '' ORDER BY program"), 'program');
@@ -210,6 +216,7 @@ $canRegister = Auth::can('registration');
 layout_start('Admission');
 RecordList::panel();
 echo NotificationCenter::banner('admission');
+if ($matching > count($rows)) echo '<div class="alert alert-info py-2 small" role="status"><i class="bi bi-info-circle me-1" aria-hidden="true"></i>Showing the newest ' . number_format(count($rows)) . ' of ' . number_format($matching) . ' matching applicants. The counters count all of them. Search by name, Student ID or admission number, or narrow the filters (program, year level, status), to list the others.</div>'; // v63.21
 ?>
 <style>@media print { @page { size: landscape; margin: 10mm; } }</style>
 <div class="admission-heading">
@@ -218,7 +225,7 @@ echo NotificationCenter::banner('admission');
   <a class="btn btn-primary admission-new d-none d-sm-inline-flex" href="<?= url('admission', ['new' => 1]) ?>" data-frame="<?= url('admission', ['new' => 1, 'embed' => 1]) ?>" data-frame-title="New applicant" data-frame-size="lg"><i class="bi bi-plus-lg me-1"></i>New Applicant</a>
 </div>
 <div class="admission-stats" aria-label="Applicant summary">
-  <a class="admission-stat stat-total" href="<?= url('admission', $keep) ?>"><span class="stat-icon"><i class="bi bi-people"></i></span><span class="stat-copy"><span class="stat-label">Applicants listed</span><strong><?= number_format(count($rows)) ?></strong></span></a>
+  <a class="admission-stat stat-total" href="<?= url('admission', $keep) ?>"><span class="stat-icon"><i class="bi bi-people"></i></span><span class="stat-copy"><span class="stat-label">Applicants listed</span><strong><?= number_format(max($matching, count($rows))) ?></strong></span></a>
   <a class="admission-stat stat-pending" href="<?= url('admission', array_merge($keep, ['status' => 'PENDING'])) ?>"><span class="stat-icon"><i class="bi bi-clock-history"></i></span><span class="stat-copy"><span class="stat-label">Pending</span><strong><?= number_format($sum['PENDING']) ?></strong></span></a>
   <a class="admission-stat stat-admitted" href="<?= url('admission', array_merge($keep, ['status' => 'ADMITTED'])) ?>"><span class="stat-icon"><i class="bi bi-check2-circle"></i></span><span class="stat-copy"><span class="stat-label">Admitted</span><strong><?= number_format($sum['ADMITTED']) ?></strong></span></a>
   <a class="admission-stat stat-rejected" href="<?= url('admission', array_merge($keep, ['status' => 'REJECTED'])) ?>"><span class="stat-icon"><i class="bi bi-x-circle"></i></span><span class="stat-copy"><span class="stat-label">Rejected</span><strong><?= number_format($sum['REJECTED']) ?></strong></span></a>
@@ -269,7 +276,7 @@ echo NotificationCenter::banner('admission');
               <td><?= h(date('m/d/Y', strtotime($r['created_at']))) ?></td>
               <td class="payer"><?= h(mb_strtoupper($name)) ?></td>
               <td><?= h(Admission::TYPES[$r['applicant_type']] ?? $r['applicant_type']) ?></td>
-              <?php $dp = EnrollmentDocs::progress($r); ?><td title="<?= h($dp['missing'] ? 'Missing: ' . implode(', ', $dp['missing']) : 'All required documents submitted') ?>"><?= $dp['required'] ? ($dp['missing'] ? '<span class="text-warning-emphasis">' . $dp['done'] . ' of ' . $dp['required'] . '</span>' : '<span class="text-success">Complete</span>') : '—' ?></td>
+              <?php $dp = EnrollmentDocs::progress($r, $docsHave[(int) $r['id']] ?? []); ?><td title="<?= h($dp['missing'] ? 'Missing: ' . implode(', ', $dp['missing']) : 'All required documents submitted') ?>"><?= $dp['required'] ? ($dp['missing'] ? '<span class="text-warning-emphasis">' . $dp['done'] . ' of ' . $dp['required'] . '</span>' : '<span class="text-success">Complete</span>') : '—' ?></td>
               <td><?= h($r['program'] ?? '') ?></td>
               <td><?= h($r['year_level']) ?></td>
               <td><?= h($r['school_year']) ?></td>
@@ -281,7 +288,7 @@ echo NotificationCenter::banner('admission');
             </tr>
           <?php endforeach; if (!$rows): ?><tr class="empty"><td colspan="13">No applicants for these filters. Click <strong>New</strong> to record one.</td></tr><?php endif; ?>
           </tbody>
-          <?php if ($rows): ?><tfoot><tr><td colspan="13"><?= count($rows) ?> applicant(s) · <?= $sum['PENDING'] ?> pending · <?= $sum['ADMITTED'] ?> admitted · <?= $sum['REJECTED'] ?> rejected</td></tr></tfoot><?php endif; ?>
+          <?php if ($rows): ?><tfoot><tr><td colspan="13"><?= number_format(max($matching, count($rows))) ?> applicant(s) · <?= $sum['PENDING'] ?> pending · <?= $sum['ADMITTED'] ?> admitted · <?= $sum['REJECTED'] ?> rejected</td></tr></tfoot><?php endif; ?>
         </table>
       </div>
     </div>
@@ -301,7 +308,7 @@ echo NotificationCenter::banner('admission');
         <div class="or-panel-title">Summaries</div>
         <div class="or-sum">
           <label>School Year</label><div class="or-box"><?= h($fSy !== '' ? $fSy : 'All years') ?></div>
-          <label>Applicants Listed</label><div class="or-box n"><?= number_format(count($rows)) ?></div>
+          <label>Applicants Listed</label><div class="or-box n"><?= number_format(max($matching, count($rows))) ?></div>
           <label>Pending · Admitted · Rejected</label><div class="or-box n"><?= $sum['PENDING'] ?> · <?= $sum['ADMITTED'] ?> · <?= $sum['REJECTED'] ?></div>
           <label>New · Continuing · Transferee · Unit Earner · Returnee</label><div class="or-box n"><?= $sum['NEW'] ?> · <?= $sum['CONTINUING'] ?> · <?= $sum['TRANSFEREE'] ?> · <?= $sum['UNIT_EARNER'] ?> · <?= $sum['RETURNEE'] ?></div>
           <label>Admitted, Not Registered</label><div class="or-box n grand"><?= number_format($sum['toReg']) ?></div>
