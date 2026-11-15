@@ -586,6 +586,14 @@ Unchanged: what saving does (classes are created for matching sections; teacher 
 
 Files: `sis/app/pages/curriculum.php`, `sis/assets/curriculum-picker.js`, `sis/assets/blue-theme.css`, `sis/app/lib/grading.php` (`saveCurriculum` takes an optional name), version tags in `sis/app/views/layout.php`; tests in `sis/tests/v63-fixes.php`.
 
+## v65.3 — Fee templates: list first, View shows one template's fees
+
+**Assessment → Fee templates** now shows only the list of templates (no template opens by itself). Tick a template and press **View** in the toolbar (or click its name, or the eye button on its row) to open it.
+
+A template's page shows only what it charges: **General fees** (category, label, how it is charged, amount) and **Subject fees**, with **← Back to templates**. To add items, press **+ Add fee** or **+ Add subject fee** (both open *Manage fees*, where you tick fees and set general fee amounts). **Edit**, **Manage fees** and **Copy template** (now a small window) are in the toolbar and its More menu. The fee preview was removed from this page; the list filters are hidden on a template's page.
+
+Files: `sis/app/views/assessment-fee-templates.php`, `sis/assets/assessment-fee-templates.css`, `sis/assets/theme.js` (tables marked `data-plain-table` stay plain), version tags in `sis/app/views/layout.php`; test in `sis/tests/v63-fixes.php`.
+
 ## v65.4 — Subject pricing page (Assessment → Subject Fees)
 
 **Set a subject price** and **Edit** on Assessment → Subject Fees now open the **Subject pricing** page, as in the design:

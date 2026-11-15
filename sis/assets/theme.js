@@ -62,7 +62,7 @@
 
  // Record tables: the same results the shared record list gates behind Apply Filters.
  const list=document.querySelector('[data-record-list]');
- const tables=[...main.querySelectorAll('.sis-record-scroll table, .sis-actions-content table, #main > table')].filter(t=>t.tHead&&t.tBodies[0]&&!t.closest('form,dialog,.modal,#entryDetail,#paymentSetup,#paymentPlans,.payment-plan-summary,[data-record-list],.sis-actions-panel')&&!t.querySelector('input[type=checkbox]')&&(list||t.querySelector('tbody td:last-child a[href]')));
+ const tables=[...main.querySelectorAll('.sis-record-scroll table, .sis-actions-content table, #main > table')].filter(t=>t.tHead&&t.tBodies[0]&&!t.matches('[data-plain-table]')&&!t.closest('form,dialog,.modal,#entryDetail,#paymentSetup,#paymentPlans,.payment-plan-summary,[data-record-list],.sis-actions-panel')&&!t.querySelector('input[type=checkbox]')&&(list||t.querySelector('tbody td:last-child a[href]')));
  // Only the result tables are the list; a detail table further down (e.g. a fee template's fee lines) keeps its own layout.
  const headOf=t=>t.tHead.rows[0].textContent.replace(/\s+/g,' ').trim();
  if(tables.length>1){const h=headOf(tables[0]);tables.splice(0,tables.length,...tables.filter(t=>headOf(t)===h));}
