@@ -37,6 +37,52 @@ final class RecordList
         if($r==='accounting'&&$tab==='ledger'){$d['from']=$today;$d['to']=$today;}
         return $d;
     }
+    /**
+     * v64.9: the page of a long list the server sends (the rest is not drawn, so 1,000–2,000 rows no longer slow the
+     * browser). ?pg= page (from 1), ?per= 15 / 30 / 50 / 100 / all (or the person's last choice, a cookie). Totals and
+     * counters are still worked out from every matching record by each page.
+     * @return array{offset:int,size:int,page:int,total:int,all:bool}
+     */
+    public static function window(int $total): array
+    {
+        $per = is_string($_GET['per'] ?? null) ? $_GET['per'] : (string) ($_COOKIE['sis_perpage'] ?? '15');
+        $all = $per === 'all';
+        $size = $all ? max(1, $total) : (in_array((int) $per, [15, 30, 50, 100], true) ? (int) $per : 15);
+        $pages = max(1, (int) ceil($total / $size));
+        $page = min($pages, max(1, (int) ($_GET['pg'] ?? 1)));
+        return ['offset' => ($page - 1) * $size, 'size' => $size, 'page' => $page, 'total' => $total, 'all' => $all];
+    }
+    /** The rows of this page, from a list already loaded (totals were worked out from all of it). */
+    public static function slice(array $rows, ?array &$w = null): array
+    {
+        $w = self::window(count($rows));
+        return array_slice(array_values($rows), $w['offset'], $w['size']);
+    }
+    /** A pager drawn by the server, for pages without the shared list bar (e.g. Subject Fees). */
+    public static function pagerHtml(array $w, string $route, array $params, string $noun = 'rows'): string
+    {
+        $link = fn(int $pg, string $label, string $aria, bool $on = true, bool $cur = false) => $on && !$cur
+            ? '<a class="sis-pager-btn" href="' . h(url($route, $params + ['pg' => $pg, 'per' => $w['all'] ? 'all' : $w['size']])) . '" aria-label="' . h($aria) . '">' . $label . '</a>'
+            : '<span class="sis-pager-btn' . ($cur ? ' is-current' : '') . '"' . ($cur ? ' aria-current="page"' : ' aria-disabled="true"') . '>' . $label . '</span>';
+        if ($w['total'] === 1) $noun = rtrim($noun, 's');
+        $pages = max(1, (int) ceil($w['total'] / $w['size'])); $p = $w['page'];
+        $a = $w['total'] ? $w['offset'] + 1 : 0; $b = min($w['total'], $w['offset'] + $w['size']);
+        $out = '<div class="sis-list-bar al-server-pager d-print-none"><span class="sis-pager-range">' . ($w['total'] ? 'Showing ' . number_format($a) . '–' . number_format($b) . ' of ' . number_format($w['total']) . ' ' . h($noun) : 'No ' . h($noun)) . '</span><nav class="sis-pager" aria-label="Pages">';
+        $out .= $link($p - 1, '<i class="bi bi-chevron-left" aria-hidden="true"></i>', 'Previous page', $p > 1);
+        $from = max(1, min($p - 2, $pages - 4)); $to = min($pages, $from + 4);
+        for ($i = $from; $i <= $to; $i++) $out .= $link($i, (string) $i, 'Page ' . $i, true, $i === $p);
+        $out .= $link($p + 1, '<i class="bi bi-chevron-right" aria-hidden="true"></i>', 'Next page', $p < $pages) . '</nav>';
+        $out .= '<form method="get" class="d-inline"><input type="hidden" name="r" value="' . h($route) . '">';
+        foreach ($params as $k => $v) if ($v !== '' && $v !== null) $out .= '<input type="hidden" name="' . h((string) $k) . '" value="' . h((string) $v) . '">';
+        $out .= '<select class="form-select form-select-sm sis-per-page" name="per" aria-label="Rows per page" data-autosubmit>';
+        foreach (['15', '30', '50', '100', 'all'] as $o) $out .= '<option value="' . $o . '"' . (($w['all'] ? 'all' : (string) $w['size']) === $o ? ' selected' : '') . '>' . ($o === 'all' ? 'All' : $o . ' / page') . '</option>';
+        return $out . '</select></form></div>';
+    }
+    /** Attribute for the <table>: the shared pager then asks the server for other pages. */
+    public static function pagesAttr(array $w): string
+    {
+        return ' data-server-pages="' . ($w['page'] - 1) . ',' . ($w['all'] ? 0 : $w['size']) . ',' . $w['total'] . '"';
+    }
     public static function applied(): bool {return is_string($_GET['apply']??null)&&$_GET['apply']==='1';}
     public static function key(): string {return self::route().'|'.(string)($_GET['tab']??'').'|'.(self::route()==='bulkaccounts'?(string)($_GET['group']??'TEACHER'):'');}
     public static function context(): array {return array_filter($_GET,fn($v,$k)=>is_string($v)&&!in_array($k,['id','edit','open','editName','new','entry','action','template','embed'],true),ARRAY_FILTER_USE_BOTH);}

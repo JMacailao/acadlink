@@ -192,9 +192,7 @@ if ($fType) { $where[] = 'a.applicant_type = ?'; $p[] = $fType; }
 if ($fProgram !== '') { $where[] = 'a.program = ?'; $p[] = $fProgram; }
 if ($fLevel) { $where[] = 'a.year_level = ?'; $p[] = $fLevel; }
 if ($q !== '') { $where[] = '(a.admission_no LIKE ? OR a.last_name LIKE ? OR a.first_name LIKE ? OR a.student_number LIKE ? OR CONCAT(a.last_name, \', \', a.first_name) LIKE ?)'; array_push($p, "%$q%", "%$q%", "%$q%", "%$q%", "%$q%"); }
-$rows = RecordList::query("SELECT a.*, $regSub AS reg_id, u.full_name AS created_by_name FROM sis_admissions a LEFT JOIN sis_users u ON u.id = a.created_by
-                  WHERE " . implode(' AND ', $where) . ' ORDER BY FIELD(a.status, "PENDING", "ADMITTED", "REJECTED", "CANCELLED"), a.id DESC LIMIT 2000', $p);
-// v63.21: the counters count every matching applicant in the database (the list itself shows the newest 2,000)
+// v63.21: the counters count every matching applicant in the database ; v64.9: the list shows one page of them
 $sum = ['PENDING' => 0, 'ADMITTED' => 0, 'REJECTED' => 0, 'CANCELLED' => 0, 'toReg' => 0] + array_fill_keys(array_keys(Admission::TYPES), 0);
 $matching = 0;
 if (RecordList::applied()) {
@@ -204,6 +202,9 @@ if (RecordList::applied()) {
         $sum['toReg'] += (int) $c['to_reg']; $matching += (int) $c['n'];
     }
 }
+$win = RecordList::window($matching); // v64.9: only this page's rows are read and drawn
+$rows = RecordList::query("SELECT a.*, $regSub AS reg_id, u.full_name AS created_by_name FROM sis_admissions a LEFT JOIN sis_users u ON u.id = a.created_by
+                  WHERE " . implode(' AND ', $where) . ' ORDER BY FIELD(a.status, "PENDING", "ADMITTED", "REJECTED", "CANCELLED"), a.id DESC LIMIT ' . $win['size'] . ' OFFSET ' . $win['offset'], $p);
 $docsHave = EnrollmentDocs::submittedFor(array_column($rows, 'id')); // v63.21: one query for the whole list
 $years = Db::all('SELECT DISTINCT school_year FROM sis_admissions ORDER BY school_year DESC');
 $years = array_values(array_unique(array_merge([selected_sy()], array_column($years, 'school_year'))));
@@ -216,7 +217,7 @@ $canRegister = Auth::can('registration');
 layout_start('Admission');
 RecordList::panel();
 echo NotificationCenter::banner('admission');
-if ($matching > count($rows)) echo '<div class="alert alert-info py-2 small" role="status"><i class="bi bi-info-circle me-1" aria-hidden="true"></i>Showing the newest ' . number_format(count($rows)) . ' of ' . number_format($matching) . ' matching applicants. The counters count all of them. Search by name, Student ID or admission number, or narrow the filters (program, year level, status), to list the others.</div>'; // v63.21
+// v64.9: every matching applicant is reachable with the pager (no 2,000 limit)
 ?>
 <style>@media print { @page { size: landscape; margin: 10mm; } }</style>
 <div class="admission-heading">
@@ -263,7 +264,7 @@ if ($matching > count($rows)) echo '<div class="alert alert-info py-2 small" rol
       </form>
       <div class="print-only"><?php $docTitle = 'Applicants' . ($fSy !== '' ? ' · ' . $fSy : ''); $docRight = ''; require __DIR__ . '/../views/print_header.php'; ?></div>
       <div class="or-grid-wrap">
-        <table class="or-grid" id="admGrid" data-select>
+        <table class="or-grid" id="admGrid" data-select<?= RecordList::pagesAttr($win) ?>>
           <thead><tr><th>Admission Number</th><th>Date</th><th>Applicant Name</th><th>Classification</th><th>Documents</th><th>Program</th><th>Year Level</th><th>School Year</th><th>Student ID</th><th>Status</th><th>Registration</th><th>Mobile</th><th>Recorded By</th></tr></thead>
           <tbody>
           <?php foreach ($rows as $r): $name = $r['last_name'] . ', ' . $r['first_name'] . ($r['middle_name'] ? ' ' . mb_substr($r['middle_name'], 0, 1) . '.' : ''); ?>

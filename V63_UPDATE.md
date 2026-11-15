@@ -516,3 +516,21 @@ Files: `lms/lib/lms.php`, `lms/pages/{classes,schedule,gradebook,reports,setting
 **Create account from a student's row.** On Students, a Power User sees **Create account** in a student's row menu (…) when the student has no sign-in. After confirming, the account is created with the Student ID as username and a temporary password (shown once, valid 7 days, must be changed at first sign-in), and it is linked to the student at once. The same checks as Bulk create accounts apply (duplicate Student ID, an existing or legacy account, a usable username). Students who already have a sign-in show **Manage account** instead.
 
 Files: `sis/assets/{sis-actions.js,sis-actions.css,standard-toolbar.js}`, `js/standard-toolbar-core.js`, `css/standard-toolbar.css`, `sis/app/pages/students.php`, `sis/app/views/layout.php`, `pages/*.html`, tests in `sis/tests/v63-fixes.php`.
+
+## v64.9 — Long lists send one page at a time
+
+Admission, Registration, Teachers and Subject Fees used to draw every row (1,000–2,000) and then show 15 of them, so the browser spent about a second drawing rows nobody saw. They now send only the page you are looking at.
+
+| Page (test data like the live site) | Before | After |
+|---|---|---|
+| Admission (2,001 applicants) | 1.37 s · 2.3 MB | 0.16 s · 50 KB |
+| Registration (1,002) | 0.73 s · 1.0 MB | 0.19 s · 44 KB |
+| Teachers (1,003) | 0.61 s · 0.9 MB | 0.14 s · 35 KB |
+| Subject Fees (1,010) | 0.70 s · 0.7 MB | 0.17 s · 145 KB |
+
+- The pager works as before ("Showing 1–15 of N", page buttons, 15 / 30 / 50 / 100 per page, remembered); moving to another page asks the server for it. A new **All** choice shows every row for that one view (for printing a full list); it is not remembered.
+- Counters and totals still count every matching record. Admission no longer stops at the newest 2,000 applicants.
+- Searching finds records on every page (Teachers: the toolbar search; Subject Fees: its search box now searches on the server). The Teachers box that searched only the rows on screen is removed.
+- Sorting by clicking a column heading sorts the rows of the page shown.
+
+Files: `sis/app/lib/record-list.php` (`RecordList::window`, `slice`, `pagesAttr`, `pagerHtml`), `sis/app/pages/{admission,registration,teachers,subjectfees}.php`, `sis/assets/theme.js`, `sis/assets/blue-theme.css`, `sis/app/views/layout.php`, tests in `sis/tests/v63-fixes.php` and `v63-speed.php`.

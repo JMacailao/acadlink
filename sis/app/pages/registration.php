@@ -669,8 +669,9 @@ if ($fState === 'VOIDED') $where[] = "r.status = 'CANCELLED'";
 if ($fState === 'OPEN') $where[] = "r.status <> 'CANCELLED' AND r.locked_at IS NULL";
 if ($fState === 'DONE') $where[] = "r.status <> 'CANCELLED' AND r.locked_at IS NOT NULL";
 if ($q !== '') { $where[] = '(r.reg_no LIKE ? OR r.student_number LIKE ? OR r.student_name LIKE ?)'; array_push($p, "%$q%", "%$q%", "%$q%"); }
-$rows = RecordList::query('SELECT r.*, u.full_name AS created_by_name FROM sis_registrations r LEFT JOIN sis_users u ON u.id = r.created_by WHERE ' . implode(' AND ', $where) . ' ORDER BY r.id DESC LIMIT 2000', $p);
+$rows = RecordList::query('SELECT r.*, u.full_name AS created_by_name FROM sis_registrations r LEFT JOIN sis_users u ON u.id = r.created_by WHERE ' . implode(' AND ', $where) . ' ORDER BY r.id DESC LIMIT 20000', $p);
 if ($fPay) $rows = array_values(array_filter($rows, fn($r) => Registration::payStatus($r) === $fPay));
+$pageRows = RecordList::slice($rows, $win); // v64.9: totals use every row; only this page is drawn
 $sum = ['n' => 0, 'total' => 0, 'paid' => 0, 'bal' => 0, 'OPEN' => 0, 'DONE' => 0, 'VOIDED' => 0];
 foreach ($rows as $r) {
     $st = Registration::state($r); $sum[$st]++;
@@ -720,10 +721,10 @@ echo NotificationCenter::banner('registration');
       </form>
       <div class="print-only"><?php $docTitle = 'Registrations · ' . $sy . ($term ? ' · ' . $term : ''); $docRight = ''; require __DIR__ . '/../views/print_header.php'; ?></div>
       <div class="or-grid-wrap">
-        <table class="or-grid" id="regGrid" data-select>
+        <table class="or-grid" id="regGrid" data-select<?= RecordList::pagesAttr($win) ?>>
           <thead><tr><th>Registration Number</th><th>Date</th><th>Student ID</th><th>Student Name</th><th>Section</th><th>Year Level</th><th>Term</th><th class="n">Units</th><th class="n">Assessment</th><th class="n">Paid</th><th class="n">Balance</th><th>Status</th><th>Payment</th><th>Registered By</th></tr></thead>
           <tbody>
-          <?php foreach ($rows as $r): $st = Registration::state($r); $bal = Registration::balance($r); ?>
+          <?php foreach ($pageRows as $r): $st = Registration::state($r); $bal = Registration::balance($r); ?>
             <tr class="<?= $st === 'VOIDED' ? 'is-void' : '' ?>" tabindex="0" data-id="<?= (int) $r['id'] ?>"
                 data-view="<?= h(url('registration', ['id' => $r['id'], 'embed' => 1])) ?>" data-open="<?= h(url('registration', ['id' => $r['id']])) ?>"
                 data-pay="<?= h(url('cashier', ['reg' => $r['id'], 'embed' => 1])) ?>" data-payable="<?= $st !== 'VOIDED' && $bal > 0 ? '1' : '0' ?>"
