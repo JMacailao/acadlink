@@ -355,6 +355,24 @@ final class TemplateFees
         return ['general' => $general, 'subjects' => $subjects];
     }
 
+    /**
+     * v63.24: tuition charged twice: the template charges a fee per unit AND charges subject prices in the same fee
+     * category (e.g. "Tuition Fee per unit" plus each subject's own tuition price). Returns the names, or null.
+     * @return array{general: string[], category: string}|null
+     */
+    public static function doubleCharge(int $nameId): ?array
+    {
+        $cat = array_column(Db::all('SELECT l.id, c.name AS category FROM sis_fee_labels l JOIN sis_fee_categories c ON c.id = l.category_id'), 'category', 'id');
+        $perUnit = [];
+        foreach (Assessment::items($nameId) as $i) if ($i['charge_type'] === 'PER_UNIT' && Money::cents($i['amount']) > 0) $perUnit[$cat[(int) $i['label_id']] ?? ''][] = (string) $i['label_name'];
+        if (!$perUnit) return null;
+        $subjectCats = [];
+        foreach (Db::all('SELECT DISTINCT f.label_id FROM sis_assessment_name_subject_fees t JOIN sis_subject_fees f ON f.id = t.subject_fee_id WHERE t.assessment_name_id = ? AND f.rate > 0', [$nameId]) as $r) $subjectCats[$cat[(int) $r['label_id']] ?? ''] = true;
+        foreach (SubjectFees::all($nameId) as $o) if (Money::cents($o['rate']) > 0) $subjectCats[$cat[(int) $o['label_id']] ?? ''] = true;
+        foreach ($perUnit as $c => $names) if (isset($subjectCats[$c])) return ['general' => $names, 'category' => $c];
+        return null;
+    }
+
     private static function categoryActive(int $id): bool
     {
         static $active = null;

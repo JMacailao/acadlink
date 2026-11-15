@@ -60,6 +60,7 @@ $problems = Assessment::setupProblems();
         $ps = ctype_digit((string) ($_GET['subjects'] ?? '')) ? (int) $_GET['subjects'] : 7;
         $preview = Assessment::compute((int) $nid, $pu, $ps);
       ?>
+      <?php $dbl = TemplateFees::doubleCharge((int) $nid); if ($dbl): ?><div class="alert alert-warning py-2 small" role="alert"><i class="bi bi-exclamation-triangle me-1" aria-hidden="true"></i><strong>Tuition may be charged twice.</strong> This template charges <?= h(implode(', ', $dbl['general'])) ?> <strong>per unit</strong> and also the subjects' own prices in <?= h($dbl['category']) ?>. Students pay both. Untick one of them in <em>Manage fees</em>: keep the per-unit fee, or keep the subject prices.</div><?php endif; /* v63.24 */ ?>
       <article class="fee-template-detail-card">
         <header class="fee-template-detail-head">
           <div class="min-w-0">

@@ -393,7 +393,7 @@ function layout_end(bool $bare = false): void
 <script src="<?= sis_web() ?>assets/app.js?v=62.2"></script>
 <script src="<?= sis_web() ?>assets/friendly-ui.js?v=48"></script>
 <script src="<?= sis_web() ?>assets/sis-actions.js?v=41"></script>
-<script src="<?= sis_web() ?>assets/theme.js?v=52"></script>
+<script src="<?= sis_web() ?>assets/theme.js?v=63.24"></script>
 <script src="../js/standard-toolbar-core.js?v=57"></script>
 <script src="<?= sis_web() ?>assets/standard-toolbar.js?v=67"></script>
 <?php if ($route === 'admission'): ?><script src="<?= sis_web() ?>assets/admission-form.js?v=1" defer></script><?php endif; ?>
