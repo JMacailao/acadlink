@@ -27,6 +27,19 @@ let editingId = null;
 
 const termName = (t) => t || "No term";
 
+// v64.6: each subject's teacher list starts with Professor X and the chosen teacher only; the full list is added when the
+// list is opened. Writing every teacher into every subject (1,000 × 1,000) froze the browser ("page unresponsive").
+let teacherOptionsCache = null;
+const allTeacherOptions = () => teacherOptionsCache ??= teachers.filter(t=>t.id!=="_acadlink_professor_x").map(t=>`<option value="${escapeHtml(t.id)}">${escapeHtml(t.teacherName)}</option>`).join("");
+function shortTeacherOption(subjectId) {
+  const id = subjectTeachers[subjectId]; if (!id || id === "_acadlink_professor_x") return "";
+  const t = teachers.find((x) => x.id === id); return t ? `<option value="${escapeHtml(t.id)}" selected>${escapeHtml(t.teacherName)}</option>` : "";
+}
+function fillTeachers(sel) {
+  if (!sel || sel.dataset.full) return; sel.dataset.full = "1";
+  const keep = sel.value; sel.innerHTML = '<option value="_acadlink_professor_x">Professor X · Needs teacher</option>' + allTeacherOptions(); sel.value = keep;
+}
+
 function renderSubjects() {
   const term = normalize(els.search.value);
   const shown = subjects.filter((s) => !term || normalize(`${s.subjectCode} ${s.subjectName}`).includes(term));
@@ -38,7 +51,7 @@ function renderSubjects() {
         <span class="flex-grow-1">${escapeHtml(s.subjectName)} <span class="small text-secondary">(${escapeHtml(formatUnits(s.units))})</span></span>
         <select class="form-select form-select-sm mt-1" data-subject-teacher="${escapeHtml(s.id)}" aria-label="Teacher for ${escapeHtml(s.subjectName)}">
           <option value="_acadlink_professor_x">Professor X · Needs teacher</option>
-          ${teachers.filter(t=>t.id!=="_acadlink_professor_x").map(t=>`<option value="${escapeHtml(t.id)}" ${subjectTeachers[s.id]===t.id?"selected":""}>${escapeHtml(t.teacherName)}</option>`).join("")}
+          ${shortTeacherOption(s.id)}
         </select>
       </div>`).join("")
     : `<div class="empty-state">${subjects.length ? "No subject matches." : 'No subjects yet. <a href="subjects.html">Add subjects</a> first.'}</div>`;
@@ -87,7 +100,7 @@ async function load() {
     const [subSnap, curSnap, secSnap, teacherSnap] = await Promise.all([
       getDocs(collection(db, "subjects")), getDocs(collection(db, "curriculum")), getDocs(collection(db, "sections")), getDocs(collection(db, "teachers")),
     ]);
-    teachers = teacherSnap.docs.map(d=>({id:d.id,...d.data()})).sort((a,b)=>compareText(a.teacherName,b.teacherName));
+    teachers = teacherSnap.docs.map(d=>({id:d.id,...d.data()})).sort((a,b)=>compareText(a.teacherName,b.teacherName)); teacherOptionsCache = null;
     subjects = subSnap.docs.map((d) => ({ id: d.id, ...d.data() })).sort((a, b) => compareText(a.subjectCode, b.subjectCode));
     list = curSnap.docs.map((d) => ({ id: d.id, ...d.data() })).sort((a, b) =>
       compareText(a.program, b.program) || YEAR_LEVELS.indexOf(a.yearLevel) - YEAR_LEVELS.indexOf(b.yearLevel) ||
@@ -160,6 +173,7 @@ async function remove(id) {
 function init() {
   els.level.innerHTML = YEAR_LEVELS.map((l) => `<option>${l}</option>`).join("");
   els.term.innerHTML = TERMS.map((t) => `<option>${t}</option>`).join("");
+  for (const ev of ["pointerdown", "focusin", "keydown"]) els.subjects.addEventListener(ev, (e) => fillTeachers(e.target.closest?.("select[data-subject-teacher]")));
   els.subjects.addEventListener("change", (e) => {
     if (e.target.dataset.subjectTeacher) {subjectTeachers[e.target.dataset.subjectTeacher]=e.target.value;return;}
     if (e.target.type !== "checkbox") return;

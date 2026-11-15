@@ -1333,6 +1333,21 @@ final class Activity
     ];
 
     /** Latest entries: [['at', 'action', 'name', 'detail', 'user', 'role', 'link'], …] */
+    /** One value from a lookup query; null when the record or its table is gone. */
+    private static function lookup(string $sql, $id)
+    {
+        try { $v = Db::val($sql, [$id]); return $v === false ? null : $v; } catch (Throwable) { return null; }
+    }
+
+    /** A Grading System class (subject, section) by id, remembered for the rest of the request. */
+    private static function gradingClass(string $id): ?array
+    {
+        static $seen = [];
+        if (!array_key_exists($id, $seen)) { try { $g = GS::get('gradingAssignments', $id); } catch (Throwable) { $g = null; }
+            $seen[$id] = $g ? ['subjectCode' => (string) ($g['subjectCode'] ?? ''), 'subjectName' => (string) ($g['subjectName'] ?? ''), 'sectionName' => (string) ($g['sectionName'] ?? '')] : null; }
+        return $seen[$id];
+    }
+
     public static function recent(int $limit = 8, bool $withSignIns = false, int $offset = 0, ?int $userId = null): array
     {
         $where = []; $p = [];
@@ -1347,7 +1362,7 @@ final class Activity
     public static function describe(array $a): array
     {
         $d = json_decode((string) $a['details'], true) ?: [];
-        $out = ['at' => $a['created_at'], 'action' => self::WORDS[$a['action']] ?? ucfirst(str_replace('_', ' ', $a['action'])),
+        $out = ['at' => $a['created_at'], 'action' => self::WORDS[$a['action']] ?? preg_replace('/^Lms\b/', 'LMS', ucfirst(str_replace('_', ' ', $a['action']))),
             'name' => '', 'detail' => '', 'user' => $a['username'] ?? 'system', 'role' => $a['role'] ?? '', 'link' => null];
         $id = $a['entity_id'];
         switch ($a['entity_type']) {
@@ -1373,11 +1388,31 @@ final class Activity
                     $out['link'] = url('admission', ['id' => $x['id']]);
                 }
                 break;
+            case 'lms_class': // v64.6: the class name, not its internal id
+            case 'lms_work':
+                $classId = $a['entity_type'] === 'lms_work' ? (string) (self::lookup('SELECT class_id FROM lms_work WHERE id = ?', (int) $id) ?? '') : (string) $id;
+                $work = $a['entity_type'] === 'lms_work' ? (string) (self::lookup('SELECT title FROM lms_work WHERE id = ?', (int) $id) ?? '') : '';
+                $c = $classId !== '' ? self::gradingClass($classId) : null;
+                $out['name'] = $work !== '' ? $work : ($c ? trim($c['subjectCode'] . ' ' . $c['subjectName']) : 'LMS class');
+                $out['detail'] = implode(' · ', array_filter([$work !== '' && $c ? trim($c['subjectCode'] . ' ' . $c['subjectName']) : '', $c['sectionName'] ?? '', (string) ($d['title'] ?? '')]));
+                break;
+            case 'library_title':
+                $out['name'] = (string) ($d['title'] ?? self::lookup('SELECT title FROM library_titles WHERE id = ?', (int) $id) ?? '');
+                $out['detail'] = (string) ($d['borrower'] ?? '');
+                break;
+            case 'library_loan':
+                $out['name'] = (string) ($d['title'] ?? self::lookup('SELECT t.title FROM library_loans l JOIN library_copies c ON c.id = l.copy_id JOIN library_titles t ON t.id = c.title_id WHERE l.id = ?', (int) $id) ?? '');
+                $out['detail'] = implode(' · ', array_filter([(string) ($d['borrower'] ?? ''), (string) ($d['barcode'] ?? '')]));
+                break;
+            case 'canteen_product':
+                $out['name'] = (string) ($d['name'] ?? self::lookup('SELECT name FROM canteen_products WHERE id = ?', (int) $id) ?? '');
+                break;
             default:
-                $out['name'] = (string) ($d['name'] ?? $d['label'] ?? $d['studentId'] ?? $d['username'] ?? '');
-                $out['detail'] = (string) ($d['section'] ?? $d['term'] ?? '');
+                $out['name'] = (string) ($d['name'] ?? $d['title'] ?? $d['subjectName'] ?? $d['teacherName'] ?? $d['teacher'] ?? $d['sectionName'] ?? $d['label'] ?? $d['studentId'] ?? $d['student'] ?? $d['username'] ?? $d['code'] ?? '');
+                $out['detail'] = implode(' · ', array_filter(array_map('strval', [$d['subjectCode'] ?? $d['subject'] ?? '', $d['section'] ?? '', $d['borrower'] ?? '', $d['barcode'] ?? '', $d['receipt_no'] ?? '', $d['term'] ?? ''])));
         }
-        if ($out['name'] === '' && $out['detail'] === '') $out['detail'] = $a['entity_type'] . ($id !== null ? ' #' . $id : '');
+        // v64.6: never show an internal record id such as "lms_class #cur_8166e0…"; name the kind of record instead
+        if ($out['name'] === '' && $out['detail'] === '') $out['detail'] = ucfirst(str_replace(['lms_', 'grading_', 'canteen_', 'library_', '_'], ['LMS ', '', 'canteen ', 'library ', ' '], (string) $a['entity_type']));
         return $out;
     }
 }

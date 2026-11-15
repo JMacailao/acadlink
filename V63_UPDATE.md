@@ -476,3 +476,25 @@ Files: `sis/app/views/layout.php`, `sis/assets/blue-theme.css`. Press Ctrl+F5 on
 The page title next to the search box ("Dashboard", "Students"…) is removed on desktop in every module (SIS, Finance, Library, LMS, Canteen). The breadcrumb under the header still names the page. On phones the title stays in the header, where it replaces the school name.
 
 File: `sis/assets/blue-theme.css`. Press Ctrl+F5 once.
+
+## v64.6 — Polish: readable activity, no browser error, phone fixes, dashboard chart, faster dashboards
+
+- **Recent activity is readable.** Dashboard and Activity Log show the class ("WEB101 Web Development · BSIT 2A"), book, product, teacher or subject instead of internal codes like "lms_class #cur_8166e…". "Lms" is written "LMS".
+- **No more "Transition was aborted" browser error.** The page-change animation is off (it failed on some pages and after sign-in). The bottom menu is printed first on every page, so it still shows at once.
+- **Bug fixed — Canteen Cashier on phones:** since v64.4 the category chips made the page wider than the screen, so the phone zoomed out and the bottom menu was hard to tap.
+- **No page is wider than a phone:** Settings could not shrink; wide tables now scroll inside their own box.
+- **Phone cards:** details are spaced apart instead of joined with "·" (a dot could start a line). Recent activity and Finance "Collections by source" are cards too.
+- **Slow saves:** after 8 seconds the spinner shows "This is taking longer than usual. Please wait." so nobody clicks Save twice.
+- **Dashboard (desktop and phone):** "Enrollment activity, last 7 days" chart (hover or tab to a day for its count) and "Recent applications" with New / Returnee / Transferee badges, for people who work on admissions.
+- **Grading System toolbar:** shows only the buttons a page can use, like the SIS.
+- **Faster dashboards:** SIS and Finance dashboard numbers are kept for one minute per person and dropped as soon as that person saves something. Reports are never cached.
+
+Files: `sis/app/lib/sis.php`, `sis/app/lib/core.php`, `sis/app/pages/dashboard.php`, `finance/pages/overview.php`, `sis/app/views/layout.php`, `sis/assets/{blue-theme.css,activity.css,activity.js,card-labels.js,bottom-nav.css}`, `css/{style.css,standard-toolbar.css}`, `js/{loading.js,record-toolbar.js}`, `pages/*.html`, `sis/tests/v63-fixes.php`. Press Ctrl+F5 once.
+
+### v64.6 — Bug fixed: Curriculum page "unresponsive"
+
+With about 1,000 subjects and 1,000 teachers, the Curriculum form wrote the full teacher list into every subject row: 1,013,061 dropdown entries and 54 MB of HTML, about 2½ minutes to load, and the browser said the page was unresponsive. Now each row starts with Professor X and the chosen teacher, and the full list (written once) is added when that row's list is opened: 522 KB, under 1 second. The Grading System's Curriculum page had the same problem and is fixed the same way (0.6 seconds).
+
+Saving also sends only the ticked subjects' teachers. Before, a large form sent over 2,000 values, and PHP's default limit is 1,000, so teacher choices could be silently lost.
+
+Files: `sis/app/pages/curriculum.php`, `sis/assets/curriculum-picker.js` (new), `js/curriculum.js`, `pages/curriculum.html`.

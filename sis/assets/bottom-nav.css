@@ -65,7 +65,8 @@ html[data-app="library"], html[data-system][data-app="library"] { --bn-accent: #
 
 /* v63.2 The bottom menu stays where it is while another page opens: the browser keeps it in place during the page
    change (cross-document View Transitions: Chrome/Edge 126+, Safari 18.2+; other browsers simply load the page). */
-@view-transition { navigation: auto; }
+/* v64.6: the page-change animation is off. Chrome aborted it on some pages ("Transition was aborted"), and the menu is
+   printed first on every page, so it is on screen at once anyway. */
 @media (max-width: 991.98px) {
   .al-bnav { view-transition-name: al-bnav; }
   ::view-transition-group(al-bnav) { animation: none; z-index: 100; }

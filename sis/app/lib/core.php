@@ -99,7 +99,7 @@ final class Db
     private static ?WeakReference $memoDb = null;
 
     /** A write that did not go through Db::q (another connection wrapper): drop the request caches. */
-    public static function changed(): void { self::$writes++; }
+    public static function changed(): void { self::$writes++; ShortCache::saved(); }
     /** The write counter (a request cache keyed by it is dropped by any write). */
     public static function writes(): int { return self::$writes; }
 
@@ -119,7 +119,7 @@ final class Db
 
     public static function q(string $sql, array $params = []): PDOStatement
     {
-        if (!preg_match('/^\s*(SELECT|SHOW|SET|DESCRIBE|EXPLAIN)\b/i', $sql)) self::$writes++;
+        if (!preg_match('/^\s*(SELECT|SHOW|SET|DESCRIBE|EXPLAIN)\b/i', $sql)) { self::$writes++; ShortCache::saved(); }
         $st = self::pdo()->prepare($sql);
         $st->execute($params);
         return $st;
@@ -774,5 +774,38 @@ final class FormOnce
             $action();
             return true;
         });
+    }
+}
+
+
+/**
+ * v64.6: numbers on the dashboards (SIS, Finance) are kept for a minute in the person's session, so opening the dashboard
+ * again does not count thousands of records each time. Anything this person saves (a form sent with POST that writes to
+ * the database) drops them at once, so their own changes show immediately; other people's changes show within a minute.
+ * Reports are never cached: they are official printouts.
+ */
+final class ShortCache
+{
+    private static bool $marked = false;
+
+    public static function get(string $key, int $seconds, callable $load): mixed
+    {
+        if (PHP_SAPI === 'cli' || session_status() !== PHP_SESSION_ACTIVE) return $load();
+        $stamp = (int) ($_SESSION['al_saved'] ?? 0);
+        $hit = $_SESSION['al_cache'][$key] ?? null;
+        if (is_array($hit) && $hit['stamp'] === $stamp && $hit['until'] >= time()) return $hit['value'];
+        $value = $load();
+        $_SESSION['al_cache'] = array_filter($_SESSION['al_cache'] ?? [], fn($e) => is_array($e) && $e['until'] >= time());
+        $_SESSION['al_cache'][$key] = ['stamp' => $stamp, 'until' => time() + $seconds, 'value' => $value];
+        return $value;
+    }
+
+    /** Called on every database write: a POST request (someone saving) drops this person's kept numbers. */
+    public static function saved(): void
+    {
+        if (self::$marked || ($_SERVER['REQUEST_METHOD'] ?? 'GET') !== 'POST' || session_status() !== PHP_SESSION_ACTIVE) return;
+        self::$marked = true;
+        $_SESSION['al_saved'] = (int) ($_SESSION['al_saved'] ?? 0) + 1;
+        unset($_SESSION['al_cache']);
     }
 }

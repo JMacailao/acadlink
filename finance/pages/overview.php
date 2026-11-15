@@ -4,8 +4,10 @@ declare(strict_types=1);
 require_once FINANCE_ROOT . '/lib/overview.php';
 if (!Auth::central()->can((int) Auth::centralId(), 'finance.workspace.view')) redirect('workspaces');
 
-$data = FinanceOverview::collections((string) ($_GET['from'] ?? ''), (string) ($_GET['to'] ?? ''));
-$attention = FinanceOverview::attention();
+$from = (string) ($_GET['from'] ?? ''); $to = (string) ($_GET['to'] ?? '');
+// v64.6: kept for a minute (dropped when this person saves anything)
+$data = ShortCache::get('fin|collections|' . $from . '|' . $to . '|' . date('Y-m-d'), 60, fn() => FinanceOverview::collections($from, $to));
+$attention = ShortCache::get('fin|attention', 60, fn() => FinanceOverview::attention());
 $shortcuts = [];
 if (Auth::can('payments.record')) $shortcuts[] = ['Receive a payment', 'Record a payment and issue a receipt', 'cash-coin', url('cashier', ['new' => 1])];
 if (Auth::can('payments.view')) $shortcuts[] = ['Receipts', 'Find, view and re-print receipts', 'receipt', url('cashier')];

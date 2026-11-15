@@ -269,7 +269,7 @@ function layout_start(string $title, bool $bare = false): void
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta name="theme-color" content="<?= $system === 'portal' ? '#2b1866' : '#1d6b47' ?>">
+<meta name="theme-color" content="<?= $system === 'portal' ? '#2b1866' : '#123D70' ?>">
 <title><?= h($title) ?> · <?= h($school) ?></title>
 <link rel="icon" type="image/png" sizes="32x32" href="../icons/favicon-32.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -277,9 +277,9 @@ function layout_start(string $title, bool $bare = false): void
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@400;500;600;700&amp;family=Source+Serif+4:opsz,wght@8..60,600;8..60,700&amp;display=swap">
 <link rel="stylesheet" href="../vendor/bootstrap-5.3.8/css/bootstrap.min.css">
 <link rel="stylesheet" href="../vendor/bootstrap-icons-1.13.1/font/bootstrap-icons.min.css">
-<link rel="stylesheet" href="../css/style.css?v=64.3"><!-- the grading system's own theme: both systems look the same -->
+<link rel="stylesheet" href="../css/style.css?v=64.6"><!-- the grading system's own theme: both systems look the same -->
 <link rel="stylesheet" href="<?= sis_web() ?>assets/app.css?v=56b">
-<link rel="stylesheet" href="<?= sis_web() ?>assets/activity.css?v=64.3">
+<link rel="stylesheet" href="<?= sis_web() ?>assets/activity.css?v=64.6">
 <link rel="stylesheet" href="<?= sis_web() ?>assets/navigation.css?v=64.3">
 <?php if (settings_hub_route()): ?><link rel="stylesheet" href="<?= sis_web() ?>assets/settings-hub.css?v=1"><?php endif; ?>
 <link rel="stylesheet" href="<?= sis_web() ?>assets/reference-ui.css?v=20261021portal">
@@ -292,17 +292,17 @@ function layout_start(string $title, bool $bare = false): void
 <link rel="stylesheet" href="<?= sis_web() ?>assets/people.css?v=63">
 <link rel="stylesheet" href="<?= sis_web() ?>assets/schedule-grid.css?v=63.4">
 <link rel="stylesheet" href="<?= sis_web() ?>assets/unified-toolbar.css?v=60">
-<link rel="stylesheet" href="../css/standard-toolbar.css?v=64.1">
+<link rel="stylesheet" href="../css/standard-toolbar.css?v=64.6">
 <link rel="stylesheet" href="<?= sis_web() ?>assets/registration-fees.css?v=4">
 <link rel="stylesheet" href="<?= sis_web() ?>assets/assessment-fee-templates.css?v=1">
 <?php if (app_system() === 'CANTEEN'): ?><link rel="stylesheet" href="assets/canteen.css?v=63.5"><?php endif; ?>
 <?php if (app_system() === 'LIBRARY'): ?><link rel="stylesheet" href="assets/library.css?v=63.6"><?php endif; ?>
 <?php if (app_system() === 'LMS'): ?><link rel="stylesheet" href="assets/lms.css?v=63.5"><?php endif; ?>
-<?php if (in_array(app_system(), ['LMS', 'CANTEEN', 'LIBRARY', 'SIS', 'FINANCE'], true)): ?><link rel="stylesheet" href="<?= sis_web() ?>assets/bottom-nav.css?v=64.3"><?php endif; ?>
+<?php if (in_array(app_system(), ['LMS', 'CANTEEN', 'LIBRARY', 'SIS', 'FINANCE'], true) && !$bare && $u): // v64.6: not on sign-in or the workspace chooser ?><link rel="stylesheet" href="<?= sis_web() ?>assets/bottom-nav.css?v=64.6"><?php endif; ?>
 <?php if ($route === 'assessment' && ($_GET['tab'] ?? '') === 'names'): ?><script src="<?= sis_web() ?>assets/fee-templates.js?v=1" defer></script><?php endif; ?>
 <?php if ($route === 'documents' && ($_GET['tab'] ?? '') === 'settings'): ?><script src="<?= sis_web() ?>assets/documents-template-preview.js?v=1" defer></script><?php endif; ?>
 <?php if ($route === 'admission'): ?><link rel="stylesheet" href="<?= sis_web() ?>assets/admission-form.css?v=1"><?php endif; ?>
-<?php if ($system === 'sis' && !$bare && $u): ?><link rel="stylesheet" href="<?= sis_web() ?>assets/easy-navigation.css?v=6"><link rel="stylesheet" href="<?= sis_web() ?>assets/dashboard.css?v=2"><link rel="stylesheet" href="<?= sis_web() ?>assets/blue-theme.css?v=64.5"><?php endif; // v64: the blue and orange design, loaded last ?>
+<?php if ($system === 'sis' && !$bare && $u): ?><link rel="stylesheet" href="<?= sis_web() ?>assets/easy-navigation.css?v=6"><link rel="stylesheet" href="<?= sis_web() ?>assets/dashboard.css?v=2"><link rel="stylesheet" href="<?= sis_web() ?>assets/blue-theme.css?v=64.6"><?php endif; // v64: the blue and orange design, loaded last ?>
 </head>
 <?php $embedFlashes = $bare && isset($_GET['embed']) ? take_flashes() : []; // pop-up pages show their own messages ?>
 <body data-client-scope="<?= h($u ? acadlink_client_scope(Auth::central()) : '') ?>" class="<?= $bare ? 'bare' : ('sis-theme' . ($system === 'sis' && $u ? ' sis-easy' : '')) ?>" data-user-id="<?= h((string) ($u['id'] ?? 'guest')) ?>" data-route="<?= h((string) $route) ?>"<?= array_filter($embedFlashes, fn($f) => $f[0] === 'success') ? ' data-changed="1"' : '' ?>>
@@ -418,7 +418,7 @@ function layout_end(bool $bare = false): void
 <script src="../vendor/bootstrap-5.3.8/js/bootstrap.bundle.min.js"></script>
 <script src="<?= sis_web() ?>assets/navigation.js?v=61"></script>
 <?php if (app_system() === 'LMS'): ?><script src="assets/lms.js?v=61.1" defer></script><?php endif; ?>
-<script src="<?= sis_web() ?>assets/activity.js?v=31"></script>
+<script src="<?= sis_web() ?>assets/activity.js?v=64.6"></script>
 <script src="<?= sis_web() ?>assets/record-list.js?v=48" defer></script>
 <script src="<?= sis_web() ?>assets/fixed-shell.js?v=31" defer></script>
 <script src="<?= sis_web() ?>assets/accounting-ui.js?v=31" defer></script>
@@ -428,7 +428,8 @@ function layout_end(bool $bare = false): void
 <script src="<?= sis_web() ?>assets/theme.js?v=64.2"></script>
 <script src="../js/standard-toolbar-core.js?v=64.1"></script>
 <script src="<?= sis_web() ?>assets/standard-toolbar.js?v=68"></script>
-<script src="<?= sis_web() ?>assets/card-labels.js?v=64.3"></script>
+<script src="<?= sis_web() ?>assets/card-labels.js?v=64.6"></script>
+<script src="<?= sis_web() ?>assets/curriculum-picker.js?v=64.6"></script>
 <?php if ($route === 'admission'): ?><script src="<?= sis_web() ?>assets/admission-form.js?v=1" defer></script><?php endif; ?>
 <script src="<?= sis_web() ?>assets/eligibility.js?v=31"></script>
 <script src="<?= sis_web() ?>assets/workspaces.js?v=31"></script>

@@ -63,3 +63,7 @@ tr.std-row-selectable { cursor:pointer; }
 @media (min-width:992px) and (max-width:1279.98px) {
   .sis-toolbar-header .std-tb :is([data-std-slot="view"],[data-std-slot="delete"]) .std-tb-label { display:none; }
 }
+/* v64.6: a group or divider with nothing visible after it is not drawn (the Grading System hides buttons a page cannot use) */
+.std-tb-group:not(:has(> :not([hidden]):not(.std-tb-sep))) { display:none; }
+.std-tb-group-1 > .std-tb-sep:first-child, .std-tb-group-1 > .std-tb-sep:not(:has(~ .std-tb-btn:not([hidden]))) { display:none; }
+.std-tb-group-1 > [hidden] + .std-tb-sep:is(:nth-child(3)) { display:none; }

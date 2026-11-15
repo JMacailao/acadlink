@@ -10,8 +10,8 @@
   }
   function start(message='Loading…'){
     const id=++next;tasks.set(id,message);
-    if(tasks.size===1){showTimer=setTimeout(paint,160);slowTimer=setTimeout(()=>{if(panel&&!panel.hidden)panel.querySelector('.activity-message').textContent=message+' This is taking longer than usual. Please wait.';},8000);}else if(panel&&!panel.hidden)paint();
-    let done=false;return ()=>{if(done)return;done=true;tasks.delete(id);if(tasks.size){if(panel&&!panel.hidden)paint();return;}clearTimeout(showTimer);clearTimeout(slowTimer);if(panel)panel.hidden=true;if(progress)progress.hidden=true;};
+    if(tasks.size===1){showTimer=setTimeout(paint,160);slowTimer=setTimeout(()=>{if(panel&&!panel.hidden){panel.querySelector('.activity-message').textContent=message+' This is taking longer than usual. Please wait.';panel.classList.add('is-slow');}},8000);}else if(panel&&!panel.hidden)paint();
+    let done=false;return ()=>{if(done)return;done=true;tasks.delete(id);if(tasks.size){if(panel&&!panel.hidden)paint();return;}clearTimeout(showTimer);clearTimeout(slowTimer);if(panel){panel.hidden=true;panel.classList.remove('is-slow');}if(progress)progress.hidden=true;};
   }
   function end(){if(legacyDone){legacyDone();legacyDone=null;}}
   window.SISActivity={start,begin(message){end();legacyDone=start(message);},end,get writing(){return writes>0;}};

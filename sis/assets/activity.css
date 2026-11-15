@@ -11,3 +11,6 @@
 .activity-status{padding:0;min-width:0;background:transparent;border:0;box-shadow:none}
 .activity-status .activity-message{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
 .activity-ring{width:52px;height:52px;filter:drop-shadow(0 2px 6px #12305a33)}
+/* v64.6: after 8 seconds the words come back under the circle, so nobody clicks Save twice on a slow connection */
+.activity-status.is-slow{padding:1rem 1.25rem;background:var(--bs-body-bg,#fff);border:1px solid #DCE3EC;box-shadow:0 12px 36px #12305a2e;max-width:min(18rem,calc(100vw - 3rem))}
+.activity-status.is-slow .activity-message{position:static;width:auto;height:auto;overflow:visible;clip:auto;white-space:normal;font-size:.9rem}
