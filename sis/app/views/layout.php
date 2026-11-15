@@ -150,6 +150,7 @@ function app_title(): string
  * [route, label, icon, hint, permissions]
  */
 const SETTINGS_HUB = [
+    ['syscheck', 'System Check', 'clipboard2-pulse', 'Is the server ready and safe?', ['settings.manage']],
     ['school', 'School Profile', 'building', 'Name, logo, contacts, sign-in picture', ['settings.manage']],
     ['gradingoptions', 'Grading Options', 'sliders', 'Grading scale, final grade, deadlines', ['settings.manage']],
     ['settings', 'Printing', 'printer', 'Assessment and receipt printouts', ['settings.manage']],
@@ -170,7 +171,7 @@ function settings_hub_pages(): array
     $out = [];
     foreach (SETTINGS_HUB as $p) {
         if (!Auth::can(...$p[4])) continue;
-        if ($p[0] === 'backup' && !Backup::allowed()) continue; // power.admin only
+        if (($p[0] === 'backup' || $p[0] === 'syscheck') && !Backup::allowed()) continue; // power.admin only
         if ($p[0] === 'importall' && !ImportAll::can()) continue; // needs Curriculum and Assessment editing
         $out[] = $p;
     }

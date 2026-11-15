@@ -74,7 +74,7 @@ final class AccountEmail
     }
 }
 
-/** Email through the school's EmailJS account (Grading System → School settings → Email sending), sent by the server. */
+/** Email through the school's EmailJS account (Settings → System Settings → Email sending), sent by the server. */
 final class Mailer
 {
     private const ENDPOINT = 'https://api.emailjs.com/api/v1.0/email/send';
@@ -124,8 +124,8 @@ final class Mailer
     public static function missing(): array
     {
         $k = self::keys(); $m = [];
-        if ($k['publicKey'] === '' || $k['serviceId'] === '' || $k['templateId'] === '') $m[] = 'EmailJS keys in the Grading System (School settings → Email sending)';
-        if (!self::hasPrivateKey()) $m[] = 'EmailJS Private Key (SIS → Email sending)';
+        if ($k['publicKey'] === '' || $k['serviceId'] === '' || $k['templateId'] === '') $m[] = 'EmailJS keys (Settings → System Settings → Email sending)';
+        if (!self::hasPrivateKey()) $m[] = 'EmailJS Private Key (Settings → Email Sending)';
         return $m;
     }
 

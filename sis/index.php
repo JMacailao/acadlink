@@ -69,6 +69,7 @@ const ROUTES = [
     'backup'       => ['backup', ['users.manage']], // v63: Backup & Restore (power.admin only, checked inside)
     'emailsetup'   => ['emailsetup', ['settings.manage']],
     'settings'     => ['settings', ['settings.manage']],
+    'syscheck'     => ['syscheck', ['settings.manage']], // v63.16: System Check (power.admin, checked inside)
     'school'       => ['school', ['settings.manage']], // v63.8: School Profile (the Grading System's School settings)
     'gradingoptions' => ['gsframe', ['settings.manage']], // v63.9: the Grading System's Setup and options
     'systemsettings' => ['gsframe', ['settings.manage']], // v63.9: sign-in security, teacher downtime, database, email keys, Google Sheets

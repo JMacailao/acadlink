@@ -3,7 +3,7 @@ declare(strict_types=1);
 /** @var bool $isPost Set by index.php: true when a form was submitted (POST). */
 /**
  * Email sending (v51): the server sends password emails with the school's EmailJS account.
- * The Public Key, Service ID and Template ID are the Grading System's (School settings → Email sending);
+ * The Public Key, Service ID and Template ID are the Grading System's (Settings → System Settings → Email sending);
  * only the Private Key is kept here, encrypted and never shown again.
  */
 $me = (int) Auth::centralId();
@@ -40,7 +40,7 @@ page_title('Email sending', '', 'Forgot password sends a temporary password by e
         <dt class="col-5">Template ID</dt><dd class="col-7"><?= $show($k['templateId']) ?></dd>
         <dt class="col-5">Private Key</dt><dd class="col-7"><?= Mailer::hasPrivateKey() ? '<span class="text-success">Saved ••••</span>' : '<span class="text-danger">not set</span>' ?></dd>
       </dl>
-      <p class="small text-muted mt-2 mb-0">The first three are set in the Grading System: <a href="../pages/settings.html" target="_top">School settings → Email sending</a>. The same template is used (to_email, to_name, from_name, subject, message_html).</p>
+      <p class="small text-muted mt-2 mb-0">The first three are set in <a href="<?= h(url('systemsettings')) ?>">Settings → System Settings → Email sending</a>. The same template is used (to_email, to_name, from_name, subject, message_html).</p>
     </section>
     <form method="post" class="form-section"><?= csrf_field() ?><input type="hidden" name="action" value="test">
       <h2 class="h6">Send a test email</h2>
