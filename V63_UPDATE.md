@@ -570,3 +570,18 @@ Files: `sis/app/lib/core.php`, `sis/app/bootstrap.php`, `api/lib.php`, `sis/app/
 The filter panel is now one plain row, as in the design: a tick box with a bold label above each filter, the control below it, and unticked filters shown grey. The date range is two boxes, **From | date** and **To | date** (it takes two columns). Dropdowns show a ▾ arrow; Cashier's dropdown says "All cashiers". On phones each filter takes the full width. The Today / Last 7 days / This month shortcuts and the panel's own Apply/Clear buttons are hidden; the toolbar's Filters and Apply still work, and unticking a filter and pressing Apply removes it.
 
 Files: `sis/app/pages/{cashier,admission,registration}.php`, `sis/app/views/layout.php` (`date_range_controls`, version tags), `sis/assets/blue-theme.css`; test in `sis/tests/v63-fixes.php`.
+
+## v65.2 — New Add / Edit curriculum page (SIS → Curriculum)
+
+**Add curriculum** and **Edit** now open their own page, as in the designs (no more pop-up form):
+- **Back to curricula**, then a **Curriculum details** card: Curriculum name (new, optional, e.g. "BSBA First Year"; shown in the list), Program, Year level and Term.
+- **Subjects** tab: *Selected subjects* with "3 subjects • 9 total units", **Add subjects**, and a bin to remove a subject.
+- **Select subjects** window: *Available subjects* with search and **Add** / **Added**; *Selected subjects* with "2 subjects • 6 units" and **Remove**; **Cancel** leaves everything as it was, **Confirm selection** applies it.
+- **Teachers** tab: *Assign teachers* with search, "3 unassigned", **Choose teacher** / **Change**, 10 subjects per page. Tabs show counts: Subjects (8), Teachers (5 assigned).
+- **Select teacher** window: subject, "BSBA • 1st Year • 1st Semester", search by name or ID, initials, Teacher ID, **Select teacher**. (Teacher records have no department, so that column is not shown.)
+- A bar at the bottom: **Unsaved changes**, **Cancel**, **Save changes**; leaving the page with unsaved changes asks first.
+- Phones: one field per line, the windows fit the screen, the bar sits above the bottom menu.
+
+Unchanged: what saving does (classes are created for matching sections; teacher changes reach active classes without submitted grades). The teacher list is written once in the page, so large schools stay fast.
+
+Files: `sis/app/pages/curriculum.php`, `sis/assets/curriculum-picker.js`, `sis/assets/blue-theme.css`, `sis/app/lib/grading.php` (`saveCurriculum` takes an optional name), version tags in `sis/app/views/layout.php`; tests in `sis/tests/v63-fixes.php`.

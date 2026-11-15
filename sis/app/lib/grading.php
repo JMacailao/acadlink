@@ -627,7 +627,7 @@ final class GS
         return self::get('curriculum', self::curriculumId($program, $yearLevel, $term));
     }
 
-    public static function saveCurriculum(string $program, string $yearLevel, string $term, array $subjectIds, ?array $subjectTeachers=null): string
+    public static function saveCurriculum(string $program, string $yearLevel, string $term, array $subjectIds, ?array $subjectTeachers=null, ?string $name=null): string
     {
         Auth::require('curriculum.edit');
         $program = strtoupper(trim($program));
@@ -635,11 +635,13 @@ final class GS
         if (!in_array($yearLevel, YEAR_LEVELS, true)) throw new AppError('Choose a year level.');
         if ($term !== '' && !in_array($term, TERMS, true)) throw new AppError('Choose a term.');
         if ($term === '' && !self::get('curriculum', self::curriculumId($program, $yearLevel, ''))) throw new AppError('Choose the semester: 1st Semester, 2nd Semester, 3rd Semester or Summer.');
-        return CurriculumAssignments::locked(Db::pdo(),function()use($program,$yearLevel,$term,$subjectIds,$subjectTeachers){
-            return Db::tx(function()use($program,$yearLevel,$term,$subjectIds,$subjectTeachers){
+        if ($name !== null) { $name = trim(preg_replace('/\s+/u', ' ', $name)); if (mb_strlen($name) > 80) throw new AppError('Keep the curriculum name to 80 characters.'); }
+        return CurriculumAssignments::locked(Db::pdo(),function()use($program,$yearLevel,$term,$subjectIds,$subjectTeachers,$name){
+            return Db::tx(function()use($program,$yearLevel,$term,$subjectIds,$subjectTeachers,$name){
                 $id=self::curriculumId($program,$yearLevel,$term);$before=self::get('curriculum',$id);
                 $data=array_merge($before??['createdAt'=>self::ts()],['program'=>$program,'yearLevel'=>$yearLevel,'term'=>$term,'subjectIds'=>$subjectIds,'updatedAt'=>self::ts()]);
                 if ($subjectTeachers!==null) $data['subjectTeachers']=$subjectTeachers;
+                if ($name!==null) $data['name']=$name; // v65.2: optional "BSBA First Year"
                 $service=new CurriculumAssignments(Db::pdo());
                 try {$data=$service->normalize($data,$before);}catch(RuntimeException $e){throw new AppError($e->getMessage());}
                 self::put('curriculum',$id,$data);
