@@ -585,3 +585,19 @@ Files: `sis/app/pages/{cashier,admission,registration}.php`, `sis/app/views/layo
 Unchanged: what saving does (classes are created for matching sections; teacher changes reach active classes without submitted grades). The teacher list is written once in the page, so large schools stay fast.
 
 Files: `sis/app/pages/curriculum.php`, `sis/assets/curriculum-picker.js`, `sis/assets/blue-theme.css`, `sis/app/lib/grading.php` (`saveCurriculum` takes an optional name), version tags in `sis/app/views/layout.php`; tests in `sis/tests/v63-fixes.php`.
+
+## v65.4 — Subject pricing page (Assessment → Subject Fees)
+
+**Set a subject price** and **Edit** on Assessment → Subject Fees now open the **Subject pricing** page, as in the design:
+- **Select subjects**: choose the **Fee** and the **Price per unit** (with **Set as default** to make that fee the first choice next time), search subjects and press **Add** (added ones show ✓ Added).
+- **Charge in fee templates**: the chosen templates as chips (× to remove) and **Choose templates**; only these templates charge the prices.
+- A summary: **Selected subjects**, **Total units**, **Price per unit**, **Total amount**.
+- **Selected subjects**: code, name, units, fee, an editable **Price / unit** per subject, amount and a bin; **Total**.
+- **Unsaved changes**, **Cancel**, **Save prices**. All subjects are saved together: if one is refused, none is saved and the page comes back with what was entered.
+- Edit opens the page with that subject, its fee, price and templates; more subjects can be added. Changing the price on top changes every selected subject's price.
+- With lecture/laboratory units on, **Charged per** (all, lecture or laboratory units) is next to the fee.
+- Phones: each selected subject is a two-line card.
+
+The list of subject prices is unchanged; the old form and the separate "Default fee" box below it were replaced by this page.
+
+Files: `sis/app/pages/subjectfees.php`, `sis/app/views/subject-pricing.php` (new), `sis/assets/subject-pricing.js` (new), `sis/assets/blue-theme.css`, version tag in `sis/app/views/layout.php`; test in `sis/tests/v63-fixes.php`.
