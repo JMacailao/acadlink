@@ -543,7 +543,10 @@ final class Registration
             $l = Assessment::line($c, $c['unit_amount'] !== null ? Money::cents($c['unit_amount']) : Money::cents($c['default_amount']), $units, count($subs));
             if ($l) $lines[] = $l;
         }
-        $lines = array_merge($lines, SubjectFees::lines($subs, $r['assessment_name_id'] ? (int) $r['assessment_name_id'] : null)); // fees of particular subjects, × their units
+        $subjectLines = SubjectFees::lines($subs, $r['assessment_name_id'] ? (int) $r['assessment_name_id'] : null); // fees of particular subjects, × their units
+        $skip = self::subjectSkips($id); // v65.11: a subject's fee taken off this student's assessment
+        if ($skip) $subjectLines = array_values(array_filter($subjectLines, fn($l) => !isset($skip[$l['subject_doc_id'] . '|' . $l['fee_label_id']])));
+        $lines = array_merge($lines, $subjectLines);
         usort($lines, fn($a, $b) => $a['sort_order'] <=> $b['sort_order'] ?: strcmp($a['label_name'], $b['label_name']));
         $fees = array_sum(array_column($lines, 'amount_cents'));
         $adjust = Money::cents((string) Db::val("SELECT COALESCE(SUM(amount), 0) FROM sis_registration_items WHERE registration_id = ? AND charge_type = 'ADJUSTMENT'", [$id]));
@@ -741,6 +744,32 @@ final class Registration
             }
             self::recompute($id);
             Audit::log('registration_label_removed', 'registration', $id, ['label_id' => $labelId]);
+        });
+    }
+
+    /** v65.11: subject fees not charged to this registration: ['subject|label' => true]. */
+    public static function subjectSkips(int $id): array
+    {
+        static $ready = null;
+        $ready ??= Db::tableExists('sis_registration_subject_skips');
+        if (!$ready) return [];
+        $out = [];
+        foreach (Db::all('SELECT subject_doc_id, label_id FROM sis_registration_subject_skips WHERE registration_id = ?', [$id]) as $k) $out[$k['subject_doc_id'] . '|' . (int) $k['label_id']] = true;
+        return $out;
+    }
+
+    /** v65.11: take one subject's fee (e.g. Tuition Fee · IT101) off this student's assessment, or charge it again. */
+    public static function skipSubjectFee(int $id, string $subjectDocId, int $labelId, bool $skip = true): void
+    {
+        Auth::require('registration');
+        Db::tx(function () use ($id, $subjectDocId, $labelId, $skip) {
+            self::lockOpen($id);
+            if (!Db::val('SELECT 1 FROM sis_registration_subjects WHERE registration_id = ? AND subject_doc_id = ?', [$id, $subjectDocId])) throw new AppError('That subject is not in this registration.');
+            if (!Db::val('SELECT 1 FROM sis_fee_labels WHERE id = ?', [$labelId])) throw new AppError('That fee no longer exists.');
+            if ($skip) Db::q('INSERT IGNORE INTO sis_registration_subject_skips (registration_id, subject_doc_id, label_id, created_by) VALUES (?, ?, ?, ?)', [$id, $subjectDocId, $labelId, Auth::id()]);
+            else Db::q('DELETE FROM sis_registration_subject_skips WHERE registration_id = ? AND subject_doc_id = ? AND label_id = ?', [$id, $subjectDocId, $labelId]);
+            self::recompute($id);
+            Audit::log($skip ? 'registration_subject_fee_removed' : 'registration_subject_fee_charged', 'registration', $id, ['subject' => $subjectDocId, 'label_id' => $labelId]);
         });
     }
 

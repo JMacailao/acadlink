@@ -26,6 +26,13 @@ $printedAt = date('F j, Y');
 // v56: "Prepared by" is the staff member signed in now (printing the statement), never typed by hand.
 $preparedBy = SoaPreparer::name();
 $columnCount = $showBreakdown ? 6 : 4;
+// v65.11: "Tuition Fee · IT101" → [subject doc id, fee label id] when it is a subject's fee of this registration
+$subjectCodeToDoc = []; foreach ($subs as $sx) $subjectCodeToDoc[(string) ($sx['subject_code'] ?? '')] = (string) $sx['subject_doc_id'];
+$subjectFeeOf = function (string $name) use ($subjectCodeToDoc, &$labelIdByName): ?array {
+    $at = strrpos($name, ' · '); if ($at === false || !isset($labelIdByName)) return null;
+    $label = substr($name, 0, $at); $code = substr($name, $at + strlen(' · '));
+    return isset($subjectCodeToDoc[$code], $labelIdByName[$label]) ? [$subjectCodeToDoc[$code], (int) $labelIdByName[$label]] : null;
+};
 ?>
 <style>@media print { @page { size: <?= Settings::pageSize(Settings::get('asm_paper')) ?>; margin: 10mm; } }</style>
 <div class="doc-sheet soa-sheet paper-<?= h(strtolower(Settings::get('asm_paper'))) ?>">
@@ -97,6 +104,8 @@ $columnCount = $showBreakdown ? 6 : 4;
         ?>
         <tr class="soa-fee-line">
           <td><?= h($line['label_name']) ?><?php if ($editable && $line['charge_type'] === 'ADJUSTMENT'): ?> <span class="d-print-none"><?= post_button('registration', ['id' => $id], ['action' => 'remove_adj', 'item_id' => $line['id']], '<i class="bi bi-x-lg"></i>', 'btn-sm btn-link text-danger p-0', 'Remove this adjustment?') ?></span>
+            <?php elseif ($editable && ($sk = $subjectFeeOf($line['label_name']))): /* v65.11: a subject's fee (Tuition Fee · IT101) */ ?>
+              <span class="d-print-none"><?= post_button('registration', ['id' => $id], ['action' => 'skip_subject_fee', 'subject_doc_id' => $sk[0], 'label_id' => $sk[1]], '<i class="bi bi-x-lg"></i>', 'btn-sm btn-link text-danger p-0', 'Take ' . $line['label_name'] . ' off this student\'s assessment?') ?></span>
             <?php elseif ($editable && isset($labelIdByName[$line['label_name']])): $labelId = (int) $labelIdByName[$line['label_name']]; ?>
               <?php if (isset($feeChoices[$labelId])): ?><span class="badge text-bg-info me-1 d-print-none">for this student</span><?php endif; ?>
               <span class="d-print-none"><?= post_button('registration', ['id' => $id], ['action' => 'remove_label', 'label_id' => $labelId], '<i class="bi bi-x-lg"></i>', 'btn-sm btn-link text-danger p-0', 'Take ' . $line['label_name'] . ' off this student\'s assessment?') ?></span>
@@ -115,6 +124,12 @@ $columnCount = $showBreakdown ? 6 : 4;
           <td class="soa-num"><?= $amountText($groupCharges) ?></td><td class="soa-num"><?= $groupDiscounts ? '₱' . Money::fmt($groupDiscounts) : '—' ?></td><td class="soa-num"><?= $amountText($groupNet) ?></td>
         </tr>
       <?php endforeach; ?>
+      <?php if ($editable && ($skips = Registration::subjectSkips((int) $id))): $labelNameById = isset($labelIdByName) ? array_flip($labelIdByName) : []; $docToCode = array_flip($subjectCodeToDoc); ?>
+      <tr class="soa-category d-print-none"><th colspan="<?= $columnCount ?>">Not charged to this student</th></tr>
+      <?php foreach (array_keys($skips) as $key): [$sd, $lid] = explode('|', $key); ?>
+      <tr class="soa-fee-line d-print-none soa-skipped" data-keep-controls><td colspan="<?= $columnCount ?>"><?= h(($labelNameById[(int) $lid] ?? 'Fee') . ' · ' . ($docToCode[$sd] ?? '')) ?>
+        <span class="ms-2"><?= post_button('registration', ['id' => $id], ['action' => 'charge_subject_fee', 'subject_doc_id' => $sd, 'label_id' => (int) $lid], '<i class="bi bi-arrow-counterclockwise me-1"></i>Charge again', 'btn-sm btn-link p-0') ?></span></td></tr>
+      <?php endforeach; endif; ?>
       <tr class="soa-grand-total">
         <th colspan="<?= $showBreakdown ? 3 : 1 ?>">TOTAL ASSESSMENT</th>
         <th class="soa-num"><?= $amountText(array_sum(array_map(fn($line) => max(0, Money::cents($line['amount'])), $items))) ?></th>

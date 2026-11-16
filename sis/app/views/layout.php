@@ -423,7 +423,7 @@ function layout_end(bool $bare = false): void
 <script src="<?= sis_web() ?>assets/accounting-ui.js?v=31" defer></script>
 <script src="<?= sis_web() ?>assets/app.js?v=65.1"></script>
 <script src="<?= sis_web() ?>assets/friendly-ui.js?v=48"></script>
-<script src="<?= sis_web() ?>assets/sis-actions.js?v=65.8"></script>
+<script src="<?= sis_web() ?>assets/sis-actions.js?v=65.11"></script>
 <script src="<?= sis_web() ?>assets/theme.js?v=65.10"></script>
 <script src="../js/standard-toolbar-core.js?v=65"></script>
 <script src="<?= sis_web() ?>assets/standard-toolbar.js?v=69"></script>
