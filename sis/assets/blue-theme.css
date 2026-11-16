@@ -689,3 +689,12 @@ html body .sp-selected .is-invalid { border-color: #B42318 !important; box-shado
 }
 /* v65.5: Class Schedules — the schedule's teacher differs from the class's teacher in Grading assignments */
 .sched-teacher-diff { display: inline-flex; align-items: center; gap: 4px; margin-left: 6px; padding: 1px 8px; border-radius: 999px; background: #FDF1E4; border: 1px solid #F0C9A0; color: #93400A; font-size: 12px; font-weight: 600; white-space: nowrap; }
+/* v65.8: a registration's Tools stay beside the statement (not only in More Actions) */
+html[data-system="sis"] body.sis-easy aside[data-keep-side] .registration-tool-list { list-style: none; margin: 0; padding: 6px 0; }
+html[data-system="sis"] body.sis-easy aside[data-keep-side] .registration-tool-button { display: flex; align-items: center; gap: 10px; width: 100%; padding: 9px 16px; border: 0; background: transparent; color: #1F2D40; font-size: 14px; text-align: left; border-radius: 0; }
+html[data-system="sis"] body.sis-easy aside[data-keep-side] .registration-tool-button strong { font-weight: 500; }
+html[data-system="sis"] body.sis-easy aside[data-keep-side] .registration-tool-button > .bi { flex: 0 0 auto; width: 18px; color: #1D5BE0; font-size: 16px; }
+html[data-system="sis"] body.sis-easy aside[data-keep-side] .registration-tool-button:hover { background: #EEF4FF; color: #123D70; }
+html[data-system="sis"] body.sis-easy aside[data-keep-side] .registration-tool-button:focus-visible { outline: 3px solid rgba(35, 95, 214, .35); outline-offset: -3px; }
+html[data-system="sis"] body.sis-easy aside[data-keep-side] .registration-tool-button.is-payment-plan { color: #93400A; }
+html[data-system="sis"] body.sis-easy aside[data-keep-side] .registration-tool-button.is-payment-plan > .bi { color: #B85309; }

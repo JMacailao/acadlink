@@ -253,6 +253,13 @@ test('v65.5: a class schedule follows the teacher of its class (clashes are left
     ok(ScheduleTeacherSync::classTeachers($pdo, 'st_secA', $sy, $term)['st_sub2']['id'] === 'st_t3', 'class teacher lookup');
 });
 
+test('v65.8: a registration shows its Tools beside the statement, and Class schedule opens', function () {
+    $pg = (string) file_get_contents(SIS_ROOT . '/app/pages/registration.php');
+    ok(str_contains($pg, '<aside class="or-side tools-first d-print-none" data-keep-side'), 'the Tools panel is not kept on the page');
+    ok(str_contains((string) file_get_contents(SIS_ROOT . '/assets/sis-actions.js'), ".or-side:not([data-keep-side])"), 'the Tools panel is moved into the hidden Actions panel again');
+    ok(str_contains($pg, '$schedReg = Schedules::forRegistration($r') && !str_contains($pg, 'isset($schedReg)'), 'Class schedule has no window to open (schedReg never set)');
+});
+
 $server->exec("DROP DATABASE IF EXISTS `$name`");
 echo "$pass passed, $fail failed\n";
 exit($fail ? 1 : 0);

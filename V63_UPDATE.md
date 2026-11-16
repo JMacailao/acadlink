@@ -620,3 +620,10 @@ A class (one subject of one section in one term) has its teacher in **Grading as
 Tested: changing a class's teacher in the Grading System moved its schedule; a clashing entry stayed; only entries with the previous teacher move; a new class fills only empty entries.
 
 Files: `shared/schedule-teacher-sync.php` (new), `shared/curriculum-assignments.php`, `sis/app/lib/grading.php`, `sis/app/lib/schedules.php` (the unused `assignedTeacher` helper removed), `sis/app/pages/schedules.php`, `sis/assets/schedule-teacher.js` (new), `sis/assets/blue-theme.css`, version tag in `sis/app/views/layout.php`; tests in `sis/tests/v63-fixes.php`.
+
+## v65.8 — A registration's Tools beside the statement; Class schedule opens again
+
+- On a registration, the **Tools** (Class schedule, Subjects, Assessment name, Scholarship / discount, Add a fee, Charge or less, Teachers, Payment plan — or Class schedule, Add / drop subjects and Payment plan once confirmed) and the **Summaries** are shown on the right of the statement again, as a list with icons. Since v64.8 they were only in **More Actions** (still there too). On phones they are above the statement.
+- **Bug fixed:** **Class schedule** opened nothing (a script error in the browser): the line that loads the registration's schedule was removed together with the tool descriptions. All tools were checked to open, for an open and for a confirmed registration.
+
+Files: `sis/app/pages/registration.php`, `sis/assets/sis-actions.js`, `sis/assets/blue-theme.css`, version tags in `sis/app/views/layout.php`; test in `sis/tests/v63-fixes.php`.
