@@ -10,6 +10,8 @@
  document.querySelectorAll('#sidebar .nav-group').forEach(group=>{
    const button=group.querySelector('.nav-group-toggle'),items=group.querySelector('.nav-group-items'),key='sis.nav.'+group.dataset.navGroup;
    const set=open=>{button.setAttribute('aria-expanded',String(open));items.hidden=!open;group.classList.toggle('is-collapsed',!open);};
+   // v65.9: in the SIS every group is always open under its heading band (no collapsing)
+   if(document.documentElement.dataset.app==='sis'&&document.body.classList.contains('sis-easy')){set(true);group.classList.add('is-flat');button.tabIndex=-1;button.setAttribute('aria-disabled','true');return;}
    set(group.querySelector('.side-link.active')?true:(store.get(key)||(['Assessment','Accounting'].includes(group.dataset.navGroup)?'closed':'open'))!=='closed');
    if(!button.dataset.bound){button.dataset.bound='1';button.addEventListener('click',()=>{const open=button.getAttribute('aria-expanded')!=='true';set(open);store.set(key,open?'open':'closed');});}
  });

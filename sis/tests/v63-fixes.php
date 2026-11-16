@@ -293,6 +293,21 @@ test('v65.8: a registration shows its Tools beside the statement, and Class sche
     ok(str_contains($pg, '$schedReg = Schedules::forRegistration($r') && !str_contains($pg, 'isset($schedReg)'), 'Class schedule has no window to open (schedReg never set)');
 });
 
+test('v65.9: SIS menu order and groups', function () {
+    $src = (string) file_get_contents(SIS_ROOT . '/app/views/layout.php');
+    preg_match('/const NAV = \[(.*?)\n\];/s', $src, $m);
+    preg_match_all("/^\\s*\\['([^']*)', '[^']*', '[^']*', \\[[^\\]]*\\], '([^']*)'/m", $m[1] ?? '', $rows, PREG_SET_ORDER);
+    $nav = array_map(fn($r) => [$r[1], '', '', [], $r[2]], $rows);
+    ok(count($nav) > 20, 'menu not read');
+    $groups = []; $routes = [];
+    foreach ($nav as $n) { if ($n[4] !== '' && !in_array($n[4], $groups, true)) $groups[] = $n[4]; $routes[$n[0]] = $n[4]; }
+    ok($groups === ['Assessment', 'Academics', 'Operations', 'Student Services', 'Administration'], 'group order: ' . implode(', ', $groups));
+    ok($nav[0][0] === 'notifications' && array_search('dashboard', array_column($nav, 0)) < 3, 'Notifications first, then Dashboard');
+    foreach (['enrollment', 'admission', 'registration', 'cashier'] as $r) ok($routes[$r] === 'Operations', "$r is not in Operations");
+    foreach (['students', 'photos', 'privacy', 'documents'] as $r) ok($routes[$r] === 'Student Services', "$r is not in Student Services");
+    foreach (['history&tab=grades', 'history&tab=assessments', '@GRADING', '@LMS'] as $r) ok(!isset($routes[$r]), "$r is still in the menu");
+});
+
 $server->exec("DROP DATABASE IF EXISTS `$name`");
 echo "$pass passed, $fail failed\n";
 exit($fail ? 1 : 0);
