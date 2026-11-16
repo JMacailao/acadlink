@@ -1,4 +1,4 @@
-**Updating to v66.2?** Hostinger deploys from GitHub; press Ctrl+F5 once. Approvals are now the school's choice: one switch in Settings, off by default; no database step.
+**Updating to v66.3?** Hostinger deploys from GitHub; press Ctrl+F5 once. The Grading System menu no longer has Academic setup (managed in the SIS); no database step.
 
 **Updating to v63.24?** Deploy or upload the changed files (see V63_UPDATE.md) and press Ctrl+F5 once. No database change.
 

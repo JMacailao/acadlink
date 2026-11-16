@@ -733,3 +733,9 @@ Settings → Fee reductions and reopening now has one switch for approvals: **Us
 The two earlier approval switches are replaced by this one; "Ask for a reason when what a student pays is lowered" stays.
 
 Files: `sis/app/lib/core.php` (setting `approval_on_reopen`, `Settings::reload`), `sis/app/lib/reductions.php`, `sis/app/pages/settings.php`; test in `sis/tests/v63-fixes.php`.
+
+## v66.3 — Grading System menu without Academic setup
+
+The Grading System menu no longer has the **Academic setup** group (Subjects, Curriculum, Teachers, Sections, Students): these are managed in the SIS (Academics → Curriculum with its Subjects tab, Sections, Teachers; Student Services → Students). The menu is now Notifications, Overview (Dashboard), Grading (Grading assignments, Enter grades, Final grades, …) and School Information System.
+
+Files: `js/grading-menu.js`, version tag in `pages/*.html`; test in `sis/tests/v63-fixes.php`.
