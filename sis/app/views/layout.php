@@ -12,12 +12,12 @@ const NAV = [
     ['notifications', 'Notifications', 'bell', ['admission', 'registration', 'payments.view', 'accounting'], '', 'Special-request approvals'],
     ['my', 'My Account', 'person-badge', ['self'], '', 'Grades, fees, receipts'],
     ['dashboard', 'Dashboard', 'house-door', [], '', ''],
-    ['assessment&tab=categories', 'Fee categories', 'tags', ['assessment'], 'Assessment', 'Fee groups'],
+    ['assessment&tab=categories', 'Fee categories', 'database', ['assessment'], 'Assessment', 'Fee groups'],
     ['assessment&tab=labels', 'Fee labels', 'tag', ['assessment'], 'Assessment', 'Fee lines'],
-    ['assessment&tab=names', 'Fee Templates', 'card-list', ['assessment'], 'Assessment', 'Fee templates'],
-    ['subjectfees', 'Subject Fees', 'journal-plus', ['assessment'], 'Assessment', 'Fees of particular subjects, per unit'],
-    ['discounts', 'Scholarships & Discounts', 'award', ['assessment', 'discounts.manage'], 'Assessment', 'Less on the fees'],
-    ['assessment&tab=labels&plan=list', 'Payment Setup', 'calendar3', ['assessment'], 'Assessment', 'Installments, due dates and full-payment discount'],
+    ['assessment&tab=names', 'Fee templates', 'file-earmark-text', ['assessment'], 'Assessment', 'Fee templates'],
+    ['subjectfees', 'Subject fees', 'mortarboard', ['assessment'], 'Assessment', 'Fees of particular subjects, per unit'],
+    ['discounts', 'Scholarships & discounts', 'percent', ['assessment', 'discounts.manage'], 'Assessment', 'Less on the fees'],
+    ['assessment&tab=labels&plan=list', 'Payment setup', 'credit-card', ['assessment'], 'Assessment', 'Installments, due dates and full-payment discount'],
     ['curriculum', 'Curriculum', 'list-check', ['curriculum'], 'Academics', 'Subjects per term'],
     ['schedules', 'Class Schedules', 'calendar-week', ['schedules'], 'Academics', 'Days, times, rooms and teachers'],
     ['sections', 'Sections', 'collection', ['sections'], 'Academics', ''],
@@ -301,7 +301,7 @@ function layout_start(string $title, bool $bare = false): void
 <?php if ($route === 'assessment' && ($_GET['tab'] ?? '') === 'names'): ?><script src="<?= sis_web() ?>assets/fee-templates.js?v=1" defer></script><?php endif; ?>
 <?php if ($route === 'documents' && ($_GET['tab'] ?? '') === 'settings'): ?><script src="<?= sis_web() ?>assets/documents-template-preview.js?v=1" defer></script><?php endif; ?>
 <?php if ($route === 'admission'): ?><link rel="stylesheet" href="<?= sis_web() ?>assets/admission-form.css?v=1"><?php endif; ?>
-<?php if ($system === 'sis' && !$bare && $u): ?><link rel="stylesheet" href="<?= sis_web() ?>assets/easy-navigation.css?v=65.7"><link rel="stylesheet" href="<?= sis_web() ?>assets/dashboard.css?v=2"><link rel="stylesheet" href="<?= sis_web() ?>assets/blue-theme.css?v=65.8"><?php endif; // v64: the blue and orange design, loaded last ?>
+<?php if ($system === 'sis' && !$bare && $u): ?><link rel="stylesheet" href="<?= sis_web() ?>assets/easy-navigation.css?v=65.7"><link rel="stylesheet" href="<?= sis_web() ?>assets/dashboard.css?v=2"><link rel="stylesheet" href="<?= sis_web() ?>assets/blue-theme.css?v=65.9b"><?php endif; // v64: the blue and orange design, loaded last ?>
 </head>
 <?php $embedFlashes = $bare && isset($_GET['embed']) ? take_flashes() : []; // pop-up pages show their own messages ?>
 <body data-client-scope="<?= h($u ? acadlink_client_scope(Auth::central()) : '') ?>" class="<?= $bare ? 'bare' : ('sis-theme' . ($system === 'sis' && $u ? ' sis-easy' : '')) ?>" data-user-id="<?= h((string) ($u['id'] ?? 'guest')) ?>" data-route="<?= h((string) $route) ?>"<?= array_filter($embedFlashes, fn($f) => $f[0] === 'success') ? ' data-changed="1"' : '' ?>>
@@ -377,7 +377,7 @@ function layout_start(string $title, bool $bare = false): void
         <a class="side-link<?= $active ? ' active' : '' ?>" href="<?= $extern !== '' ? h(SYSTEM_LINKS[$extern]) : url($rr, $params) ?>"<?= $active ? ' aria-current="page"' : '' ?><?= $hint !== '' ? ' title="' . h($hint) . '"' : '' ?>><i class="bi bi-<?= $icon ?>" aria-hidden="true"></i><span><?= h($label) ?></span><?php if (app_system() === 'LMS' && $rr === 'messages' && function_exists('lms_unread') && ($lu = lms_unread())): ?><span class="sis-nav-badge" aria-label="<?= $lu ?> unread"><?= $lu > 99 ? '99+' : $lu ?></span><?php endif; ?><?php if ($rr === 'notifications' && $unread): ?><span class="sis-nav-badge" aria-label="<?= $unread ?> unread"><?= $unread > 99 ? '99+' : $unread ?></span><?php endif; ?></a>
       <?php endforeach; if ($group !== '') echo '</div></div>'; ?>
       </nav>
-      <?php if ($system === 'sis'): ?><a class="sis-rail-profile" href="<?= url('profile') ?>"><span class="sis-user-avatar" aria-hidden="true"><?= h($initials) ?></span><span><strong><?= h($u['full_name']) ?></strong><small><?= h($u['role_name']) ?></small></span><i class="bi bi-chevron-right" aria-hidden="true"></i></a><?php endif; ?>
+      <?php if ($system === 'sis'): ?><a class="sis-rail-profile" href="<?= url('profile') ?>"><span class="sis-user-avatar" aria-hidden="true"><?= h($initials) ?></span><span><strong><?= h($u['full_name']) ?></strong><small><?= h($u['role_name']) ?></small></span><i class="bi bi-three-dots" aria-hidden="true"></i></a><?php endif; ?>
     </div>
   </aside>
   <div class="app-main">
@@ -424,7 +424,7 @@ function layout_end(bool $bare = false): void
 <script src="<?= sis_web() ?>assets/app.js?v=65.1"></script>
 <script src="<?= sis_web() ?>assets/friendly-ui.js?v=48"></script>
 <script src="<?= sis_web() ?>assets/sis-actions.js?v=65.8"></script>
-<script src="<?= sis_web() ?>assets/theme.js?v=65.3"></script>
+<script src="<?= sis_web() ?>assets/theme.js?v=65.9"></script>
 <script src="../js/standard-toolbar-core.js?v=65"></script>
 <script src="<?= sis_web() ?>assets/standard-toolbar.js?v=69"></script>
 <script src="<?= sis_web() ?>assets/card-labels.js?v=64.6"></script>

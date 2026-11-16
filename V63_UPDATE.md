@@ -657,6 +657,8 @@ The SIS menu is now, from the top:
 - **Student Services**: Students, Photo Approvals, Data Privacy, TOR & Certificates (and Online Clearance when it is on)
 - **Administration**: unchanged
 
+**Look (as in the design):** Notifications on top; each group (Overview, Assessment, Academics, Operations, Student Services, Administration) under a full-width light blue band with its name in capitals; groups are always open (no arrows); Assessment items read Fee templates, Subject fees, Scholarships & discounts, Payment setup with new icons; the account at the bottom shows ⋯.
+
 **History of Grades** and **History of Assessments** are no longer in the menu; they still open from the Students page and from a student's record (the menu then shows Students as the current page).
 
 Files: `sis/app/views/layout.php`; test in `sis/tests/v63-fixes.php`.
