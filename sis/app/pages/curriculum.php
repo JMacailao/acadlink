@@ -7,12 +7,12 @@ $tab = ($_GET['tab'] ?? '') === 'subjects' ? 'subjects' : 'curriculum';
 if ($isPost) {
     if (($_POST['action'] ?? '') === 'subject') {
         // v56.2: with lecture / laboratory units, Units = lecture + laboratory
-        $splitIn = LecLab::on() ? LecLab::parse((string) ($_POST['lecUnits'] ?? ''), (string) ($_POST['labUnits'] ?? '')) : null;
+        $splitIn = true ? LecLab::parse((string) ($_POST['lecUnits'] ?? ''), (string) ($_POST['labUnits'] ?? '')) : null;
         $unitsIn = $splitIn ? LecLab::text($splitIn[0] + $splitIn[1]) : (string) ($_POST['units'] ?? '');
         Db::tx(function () use (&$sid, $unitsIn, $splitIn) {
             $sid = GS::saveSubject(In::str($_POST, 'id', 191), (string) ($_POST['subjectCode'] ?? ''), (string) ($_POST['subjectName'] ?? ''), $unitsIn);
             GS::setSubjectType($sid, (string) ($_POST['subjectType'] ?? ''));
-            if (LecLab::on()) GS::setSubjectSplit($sid, $splitIn);
+            GS::setSubjectSplit($sid, $splitIn); // v65.6: always (the Settings switch now only affects fees)
         });
         flash('success', 'Subject saved. Its price per unit is set in Assessment → Subject Fees (₱0.00 until then).');
         redirect('curriculum', ['tab' => 'subjects']);
@@ -146,8 +146,8 @@ if (!$curEditing) page_title('Curriculum', $canEdit ? '<a class="btn btn-primary
 <div class="row g-3">
 <div class="<?= $canEdit ? 'col-xl-8' : 'col-12' ?>">
   <input class="form-control form-control-sm mb-2" data-filter="#subjects" placeholder="Search">
-  <div class="table-responsive bg-white border rounded"><table class="table table-sm mb-0" id="subjects"><thead class="table-light"><tr><th>Code</th><th>Subject</th><?php if (LecLab::on()): ?><th>Lec</th><th>Lab</th><?php endif; ?><th>Units</th><th>Type</th><th></th></tr></thead><tbody>
-  <?php foreach (RecordList::rows(fn()=>$subjects) as $s): ?><tr><td class="font-monospace"><?= h($s['subjectCode'] ?? '') ?></td><td><?= h($s['subjectName'] ?? '') ?></td><?php if (LecLab::on()): $sp = LecLab::ofSubject($s); ?><td><?= h(LecLab::text($sp[0])) ?></td><td><?= h(LecLab::text($sp[1])) ?></td><?php endif; ?><td><?= h($s['units'] ?? '') ?></td><td class="small"><?= h($s['subjectType'] ?? '') ?></td>
+  <div class="table-responsive bg-white border rounded"><table class="table table-sm mb-0" id="subjects"><thead class="table-light"><tr><th>Code</th><th>Subject</th><th>Lec units</th><th>Lab units</th><th>Total units</th><th>Type</th><th></th></tr></thead><tbody>
+  <?php foreach (RecordList::rows(fn()=>$subjects) as $s): ?><tr><td class="font-monospace"><?= h($s['subjectCode'] ?? '') ?></td><td><?= h($s['subjectName'] ?? '') ?></td><?php $sp = LecLab::ofSubject($s); ?><td><?= h(LecLab::text($sp[0])) ?></td><td><?= h(LecLab::text($sp[1])) ?></td><td><?= h($s['units'] ?? '') ?></td><td class="small"><?= h($s['subjectType'] ?? '') ?></td>
     <td class="text-end"><?php if ($canEdit): ?><a class="btn btn-sm btn-outline-secondary" href="<?= url('curriculum', ['tab' => 'subjects', 'edit' => $s['id']]) ?>"><i class="bi bi-pencil me-1"></i>Edit</a><?php endif; ?></td></tr><?php endforeach; ?>
   </tbody></table></div>
 </div>
@@ -156,13 +156,11 @@ if (!$curEditing) page_title('Curriculum', $canEdit ? '<a class="btn btn-primary
   <h2 class="h6"><?= $edit ? 'Edit ' . h($edit['subjectName']) : 'Add a subject' ?></h2>
   <label class="form-label small">Code</label><input class="form-control form-control-sm mb-2" name="subjectCode" maxlength="40" value="<?= h($edit['subjectCode'] ?? '') ?>">
   <label class="form-label small">Subject name</label><input class="form-control form-control-sm mb-2" name="subjectName" required maxlength="150" value="<?= h($edit['subjectName'] ?? '') ?>">
-  <?php if (LecLab::on()): $esp = $edit ? LecLab::ofSubject($edit) : [3, 0, 3]; ?>
-  <div class="row g-2 mb-2"><div class="col-6"><label class="form-label small" for="subLec">Lecture units</label><input class="form-control form-control-sm" id="subLec" name="lecUnits" inputmode="decimal" value="<?= h(LecLab::text($esp[0])) ?>"></div>
-    <div class="col-6"><label class="form-label small" for="subLab">Laboratory units</label><input class="form-control form-control-sm" id="subLab" name="labUnits" inputmode="decimal" value="<?= h(LecLab::text($esp[1])) ?>"></div></div>
-  <p class="form-text mt-0">Units = lecture + laboratory units.</p>
-  <?php else: ?>
-  <label class="form-label small">Units</label><input class="form-control form-control-sm mb-2" name="units" required value="<?= h($edit['units'] ?? '3') ?>">
-  <?php endif; ?>
+  <?php $esp = $edit ? LecLab::ofSubject($edit) : [3, 0, 3]; /* v65.6: always lecture + laboratory = total */ ?>
+  <div class="row g-2 mb-1" data-unit-split><div class="col-4"><label class="form-label small" for="subLec">Lecture units</label><input class="form-control form-control-sm" id="subLec" name="lecUnits" inputmode="decimal" value="<?= h(LecLab::text($esp[0])) ?>"></div>
+    <div class="col-4"><label class="form-label small" for="subLab">Lab units</label><input class="form-control form-control-sm" id="subLab" name="labUnits" inputmode="decimal" value="<?= h(LecLab::text($esp[1])) ?>"></div>
+    <div class="col-4"><label class="form-label small" for="subTotal">Total units</label><output class="form-control form-control-sm bg-light fw-semibold" id="subTotal" data-unit-total for="subLec subLab"><?= h(LecLab::text($esp[2])) ?></output></div></div>
+  <p class="form-text mt-0">Total = lecture + laboratory units. Class Schedules gives 1 hour a week per lecture unit and 3 hours a week per laboratory unit.</p>
   <label class="form-label small">Subject type</label><select class="form-select form-select-sm mb-2" name="subjectType"><?= list_options(ImportAll::SUBJECT_TYPES, $edit['subjectType'] ?? null, 'Not set') ?></select>
   <p class="form-text mt-0">No fee is needed here: the price per unit is set in Assessment → Subject Fees.</p>
   <button class="btn btn-sm btn-primary">Save subject</button><?php if ($edit): ?> <a class="btn btn-sm btn-link" href="<?= url('curriculum', ['tab' => 'subjects']) ?>">Add instead</a><?php endif; ?>
@@ -170,4 +168,5 @@ if (!$curEditing) page_title('Curriculum', $canEdit ? '<a class="btn btn-primary
 <?php endif; ?>
 </div>
 <?php endif; ?>
+<script src="assets/subject-units.js?v=65.6" defer></script>
 <?php layout_end();
