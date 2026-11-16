@@ -322,6 +322,18 @@ test('v65.10: the banded menu in every workspace', function () {
     }
 });
 
+test('v65.11: an × on each subject tuition line takes it off one student (and Charge again)', function () {
+    ok(Db::tableExists('sis_registration_subject_skips'), 'the skips table is not created by the upgrade');
+    $sheet = (string) file_get_contents(SIS_ROOT . '/app/views/assessment_sheet.php');
+    ok(str_contains($sheet, "'action' => 'skip_subject_fee'") && str_contains($sheet, "'action' => 'charge_subject_fee'"), 'no × or Charge again on subject fee lines');
+    ok(str_contains($sheet, 'soa-skipped" data-keep-controls'), 'Charge again would be hidden by the toolbar script');
+    $lib = (string) file_get_contents(SIS_ROOT . '/app/lib/sis.php');
+    ok(str_contains($lib, "!isset(\$skip[\$l['subject_doc_id'] . '|' . \$l['fee_label_id']])"), 'skipped subject fees are still charged');
+    $line = SubjectFees::lines([['subject_doc_id' => 'nope', 'subject_code' => 'X', 'units' => 3]], null);
+    ok($line === [], 'lines() of an unpriced subject');
+    ok(str_contains((string) file_get_contents(SIS_ROOT . '/app/lib/subject-fees.php'), "'subject_doc_id' => (string) \$s['subject_doc_id'], 'fee_label_id' => (int) \$f['label_id']"), 'subject fee lines do not say which subject and fee they are');
+});
+
 $server->exec("DROP DATABASE IF EXISTS `$name`");
 echo "$pass passed, $fail failed\n";
 exit($fail ? 1 : 0);

@@ -23,7 +23,7 @@
  // Proxy secondary row controls without moving forms or copying permission logic.
  const recordActions=document.createElement('section');recordActions.hidden=true;const recordHeading=document.createElement('h2');recordHeading.textContent='Record Actions';recordActions.append(recordHeading);panel.append(recordActions);
  const primary=main.querySelector('.record-selection-action'),accountingView=main.querySelector('[data-accounting-action="view"]');
- const candidates=[...main.querySelectorAll('table:not([data-select]) tbody tr')].filter(row=>!row.closest('form,dialog,.modal,#entryDetail,#paymentSetup,#paymentPlans,.payment-plan-summary'));
+ const candidates=[...main.querySelectorAll('table:not([data-select]) tbody tr')].filter(row=>!row.matches('[data-keep-controls]')&&!row.closest('form,dialog,.modal,#entryDetail,#paymentSetup,#paymentPlans,.payment-plan-summary')); /* v65.11: [data-keep-controls] rows keep their own buttons */
  const controls=row=>[...row.querySelectorAll('td:last-child a[href],td:last-child button')].filter(el=>!el.closest('.dropdown-menu')&&((el.textContent||'').trim()||el.getAttribute('aria-label')||el.title));
  candidates.forEach(row=>controls(row).forEach(el=>el.classList.add('sis-proxied-control')));
  function clearRecordActions(){[...recordActions.children].slice(1).forEach(el=>el.remove());recordActions.hidden=true;}

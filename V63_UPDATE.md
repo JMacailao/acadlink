@@ -674,3 +674,11 @@ The SIS menu design (v65.9) is now used in **Finance, LMS, Library, Canteen POS*
 The Student Portal keeps its row of tabs at the top (it has no side menu).
 
 Files: `sis/app/views/layout.php`, `sis/assets/blue-theme.css`, `sis/assets/theme.js`, `css/style.css`, `pages/*.html`; test in `sis/tests/v63-fixes.php`.
+
+## v65.11 — × on each tuition line of a registration
+
+On a registration's statement, **Tuition Fee · BSBA1101** and the other lines priced per subject (Assessment → Subject fees) now have an **×** like the Miscellaneous fees. It takes that subject's fee off this student's assessment only; the assessment, scholarships computed on tuition and the payment plan are recalculated at once. Removed lines are listed under **Not charged to this student** with **Charge again** (not printed). Like the other ×, it works while the registration is open.
+
+Database: a small table `sis_registration_subject_skips` is created automatically (schema version 36) on the first page view after the update.
+
+Files: `sis/app/lib/sis.php` (`Registration::skipSubjectFee`, `subjectSkips`, `build`), `sis/app/lib/subject-fees.php`, `sis/app/pages/registration.php`, `sis/app/views/assessment_sheet.php`, `sis/assets/sis-actions.js` (`data-keep-controls`), `sis/app/bootstrap.php`; test in `sis/tests/v63-fixes.php`.

@@ -21,6 +21,17 @@ final class SubjectFees
 {
     public static function install(): void
     {
+        // v65.11: a subject's fee (e.g. Tuition Fee · IT101) not charged to one student's registration (the × on the statement)
+        Db::q('CREATE TABLE IF NOT EXISTS sis_registration_subject_skips (
+            id INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
+            registration_id INT UNSIGNED NOT NULL,
+            subject_doc_id VARCHAR(191) NOT NULL,
+            label_id INT UNSIGNED NOT NULL,
+            created_by INT UNSIGNED NULL,
+            created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+            UNIQUE KEY u_sis_rskip (registration_id, subject_doc_id, label_id),
+            CONSTRAINT fk_sis_rskip_reg FOREIGN KEY (registration_id) REFERENCES sis_registrations (id) ON DELETE CASCADE
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci');
         Db::q('CREATE TABLE IF NOT EXISTS sis_subject_fees (
             id INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
             subject_doc_id VARCHAR(191) NOT NULL,
@@ -286,7 +297,7 @@ final class SubjectFees
                 $qty = LecLab::basisUnits(LecLab::ofRow($s), (string) ($f['unit_basis'] ?? 'ALL')); // v56.2: all, lecture or laboratory units
                 $amount = Money::times($rate, (string) $qty);
                 if ($amount <= 0) continue;
-                $out[] = ['label_id' => -(int) $f['id'], 'category_name' => $f['category_name'],
+                $out[] = ['label_id' => -(int) $f['id'], 'subject_doc_id' => (string) $s['subject_doc_id'], 'fee_label_id' => (int) $f['label_id'], 'category_name' => $f['category_name'],
                     'label_name' => mb_substr($f['label_name'] . ' · ' . $s['subject_code'], 0, 100), 'charge_type' => 'PER_UNIT',
                     'quantity' => (string) $qty, 'unit_cents' => $rate, 'amount_cents' => $amount, 'sort_order' => (int) $f['sort_order']];
             }

@@ -80,6 +80,9 @@ if ($isPost) {
     } elseif ($a === 'remove_label') {
         Registration::removeLabel((int) $id, (int) ($_POST['label_id'] ?? 0));
         flash('success', 'Fee taken off this student\'s assessment.');
+    } elseif ($a === 'skip_subject_fee' || $a === 'charge_subject_fee') { // v65.11
+        Registration::skipSubjectFee((int) $id, (string) ($_POST['subject_doc_id'] ?? ''), (int) ($_POST['label_id'] ?? 0), $a === 'skip_subject_fee');
+        flash('success', $a === 'skip_subject_fee' ? 'Fee taken off this student\'s assessment for that subject.' : 'Fee charged again for that subject.');
     } elseif ($a === 'reset_label') {
         Registration::resetLabel((int) $id, (int) ($_POST['label_id'] ?? 0));
         flash('success', 'Fee back to the assessment name\'s amount.');
