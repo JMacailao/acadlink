@@ -762,4 +762,6 @@ Files: `sis/assets/subject-units.js`, `sis/app/pages/curriculum.php`.
 
 In v66.4 the new "Tamper check" box took the full height of the page, so the list of entries started far below it and the page looked empty. The box is now only as tall as its contents.
 
-Files: `sis/assets/blue-theme.css` (version tag 66.5 in `sis/app/views/layout.php`).
+Also: the "Check the log" button was moved by the page into the hidden Actions panel, so on the page it could not be seen. It is now a small form, so it stays in the box (desktop and phones).
+
+Files: `sis/assets/blue-theme.css` (version tag 66.5 in `sis/app/views/layout.php`), `sis/app/pages/activity.php`.

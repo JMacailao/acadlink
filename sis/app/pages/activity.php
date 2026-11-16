@@ -16,7 +16,8 @@ page_title('Activity log', '<a class="btn btn-outline-secondary" href="' . url('
   <div class="d-flex flex-wrap align-items-center gap-2">
     <i class="bi bi-shield-lock" aria-hidden="true"></i><strong>Tamper check</strong>
     <span class="small text-muted me-auto">Each entry is sealed to the one before it. If someone changes or removes entries directly in the database, the check shows where.</span>
-    <a class="btn btn-sm btn-outline-primary" href="<?= url('activity', ['check' => 1] + ($page > 1 ? ['page' => $page] : []) + ($withSignIns ? ['signins' => 1] : [])) ?>"><i class="bi bi-search me-1" aria-hidden="true"></i>Check the log</a>
+    <form method="get" class="m-0"><input type="hidden" name="r" value="activity"><input type="hidden" name="check" value="1"><?= $page > 1 ? '<input type="hidden" name="page" value="' . $page . '">' : '' ?><?= $withSignIns ? '<input type="hidden" name="signins" value="1">' : '' ?>
+      <button class="btn btn-sm btn-outline-primary"><i class="bi bi-search me-1" aria-hidden="true"></i>Check the log</button></form><?php /* v66.5: a form, so the page's Actions panel leaves the button here */ ?>
   </div>
   <?php if ($check): ?>
   <div class="alert <?= $check['ok'] ? 'alert-success' : 'alert-danger' ?> mt-2 mb-0 py-2" role="status">
