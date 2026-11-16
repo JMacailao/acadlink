@@ -308,6 +308,20 @@ test('v65.9: SIS menu order and groups', function () {
     foreach (['history&tab=grades', 'history&tab=assessments', '@GRADING', '@LMS'] as $r) ok(!isset($routes[$r]), "$r is still in the menu");
 });
 
+test('v65.10: the banded menu in every workspace', function () {
+    $src = (string) file_get_contents(SIS_ROOT . '/app/views/layout.php');
+    ok(str_contains($src, "<?php if (\$r === 'dashboard' && \$g === ''): ?><div class=\"nav-static-head\""), 'Overview band only in some workspaces');
+    preg_match('/const FINANCE_NAV = \[\s*\[\'(\w+)\'/', $src, $m); ok(($m[1] ?? '') === 'notifications', 'Finance: Notifications first');
+    foreach (['LIBRARY_NAV' => "'Circulation'", 'LMS_NAV' => "'Classes'", 'CANTEEN_NAV' => "'Point of Sale'"] as $nav => $g) {
+        preg_match('/const ' . $nav . ' = \[(.*?)\n\];/s', $src, $mm); ok(str_contains($mm[1] ?? '', $g), "$nav has no $g group");
+    }
+    ok(str_contains((string) file_get_contents(SIS_ROOT . '/assets/theme.js'), "if(document.body.classList.contains('sis-easy')){ // v65.10"), 'groups not always open everywhere');
+    foreach (glob(dirname(SIS_ROOT) . '/pages/*.html') as $f) {
+        $h = (string) file_get_contents($f); if (!str_contains($h, 'nav-group-label')) continue;
+        ok(strpos($h, 'href="notifications.html" data-roles') < strpos($h, '>Overview</div>') && strpos($h, '>Overview</div>') < strpos($h, 'href="dashboard.html" data-roles'), basename($f) . ': Notifications, Overview, Dashboard');
+    }
+});
+
 $server->exec("DROP DATABASE IF EXISTS `$name`");
 echo "$pass passed, $fail failed\n";
 exit($fail ? 1 : 0);
