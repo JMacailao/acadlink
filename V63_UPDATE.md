@@ -724,3 +724,12 @@ Both windows have a **Reason** box.
 Database: the change kinds LOWER_FEE and CHANGE_TEMPLATE are added to `sis_registration_changes` automatically (schema 38).
 
 Files: `sis/app/lib/reductions.php`, `sis/app/pages/registration.php`, `sis/app/bootstrap.php`; test in `sis/tests/v63-fixes.php`.
+
+## v66.2 — Approvals are the school's choice (one switch)
+
+Settings → Fee reductions and reopening now has one switch for approvals: **Use an approver when a confirmed enrollment is reopened**. It is **off** unless the school turns it on.
+- **Off:** no approvals — reopening and lowering fees happen at once (with their reason when "Ask for a reason" is on). Everything is still listed in Operations → Approvals → History.
+- **On:** reopening a confirmed enrollment waits for an approver ("Ask to reopen"), and after that, lowering that student's fees waits for an approver too.
+The two earlier approval switches are replaced by this one; "Ask for a reason when what a student pays is lowered" stays.
+
+Files: `sis/app/lib/core.php` (setting `approval_on_reopen`, `Settings::reload`), `sis/app/lib/reductions.php`, `sis/app/pages/settings.php`; test in `sis/tests/v63-fixes.php`.

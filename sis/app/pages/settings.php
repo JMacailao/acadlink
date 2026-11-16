@@ -83,8 +83,7 @@ page_title('Settings', '', 'How the assessment statement and official receipt lo
       <p class="small text-muted">Taking a fee or tuition off, giving a scholarship / discount, or a Less adjustment lowers what a student pays. Every change is listed in Operations → Approvals with its reason. Approvers are the accounts with “Approve fee reductions and reopening” (Users and Groups); the Power User always has it.</p>
       <div class="d-flex flex-column gap-2">
         <label class="form-check"><input class="form-check-input" type="checkbox" name="red_reason" value="1"<?= $chk('red_reason') ?>> Ask for a reason when what a student pays is lowered</label>
-        <label class="form-check"><input class="form-check-input" type="checkbox" name="reopen_approval" value="1"<?= $chk('reopen_approval') ?>> Reopening a confirmed enrollment waits for an approver (it stays confirmed until approved)</label>
-        <label class="form-check"><input class="form-check-input" type="checkbox" name="red_approve_reopened" value="1"<?= $chk('red_approve_reopened') ?>> After an enrollment was reopened, lowering its fees waits for an approver</label>
+        <label class="form-check"><input class="form-check-input" type="checkbox" name="approval_on_reopen" value="1"<?= $chk('approval_on_reopen') ?>> <strong>Use an approver when a confirmed enrollment is reopened</strong> — reopening waits for an approver, and so does lowering that student's fees afterwards (off: no approvals; changes apply at once, with their reason)</label>
       </div>
     </section>
     <section class="form-section">

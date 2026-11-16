@@ -5,8 +5,9 @@ declare(strict_types=1);
  *
  * Every such change goes through Reductions::request(): it needs a reason (Settings → Fee reductions and reopening),
  * and it waits for an approver when Settings say so:
- *   - reopening a confirmed enrollment (setting reopen_approval), and
- *   - lowering the fees of a registration that was reopened after being confirmed (setting red_approve_reopened).
+ *   - reopening a confirmed enrollment, and
+ *   - lowering the fees of a registration that was reopened after being confirmed,
+ * both only when the school turns on Settings → "Use an approver when a confirmed enrollment is reopened" (approval_on_reopen, v66.2).
  * Approvers hold "Approve fee reductions and reopening" (sis.reductions.approve) in Users and Groups; an approver's own
  * change applies at once. Each change is kept in sis_registration_changes with its reason, who asked, who decided and
  * the total before and after, and is listed in SIS → Approvals.
@@ -75,8 +76,8 @@ final class Reductions
     /** Does this change wait for an approver? */
     public static function needsApproval(int $regId, string $kind): bool
     {
-        if ($kind === 'REOPEN') return Settings::on('reopen_approval');
-        return Settings::on('red_approve_reopened') && self::wasReopened($regId);
+        if (!Settings::on('approval_on_reopen')) return false; // v66.2: one switch, off unless the school wants an approver
+        return $kind === 'REOPEN' || self::wasReopened($regId);
     }
 
     /**
