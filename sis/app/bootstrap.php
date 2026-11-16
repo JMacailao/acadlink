@@ -28,6 +28,7 @@ require SIS_ROOT . '/app/lib/documents.php';
 require SIS_ROOT . '/app/lib/account-email.php';
 require SIS_ROOT . '/app/lib/document-requests.php';
 require SIS_ROOT . '/app/lib/schedules.php';
+require SIS_ROOT . '/app/lib/schedule-auto.php';
 require SIS_ROOT . '/app/lib/adddrop.php';
 require SIS_ROOT . '/app/lib/clearance.php';
 require SIS_ROOT . '/app/lib/balance.php';

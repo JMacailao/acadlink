@@ -1,4 +1,4 @@
-**Updating to v65.7?** Hostinger deploys from GitHub; press Ctrl+F5 once. Fix: on wide screens the search box no longer covers Void on a registration; no database step.
+**Updating to v65.7?** Hostinger deploys from GitHub; press Ctrl+F5 once. Fix: the search box no longer covers Void on a registration (v65.6: Auto-schedule; lecture + lab = total units); no database step.
 
 **Updating to v63.24?** Deploy or upload the changed files (see V63_UPDATE.md) and press Ctrl+F5 once. No database change.
 
