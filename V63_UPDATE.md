@@ -771,3 +771,14 @@ Also: on the SIS dashboard a large amount such as ₱12,210,450.00 broke onto tw
 Also: outline buttons in the SIS ("Check the log", "Show", …) still had green text from an older stylesheet, and when pointed at they showed green text on blue, which could not be read. They are now blue, with white text when pointed at. The "default" and "Scholarship" badges and the ticked parts on Backup are blue too.
 
 Files: `sis/assets/blue-theme.css` (version tag 66.5 in `sis/app/views/layout.php`), `sis/app/views/layout.php`, `sis/app/pages/activity.php`.
+
+## v66.6 — Add AcadLink to the home screen (iPhone and Android)
+
+"Add to Home Screen" (Safari on iPhone) or "Add to Home screen / Install app" (Chrome on Android) now gives an AcadLink icon that opens like an app, full screen, on every workspace: SIS, Finance, LMS, Library, Canteen, the Student Portal and the Grading System.
+
+- `manifest.webmanifest`: named "AcadLink" (was "AcadLink Grading System"), opens the workspace chooser, navy theme, covers the whole site.
+- `sis/app/views/layout.php` and `portal/views/layout.php`: link the manifest and add the iPhone home-screen tags (icon, title, full screen). The Grading System (`index.html`) already had most of them; it now also names the icon "AcadLink".
+
+No service worker and nothing stored on the phone: every page still loads live from the server.
+
+Help (SIS → Help, `sis/app/pages/help.php`) has a new section, "Put AcadLink on your phone's home screen", with the steps for iPhone/iPad (Safari: Share → Add to Home Screen) and Android (Chrome: ⋮ → Add to Home screen / Install app).

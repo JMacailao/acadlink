@@ -34,6 +34,12 @@ function portal_layout_start(string $title, bool $bare = false): void
 <meta name="theme-color" content="#c2410c">
 <title><?= h($title) ?> · Student Portal · <?= h(School::brand()) ?></title>
 <link rel="icon" type="image/png" sizes="32x32" href="../icons/favicon-32.png">
+<link rel="manifest" href="../manifest.webmanifest"><!-- v66.6: "Add to Home Screen" on Android and iPhone opens AcadLink like an app -->
+<link rel="apple-touch-icon" href="../icons/apple-touch-icon.png">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="AcadLink">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@400;500;600;700&amp;display=swap">
