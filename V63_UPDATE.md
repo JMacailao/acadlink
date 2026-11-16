@@ -751,3 +751,9 @@ Every Activity Log entry now gets a **fingerprint** (a keyed SHA-256 of its cont
 Note: entries sealed before the check cannot be changed or removed unnoticed; the newest few minutes are sealed soon after. The Grading System's own audit trail and account history are separate and not part of this check.
 
 Files: `sis/app/lib/core.php` (`Audit`), `sis/app/pages/activity.php`, `sis/app/bootstrap.php` (schema 39), `sis/assets/blue-theme.css`; test in `sis/tests/v63-fixes.php`.
+
+### Also in v66.4 — Edit units of many subjects: only changed rows are sent
+
+The units editor (Curriculum → Subjects → Edit units) listed every subject with three fields each, so a school with more than about 330 subjects went over the server's limit of 1000 fields per save and the save failed. Now only the rows you changed are sent. You can change up to 300 subjects in one save. If you need to change more, save, then change the rest.
+
+Files: `sis/assets/subject-units.js`, `sis/app/pages/curriculum.php`.

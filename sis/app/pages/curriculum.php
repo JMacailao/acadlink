@@ -7,7 +7,7 @@ $tab = ($_GET['tab'] ?? '') === 'subjects' ? 'subjects' : 'curriculum';
 if ($isPost) {
     if (($_POST['action'] ?? '') === 'units') { // v66: lecture / lab units of many subjects at once
         $ids = array_values((array) ($_POST['u_id'] ?? [])); $lecs = array_values((array) ($_POST['u_lec'] ?? [])); $labs = array_values((array) ($_POST['u_lab'] ?? []));
-        if (count($ids) !== count($lecs) || count($ids) !== count($labs) || count($ids) > 2000) throw new AppError('The list was not sent completely. Reload the page and try again.');
+        if (count($ids) !== count($lecs) || count($ids) !== count($labs) || count($ids) > 300) throw new AppError('The list was not sent completely, or too many subjects were changed at once (at most 300). Reload the page and try again.'); // v66.4: only changed rows are sent
         $changed = 0;
         Db::tx(function () use ($ids, $lecs, $labs, &$changed) {
             foreach ($ids as $i => $sid) {
@@ -202,5 +202,5 @@ if (!$curEditing) page_title('Curriculum', $canEdit ? '<a class="btn btn-primary
 <?php endif; ?>
 </div>
 <?php endif; ?>
-<script src="assets/subject-units.js?v=66" defer></script>
+<script src="assets/subject-units.js?v=66.4" defer></script>
 <?php layout_end();
