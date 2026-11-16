@@ -129,7 +129,8 @@ function sis_boot(): void
  * v63.21: the version of the tables this code expects. Raise it whenever sis_upgrade() (or an install() it calls) gains
  * a new step, so every school's database runs the upgrade once more; otherwise sis_upgrade() is one small query.
  */
-const SIS_SCHEMA_VERSION = 38; // v66.1: more change kinds; v66: sis_registration_changes (v65.11: sis_registration_subject_skips)
+const SIS_SCHEMA_VERSION = 39; // v66.4: sealed Activity Log
+// (was 38) // v66.1: more change kinds; v66: sis_registration_changes (v65.11: sis_registration_subject_skips)
 
 function sis_upgrade(): void
 {
@@ -216,6 +217,7 @@ function sis_upgrade(): void
     ParentAccess::install(Db::pdo());  // v62: parent links
     FirstSetup::install();             // v63.3: retire the old published starting password
     Reductions::install();             // v66: fee reductions and reopening, with reasons and approvals
+    Audit::install();                  // v66.4: fingerprints and seals of the Activity Log
     // v63.21: lists look up "the latest registration of this student" per row (Admission, Students): index it
     if (!Db::val("SELECT 1 FROM information_schema.statistics WHERE table_schema = DATABASE() AND table_name = 'sis_registrations' AND index_name = 'k_sis_reg_student'"))
         Db::q('ALTER TABLE sis_registrations ADD KEY k_sis_reg_student (student_number, id)');

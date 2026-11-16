@@ -523,18 +523,108 @@ final class Seq
 }
 
 // ------------------------------------------------------------------ audit log
+/**
+ * The Activity Log. v66.4: every entry carries a fingerprint (row_mac: a keyed SHA-256 of its contents, the key made
+ * from the server's own settings file, so someone who can only edit the database cannot make a valid one), and entries
+ * are sealed in order (seal = SHA-256 of the previous seal and this entry), a few minutes after they are written.
+ * Audit::check() recomputes everything: a changed entry, or one removed from the middle, breaks the chain there.
+ */
 final class Audit
 {
+    private const SEAL_AFTER = 120; // seconds: entries written inside a long transaction are committed by then
+
     public static function log(string $action, string $entityType, int|string|null $entityId, array $details = []): void
     {
-        Db::insert('sis_audit_logs', [
+        $row = [
             'user_id'     => Auth::id(),
             'action'      => $action,
             'entity_type' => $entityType,
             'entity_id'   => $entityId === null ? null : (string) $entityId,
             'details'     => json_encode($details, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES),
             'ip_address'  => $_SERVER['REMOTE_ADDR'] ?? 'cli',
-        ]);
+            'created_at'  => date('Y-m-d H:i:s'),
+        ];
+        if (self::ready()) $row['row_mac'] = self::mac($row);
+        Db::insert('sis_audit_logs', $row);
+        if (self::ready() && random_int(1, 40) === 1) { try { self::seal(); } catch (Throwable) {} } // now and then; the Activity Log page seals too
+    }
+
+    /** v66.4: the two columns (added by the upgrade). */
+    public static function install(): void
+    {
+        if (!Db::val("SELECT 1 FROM information_schema.columns WHERE table_schema = DATABASE() AND table_name = 'sis_audit_logs' AND column_name = 'row_mac'"))
+            Db::q('ALTER TABLE sis_audit_logs ADD COLUMN row_mac CHAR(64) NULL, ADD COLUMN seal CHAR(64) NULL');
+        self::$ready = null;
+    }
+
+    private static ?bool $ready = null;
+    private static function ready(): bool
+    {
+        if (self::$ready === null) {
+            try { self::$ready = (bool) Db::val("SELECT 1 FROM information_schema.columns WHERE table_schema = DATABASE() AND table_name = 'sis_audit_logs' AND column_name = 'row_mac'"); }
+            catch (Throwable) { self::$ready = false; }
+        }
+        return self::$ready;
+    }
+
+    private static function key(): string
+    {
+        $c = sis_config();
+        return hash('sha256', 'acadlink-activity-seal|' . ($c['db_pass'] ?? '') . '|' . ($c['db_name'] ?? '') . '|' . ($c['session_name'] ?? ''), true);
+    }
+
+    private static function mac(array $r): string
+    {
+        $text = implode("\x1f", [(string) ($r['user_id'] ?? ''), (string) $r['action'], (string) $r['entity_type'], (string) ($r['entity_id'] ?? ''),
+            (string) ($r['details'] ?? ''), (string) ($r['ip_address'] ?? ''), (string) $r['created_at']]);
+        return hash_hmac('sha256', $text, self::key());
+    }
+
+    private static function link(string $prevSeal, int $id, string $mac): string { return hash('sha256', $prevSeal . '|' . $id . '|' . $mac); }
+
+    /** Seals the entries written more than two minutes ago, in order. Older entries (before v66.4) get their fingerprint now. */
+    public static function seal(int $max = 5000, int $olderThan = self::SEAL_AFTER): int
+    {
+        if (!self::ready()) return 0;
+        if ((string) Db::val("SELECT GET_LOCK('acadlink_audit_seal', 0)") !== '1') return 0;
+        try {
+            $last = Db::one('SELECT id, seal FROM sis_audit_logs WHERE seal IS NOT NULL ORDER BY id DESC LIMIT 1');
+            $prev = (string) ($last['seal'] ?? ''); $after = (int) ($last['id'] ?? 0); $n = 0;
+            $rows = Db::all('SELECT * FROM sis_audit_logs WHERE id > ? AND created_at < ? ORDER BY id LIMIT ' . max(1, min(20000, $max)), [$after, date('Y-m-d H:i:s', time() - $olderThan)]); // same clock as created_at
+            $set = Db::pdo()->prepare('UPDATE sis_audit_logs SET row_mac = ?, seal = ? WHERE id = ?');
+            foreach ($rows as $r) {
+                $mac = $r['row_mac'] ?: self::mac($r);
+                $prev = self::link($prev, (int) $r['id'], $mac);
+                $set->execute([$mac, $prev, (int) $r['id']]); $n++;
+            }
+            return $n;
+        } finally { Db::val("SELECT RELEASE_LOCK('acadlink_audit_seal')"); }
+    }
+
+    /**
+     * Recomputes every sealed entry. Returns ['ok' => bool, 'checked' => n, 'unsealed' => n, 'fingerprint' => last seal,
+     * 'problem' => text or null, 'at_id' => id of the first entry that does not match].
+     */
+    public static function check(): array
+    {
+        $out = ['ok' => true, 'checked' => 0, 'unsealed' => 0, 'fingerprint' => '', 'problem' => null, 'at_id' => null];
+        if (!self::ready()) return ['ok' => false, 'problem' => 'The Activity Log is not sealed yet: open any page once to finish the update.'] + $out;
+        $prev = ''; $after = 0; $prevId = 0;
+        while (true) {
+            $rows = Db::all('SELECT * FROM sis_audit_logs WHERE id > ? AND seal IS NOT NULL ORDER BY id LIMIT 5000', [$after]);
+            if (!$rows) break;
+            foreach ($rows as $r) {
+                $id = (int) $r['id'];
+                if (!hash_equals((string) $r['row_mac'], self::mac($r))) return array_replace($out, ['ok' => false, 'at_id' => $id, 'problem' => "Entry #$id was changed after it was written (its contents no longer match its fingerprint)."]);
+                if (!hash_equals((string) $r['seal'], self::link($prev, $id, (string) $r['row_mac'])))
+                    return array_replace($out, ['ok' => false, 'at_id' => $id, 'problem' => 'The chain breaks at entry #' . $id . ': an entry between #' . $prevId . ' and #' . $id . ' was removed, or the seals were changed.']);
+                $prev = (string) $r['seal']; $prevId = $id; $out['checked']++;
+            }
+            $after = $prevId;
+        }
+        $out['unsealed'] = (int) Db::val('SELECT COUNT(*) FROM sis_audit_logs WHERE seal IS NULL');
+        $out['fingerprint'] = $prev;
+        return $out;
     }
 }
 

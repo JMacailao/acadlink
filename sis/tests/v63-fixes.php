@@ -394,6 +394,23 @@ test('v66.3: the Grading System menu has no Academic setup group', function () {
     ok(str_contains($m, 'assignments.html') && str_contains($m, 'grading.html') && str_contains($m, 'final-grades.html'), 'Grading items lost');
 });
 
+test('v66.4: the Activity Log is sealed; a changed or removed entry is found', function () {
+    Audit::install();
+    for ($i = 0; $i < 5; $i++) Audit::log('v664_test', 'test', $i, ['n' => $i]);
+    Db::q("UPDATE sis_audit_logs SET created_at = created_at - INTERVAL 1 MINUTE WHERE action = 'v664_test'"); // as if written a minute ago
+    Db::q("UPDATE sis_audit_logs SET row_mac = NULL WHERE action = 'v664_test'"); // created_at changed: recompute like an older entry
+    Audit::seal(5000, 0);
+    $c = Audit::check(); ok($c['ok'] && $c['checked'] >= 5 && strlen($c['fingerprint']) === 64, 'clean log: ' . json_encode($c));
+    $ids = array_map('intval', Db::col("SELECT id FROM sis_audit_logs WHERE action = 'v664_test' ORDER BY id"));
+    Db::q("UPDATE sis_audit_logs SET details = '{\"n\":99}' WHERE id = ?", [$ids[2]]);
+    $c = Audit::check(); ok(!$c['ok'] && $c['at_id'] === $ids[2], 'an edited entry is not found');
+    Db::q("UPDATE sis_audit_logs SET details = '{\"n\":2}' WHERE id = ?", [$ids[2]]);
+    ok(Audit::check()['ok'], 'putting it back should pass again');
+    Db::q('DELETE FROM sis_audit_logs WHERE id = ?', [$ids[1]]);
+    $c = Audit::check(); ok(!$c['ok'] && $c['at_id'] === $ids[2], 'a removed entry is not found');
+    ok(str_contains((string) file_get_contents(SIS_ROOT . '/app/pages/activity.php'), 'Audit::check()'), 'no Check the log on the Activity Log page');
+});
+
 $server->exec("DROP DATABASE IF EXISTS `$name`");
 echo "$pass passed, $fail failed\n";
 exit($fail ? 1 : 0);

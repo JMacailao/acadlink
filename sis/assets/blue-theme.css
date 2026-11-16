@@ -757,3 +757,4 @@ dialog.ask-reason::backdrop { background: rgba(15, 35, 74, .45); }
 .auto-sec-row > th { background: #E3ECF8 !important; color: #123D70; font-size: 14px; }
 /* v66: the page heading's New / Add button is already in the toolbar: phones show it once */
 @media (max-width: 991.98px) { html[data-system="sis"] body.sis-easy .sis-toolbar-header .page-head .std-tb-copied { display: none !important; } }
+.log-seal { margin-bottom: 14px; } .log-seal .bi-shield-lock { color: #1D5BE0; font-size: 18px; }

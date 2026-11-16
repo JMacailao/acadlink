@@ -739,3 +739,15 @@ Files: `sis/app/lib/core.php` (setting `approval_on_reopen`, `Settings::reload`)
 The Grading System menu no longer has the **Academic setup** group (Subjects, Curriculum, Teachers, Sections, Students): these are managed in the SIS (Academics → Curriculum with its Subjects tab, Sections, Teachers; Student Services → Students). The menu is now Notifications, Overview (Dashboard), Grading (Grading assignments, Enter grades, Final grades, …) and School Information System.
 
 Files: `js/grading-menu.js`, version tag in `pages/*.html`; test in `sis/tests/v63-fixes.php`.
+
+## v66.4 — Tamper check for the Activity Log
+
+Every Activity Log entry now gets a **fingerprint** (a keyed SHA-256 of its contents; the key comes from the server's settings file, so someone who can only edit the database — e.g. in phpMyAdmin — cannot make a valid one) and is **sealed** to the entry before it a couple of minutes after it is written. Entries from before this update are sealed the first time the Activity Log page opens.
+
+**Administration → Activity Log → Check the log** recomputes everything:
+- **No changes found** — with the log's current **fingerprint** (write it down with the date; a rebuilt log would not have it).
+- **The log was changed** — it names the first entry whose contents were changed, or where an entry was removed from the middle.
+
+Note: entries sealed before the check cannot be changed or removed unnoticed; the newest few minutes are sealed soon after. The Grading System's own audit trail and account history are separate and not part of this check.
+
+Files: `sis/app/lib/core.php` (`Audit`), `sis/app/pages/activity.php`, `sis/app/bootstrap.php` (schema 39), `sis/assets/blue-theme.css`; test in `sis/tests/v63-fixes.php`.
