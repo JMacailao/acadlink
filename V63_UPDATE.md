@@ -682,3 +682,9 @@ On a registration's statement, **Tuition Fee · BSBA1101** and the other lines p
 Database: a small table `sis_registration_subject_skips` is created automatically (schema version 36) on the first page view after the update.
 
 Files: `sis/app/lib/sis.php` (`Registration::skipSubjectFee`, `subjectSkips`, `build`), `sis/app/lib/subject-fees.php`, `sis/app/pages/registration.php`, `sis/app/views/assessment_sheet.php`, `sis/assets/sis-actions.js` (`data-keep-controls`), `sis/app/bootstrap.php`; test in `sis/tests/v63-fixes.php`.
+
+## v65.12 — × on scholarship and discount lines
+
+On a registration's statement, each **scholarship / discount** line (e.g. *Academic Scholarship (50% of Tuition)* under *Less: Scholarships & Discounts*) now has an **×** like the fee lines. It removes that program from this student's assessment and recalculates it (the same as removing it in the Scholarship / discount tool, where it can be given again). Only while the registration is open; not printed.
+
+Files: `sis/app/views/assessment_sheet.php`; test in `sis/tests/v63-fixes.php`.

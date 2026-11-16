@@ -334,6 +334,13 @@ test('v65.11: an × on each subject tuition line takes it off one student (and C
     ok(str_contains((string) file_get_contents(SIS_ROOT . '/app/lib/subject-fees.php'), "'subject_doc_id' => (string) \$s['subject_doc_id'], 'fee_label_id' => (int) \$f['label_id']"), 'subject fee lines do not say which subject and fee they are');
 });
 
+test('v65.12: an × on each scholarship / discount line of a registration', function () {
+    $sheet = (string) file_get_contents(SIS_ROOT . '/app/views/assessment_sheet.php');
+    ok(str_contains($sheet, "'action' => 'remove_discount', 'discount_id' => \$discountIdByLine[\$line['label_name']]"), 'no × on scholarship / discount lines');
+    ok(str_contains($sheet, "mb_substr(\$g['name'] . ' (' . Discounts::describe(\$g) . ')', 0, 100)"), 'the line name does not match how the assessment writes it');
+    ok(str_contains((string) file_get_contents(SIS_ROOT . '/app/lib/sis.php'), "'label' => \$g['name'] . ' (' . self::describe(\$g) . ')'"), 'discount line names changed: update the statement match');
+});
+
 $server->exec("DROP DATABASE IF EXISTS `$name`");
 echo "$pass passed, $fail failed\n";
 exit($fail ? 1 : 0);
