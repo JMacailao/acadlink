@@ -757,3 +757,9 @@ Files: `sis/app/lib/core.php` (`Audit`), `sis/app/pages/activity.php`, `sis/app/
 The units editor (Curriculum → Subjects → Edit units) listed every subject with three fields each, so a school with more than about 330 subjects went over the server's limit of 1000 fields per save and the save failed. Now only the rows you changed are sent. You can change up to 300 subjects in one save. If you need to change more, save, then change the rest.
 
 Files: `sis/assets/subject-units.js`, `sis/app/pages/curriculum.php`.
+
+## v66.5 — Activity Log: the list shows under the tamper check again
+
+In v66.4 the new "Tamper check" box took the full height of the page, so the list of entries started far below it and the page looked empty. The box is now only as tall as its contents.
+
+Files: `sis/assets/blue-theme.css` (version tag 66.5 in `sis/app/views/layout.php`).
