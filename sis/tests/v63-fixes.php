@@ -286,6 +286,13 @@ test('v65.7: the wide top-bar toolbar is not capped (the search box covered Void
     ok(str_contains($css, ':is(.std-tb-group-1, .std-tb-group-2) { flex-shrink: 0; }'), 'button groups can shrink under the search box again');
 });
 
+test('v65.8: a registration shows its Tools beside the statement, and Class schedule opens', function () {
+    $pg = (string) file_get_contents(SIS_ROOT . '/app/pages/registration.php');
+    ok(str_contains($pg, '<aside class="or-side tools-first d-print-none" data-keep-side'), 'the Tools panel is not kept on the page');
+    ok(str_contains((string) file_get_contents(SIS_ROOT . '/assets/sis-actions.js'), ".or-side:not([data-keep-side])"), 'the Tools panel is moved into the hidden Actions panel again');
+    ok(str_contains($pg, '$schedReg = Schedules::forRegistration($r') && !str_contains($pg, 'isset($schedReg)'), 'Class schedule has no window to open (schedReg never set)');
+});
+
 $server->exec("DROP DATABASE IF EXISTS `$name`");
 echo "$pass passed, $fail failed\n";
 exit($fail ? 1 : 0);

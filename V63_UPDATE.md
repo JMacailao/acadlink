@@ -639,3 +639,10 @@ Files: `sis/app/lib/schedule-auto.php` (new), `sis/app/pages/schedules.php`, `si
 On screens 1700 px wide and more, the toolbar sits in the top bar beside the School Year and was limited to 860 px. A registration's toolbar (Back, Print Assessment, Confirm Enrollment, Pay at Cashier, Void, search, Refresh, More Actions) needs about 890 px, so its buttons were squeezed and the search box covered **Pay at Cashier** and **Void**. The toolbar is now as wide as its buttons need; only the search box gets narrower. Checked on 10 pages at 1366, 1600, 1700 and 1920 px: no overlapping buttons.
 
 Files: `sis/assets/easy-navigation.css`, version tag in `sis/app/views/layout.php`; test in `sis/tests/v63-fixes.php`.
+
+## v65.8 — A registration's Tools beside the statement; Class schedule opens again
+
+- On a registration, the **Tools** (Class schedule, Subjects, Assessment name, Scholarship / discount, Add a fee, Charge or less, Teachers, Payment plan — or Class schedule, Add / drop subjects and Payment plan once confirmed) and the **Summaries** are shown on the right of the statement again, as a list with icons. Since v64.8 they were only in **More Actions** (still there too). On phones they are above the statement.
+- **Bug fixed:** **Class schedule** opened nothing (a script error in the browser): the line that loads the registration's schedule was removed together with the tool descriptions. All tools were checked to open, for an open and for a confirmed registration.
+
+Files: `sis/app/pages/registration.php`, `sis/assets/sis-actions.js`, `sis/assets/blue-theme.css`, version tags in `sis/app/views/layout.php`; test in `sis/tests/v63-fixes.php`.

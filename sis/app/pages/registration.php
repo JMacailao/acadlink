@@ -405,10 +405,10 @@ if ($id) {
             <?php if (!$pays): ?><tr class="empty"><td colspan="5">No payments yet.</td></tr><?php endif; ?></tbody></table></div></div>
         </div>
 
-        <aside class="or-side tools-first d-print-none">
+        <aside class="or-side tools-first d-print-none" data-keep-side aria-label="Registration tools">
           <?= sub_explorer() ?>
           <div class="or-panel">
-            <div class="or-panel-title" data-panel-static>Sub-Components</div>
+            <div class="or-panel-title" data-panel-static>Tools</div>
             <?php if ($open): ?>
             <ul class="or-links tools registration-tool-list">
               <?= $tool('mSchedule', 'calendar-week', 'Class schedule') ?>
@@ -634,7 +634,8 @@ if ($id) {
       </div>
     </div></div></div>
     <?php endif; ?>
-    <?php if (isset($schedReg)): ?>
+    <?php $schedReg = Schedules::forRegistration($r, array_column($subs, 'subject_doc_id')); /* v65.8: restored (lost in a04aaba), Class schedule opened nothing */ ?>
+    <?php if ($schedReg !== null): ?>
     <div class="modal fade" id="mSchedule" tabindex="-1" aria-labelledby="mScheduleT" aria-hidden="true"><div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable"><div class="modal-content">
       <div class="modal-header"><h2 class="modal-title fs-5" id="mScheduleT">Class schedule · <?= h($r['section_name'] . ' · ' . $r['term'] . ' ' . $r['school_year']) ?></h2><button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button></div>
       <div class="modal-body">
