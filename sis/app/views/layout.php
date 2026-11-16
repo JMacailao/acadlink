@@ -302,10 +302,11 @@ function layout_start(string $title, bool $bare = false): void
 <?php if ($route === 'assessment' && ($_GET['tab'] ?? '') === 'names'): ?><script src="<?= sis_web() ?>assets/fee-templates.js?v=1" defer></script><?php endif; ?>
 <?php if ($route === 'documents' && ($_GET['tab'] ?? '') === 'settings'): ?><script src="<?= sis_web() ?>assets/documents-template-preview.js?v=1" defer></script><?php endif; ?>
 <?php if ($route === 'admission'): ?><link rel="stylesheet" href="<?= sis_web() ?>assets/admission-form.css?v=1"><?php endif; ?>
+<?php $alEmbed = $system === 'sis' && $bare && $u && isset($_GET['embed']); if ($alEmbed): // v66.5: pop-up pages (Receive payment, …) get the blue and orange design too ?><link rel="stylesheet" href="<?= sis_web() ?>assets/blue-theme.css?v=66.5"><?php endif; ?>
 <?php if ($system === 'sis' && !$bare && $u): ?><link rel="stylesheet" href="<?= sis_web() ?>assets/easy-navigation.css?v=65.7"><link rel="stylesheet" href="<?= sis_web() ?>assets/dashboard.css?v=2"><link rel="stylesheet" href="<?= sis_web() ?>assets/blue-theme.css?v=66.5"><?php endif; // v64: the blue and orange design, loaded last ?>
 </head>
 <?php $embedFlashes = $bare && isset($_GET['embed']) ? take_flashes() : []; // pop-up pages show their own messages ?>
-<body data-client-scope="<?= h($u ? acadlink_client_scope(Auth::central()) : '') ?>" class="<?= $bare ? 'bare' : ('sis-theme' . ($system === 'sis' && $u ? ' sis-easy' : '')) ?>" data-user-id="<?= h((string) ($u['id'] ?? 'guest')) ?>" data-route="<?= h((string) $route) ?>"<?= array_filter($embedFlashes, fn($f) => $f[0] === 'success') ? ' data-changed="1"' : '' ?>>
+<body data-client-scope="<?= h($u ? acadlink_client_scope(Auth::central()) : '') ?>" class="<?= $bare ? 'bare' . (!empty($alEmbed) ? ' al-embed' : '') : ('sis-theme' . ($system === 'sis' && $u ? ' sis-easy' : '')) ?>" data-user-id="<?= h((string) ($u['id'] ?? 'guest')) ?>" data-route="<?= h((string) $route) ?>"<?= array_filter($embedFlashes, fn($f) => $f[0] === 'success') ? ' data-changed="1"' : '' ?>>
 <?php if ($embedFlashes): ?><div class="embed-wrap pb-0"><?php foreach ($embedFlashes as [$type, $msg]): ?><div class="alert alert-<?= h($type) ?> py-2 mb-0" style="white-space:pre-line" role="alert"><?= h($msg) ?></div><?php endforeach; ?></div><?php endif; ?>
 <?php if (!$bare && $u) app_bottom_nav(); // v63.2: printed first, so the bottom menu is there at once while the page loads ?>
 <?php $LAYOUT_SIDEBAR = !$bare && $u; if ($LAYOUT_SIDEBAR):

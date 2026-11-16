@@ -764,4 +764,6 @@ In v66.4 the new "Tamper check" box took the full height of the page, so the lis
 
 Also: the "Check the log" button was moved by the page into the hidden Actions panel, so on the page it could not be seen. It is now a small form, so it stays in the box (desktop and phones).
 
-Files: `sis/assets/blue-theme.css` (version tag 66.5 in `sis/app/views/layout.php`), `sis/app/pages/activity.php`.
+Also: pages that open inside a pop-up window (Receive payment in Finance and SIS, New applicant, Register a student, O.R. series, Terms) still had the old green buttons. They now use the blue and orange design too (`body.al-embed`).
+
+Files: `sis/assets/blue-theme.css` (version tag 66.5 in `sis/app/views/layout.php`), `sis/app/views/layout.php`, `sis/app/pages/activity.php`.

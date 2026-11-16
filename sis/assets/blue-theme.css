@@ -758,3 +758,18 @@ dialog.ask-reason::backdrop { background: rgba(15, 35, 74, .45); }
 /* v66: the page heading's New / Add button is already in the toolbar: phones show it once */
 @media (max-width: 991.98px) { html[data-system="sis"] body.sis-easy .sis-toolbar-header .page-head .std-tb-copied { display: none !important; } }
 .log-seal { margin-bottom: 14px; height: auto; } .log-seal .bi-shield-lock { color: #1D5BE0; font-size: 18px; }
+
+/* v66.5: pages shown inside pop-up windows (Receive payment, document fees, …) use the same colors */
+@media screen {
+  html[data-system="sis"] body.al-embed { --bs-link-color: #235FD6; --bs-link-color-rgb: 35,95,214; --bs-link-hover-color: #1B4CB0; --bs-link-hover-color-rgb: 27,76,176; --bs-primary-rgb: 35,95,214; --ui-primary: #B85309; --ui-primary-hover: #A84E0A; --ui-tint: #E8F0FD; }
+  html[data-system="sis"] body.al-embed :is(.btn-primary,.btn-success) { --bs-btn-bg: #B85309; --bs-btn-border-color: #B85309; --bs-btn-hover-bg: #A84E0A; --bs-btn-hover-border-color: #A84E0A; --bs-btn-active-bg: #93400A; --bs-btn-active-border-color: #93400A; --bs-btn-disabled-bg: #F2B98A; --bs-btn-disabled-border-color: #F2B98A; --bs-btn-color: #fff; --bs-btn-hover-color: #fff; background: #B85309; border-color: #B85309; color: #fff; }
+  html[data-system="sis"] body.al-embed :is(.btn-primary,.btn-success):is(:hover,:focus-visible) { background: #A84E0A; border-color: #A84E0A; }
+  html[data-system="sis"] body.al-embed :is(.btn-primary,.btn-success):disabled { background: #F2B98A; border-color: #F2B98A; }
+  html[data-system="sis"] body.al-embed :is(.btn-outline-primary,.btn-outline-success) { color: #235FD6; border-color: #9DB9EE; --bs-btn-color: #235FD6; --bs-btn-border-color: #9DB9EE; --bs-btn-hover-bg: #235FD6; --bs-btn-hover-border-color: #235FD6; --bs-btn-hover-color: #fff; --bs-btn-active-bg: #1B4CB0; --bs-btn-active-border-color: #1B4CB0; }
+  html[data-system="sis"] body.al-embed :is(.btn-outline-primary,.btn-outline-success):is(:hover,:focus-visible) { color: #fff; background: #235FD6; border-color: #235FD6; }
+  html[data-system="sis"] body.al-embed .form-check-input:checked { background-color: #235FD6; border-color: #235FD6; }
+  html[data-system="sis"] body.al-embed :is(.form-control,.form-select):focus { border-color: #235FD6; box-shadow: 0 0 0 3px #235FD61f; }
+  html[data-system="sis"] body.al-embed table > thead > tr > th { color: #123D70; }
+  html[data-system="sis"] body.al-embed :is(.nav-pills .nav-link.active) { background: #123D70; }
+  html[data-system="sis"] body.al-embed .nav-tabs .nav-link.active { color: #123D70; border-bottom-color: #B85309; }
+}
