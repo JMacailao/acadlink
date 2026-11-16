@@ -47,6 +47,7 @@ const ROUTES = [
     // Transaction: Admission, Registration, Cashier
     'admission'    => ['admission', ['admission'], ['admission.view']],
     'registration' => ['registration', ['registration', 'payments.view'], ['registration.view']],
+    'approvals'    => ['approvals', ['registration.approve', 'registration']], // v66: fee reductions and reopening
     'eligibility' => ['eligibility', ['registration', 'eligibility.holds'], ['eligibility.view']],
     // Cashier (v58.1: also opened in Finance, ../finance/)
     'cashier'      => ['cashier', ['payments.view']],

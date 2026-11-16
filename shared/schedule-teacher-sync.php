@@ -39,6 +39,33 @@ final class ScheduleTeacherSync
         }
     }
 
+    /**
+     * v66: Class Schedules → "Use the class teachers": every schedule entry of the term whose teacher differs from its
+     * class's teacher (Grading assignments) takes the class's teacher, unless that teacher already has a class then.
+     * Returns ['changed' => n, 'clashed' => [labels], 'differ' => n before].
+     */
+    public static function useClassTeachers(PDO $db, string $sy, string $term, bool $dryRun = false): array
+    {
+        $out = ['changed' => 0, 'clashed' => [], 'differ' => 0];
+        if (!self::ready($db)) return $out;
+        $q = $db->prepare('SELECT id, section_doc_id, subject_doc_id, school_year, term, days, start_time, end_time, teacher_doc_id FROM sis_class_schedules WHERE school_year = ? AND term = ? ORDER BY section_doc_id, id');
+        $q->execute([$sy, $term]);
+        $bySection = [];
+        $set = $db->prepare('UPDATE sis_class_schedules SET teacher_doc_id = ? WHERE id = ?');
+        foreach ($q->fetchAll(PDO::FETCH_ASSOC) as $row) {
+            $sec = (string) $row['section_doc_id'];
+            $bySection[$sec] ??= self::classTeachers($db, $sec, $sy, $term);
+            $want = (string) ($bySection[$sec][(string) $row['subject_doc_id']]['id'] ?? '');
+            if ($want === '' || $want === (string) ($row['teacher_doc_id'] ?? '')) continue;
+            $out['differ']++;
+            if ($dryRun) continue;
+            if (self::clashes($db, $row, $want)) { $out['clashed'][] = (int) $row['id']; continue; }
+            $set->execute([$want, (int) $row['id']]);
+            $out['changed']++;
+        }
+        return $out;
+    }
+
     /** The teacher a schedule should have: the class's teacher for that section, subject and term ('' = none or Professor X). */
     public static function classTeachers(PDO $db, string $section, string $sy, string $term): array
     {
@@ -56,7 +83,7 @@ final class ScheduleTeacherSync
     private static function real(string $teacher): string { return $teacher === self::PLACEHOLDER ? '' : $teacher; }
 
     /** Does $teacher already teach another class at a time that overlaps $row (same term, a shared day)? */
-    private static function clashes(PDO $db, array $row, string $teacher): bool
+    public static function clashes(PDO $db, array $row, string $teacher): bool
     {
         $q = $db->prepare('SELECT days FROM sis_class_schedules WHERE school_year = ? AND term = ? AND teacher_doc_id = ? AND id <> ? AND start_time < ? AND end_time > ?');
         $q->execute([$row['school_year'], $row['term'], $teacher, (int) $row['id'], $row['end_time'], $row['start_time']]);

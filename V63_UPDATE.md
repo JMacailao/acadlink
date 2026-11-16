@@ -688,3 +688,28 @@ Files: `sis/app/lib/sis.php` (`Registration::skipSubjectFee`, `subjectSkips`, `b
 On a registration's statement, each **scholarship / discount** line (e.g. *Academic Scholarship (50% of Tuition)* under *Less: Scholarships & Discounts*) now has an **×** like the fee lines. It removes that program from this student's assessment and recalculates it (the same as removing it in the Scholarship / discount tool, where it can be given again). Only while the registration is open; not printed.
 
 Files: `sis/app/views/assessment_sheet.php`; test in `sis/tests/v63-fixes.php`.
+
+## v66 — Control over fee reductions and reopening; nine improvements
+
+**Fee reductions and reopening (Settings → Fee reductions and reopening; Operations → Approvals).**
+- Taking a fee or a subject's tuition off (×), giving a scholarship / discount, or a **Less** adjustment lowers what a student pays. Each now asks for a **reason** (setting on by default).
+- **Reopening a confirmed enrollment waits for an approver**: the registrar asks with a reason (button "Ask to reopen"); the registration stays confirmed until it is approved.
+- **After an enrollment was reopened**, lowering its fees also waits for an approver. A new (never confirmed) registration only needs the reason.
+- Approvers are the accounts with the new permission **"Approve fee reductions and reopening"** (Users and Groups → Registration); the Power User has it. An approver's own change applies at once.
+- Approvers are notified; **Operations → Approvals** (with a count) shows what is waiting (Approve, or Decline with a note) and the **History** — every reduction and reopening with its reason, who asked, who decided and the total before → after, with filters, a total and Print. The person who asked is notified of the decision and can cancel while it waits.
+- A registration shows its **Changes and approvals**.
+
+**Improvements**
+1. **Curriculum**: changing an existing curriculum's program, year level or term moves it (it used to leave a copy). Moving onto a curriculum that already exists is refused.
+2. (see above)
+3. **Class Schedules → Use the class teachers**: when schedules of the term have another teacher than their class, one button fixes them all (ones that would clash are left and listed).
+4. **Class Schedules → Auto-schedule all sections**: one draft for every section of the term; sections are planned one after another, so a teacher or room is never used twice at the same time.
+5. **Curriculum → Subjects → Edit lecture / lab units** (in ⋯ More): every subject on one page with Lec, Lab and Total; only changed subjects are saved.
+6. A refused save keeps what was typed also in grouped fields (e.g. Manage fees amounts), and its window opens again.
+7. Phones: the page's New / Add button no longer shows twice (Fee templates, Curriculum).
+8. The Grading System menu is written once (`js/grading-menu.js`) instead of in 14 pages.
+9. GitHub also runs **browser flows** (take a fee off with a reason, set a subject price, auto-schedule all sections, registrar without approve buttons) and opens the new pages for each role.
+
+Database: `sis_registration_changes` (schema 37) and the permission `sis.reductions.approve` are added automatically.
+
+Files: `sis/app/lib/reductions.php` (new), `sis/app/pages/approvals.php` (new), `js/grading-menu.js` (new), `sis/tests/browser-flows.mjs` (new), `sis/app/pages/{registration,schedules,curriculum,settings}.php`, `sis/app/views/{layout,assessment_sheet}.php`, `sis/app/lib/{grading,schedule-auto,core,auth}.php`, `shared/{module-access,schedule-teacher-sync}.php`, `sis/app/bootstrap.php`, `sis/index.php`, `sis/assets/{app.js,standard-toolbar.js,subject-units.js,blue-theme.css}`, `pages/*.html`, `.github/workflows/tests.yml`, `sis/tests/{v63-fixes.php,browser-smoke.mjs}`.

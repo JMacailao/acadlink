@@ -56,8 +56,14 @@ if ($isPost) {
         $kind = (string) In::enum($_POST, 'kind', ['charge', 'less'], true, 'Type');
         $cents = (int) In::money($_POST, 'amount', true, 'Amount', false);
         $label = (string) In::str($_POST, 'label', 100, true, 'Description');
-        $added = FormOnce::run($_POST, fn() => Registration::addAdjustment((int) $id, $label, $kind === 'less' ? -$cents : $cents, $kind === 'less' ? 'Less / Discount' : 'Other Charges'));
+        if ($kind === 'less') { // v66: lowering what the student pays: reason, and approval after a reopen
+            $res = null;
+            $ran = FormOnce::run($_POST, function () use (&$res, $id, $label, $cents) { $res = Reductions::request((int) $id, 'LESS', ['label' => $label, 'cents' => $cents], 'Less ' . Money::fmt($cents) . ': ' . $label, (string) ($_POST['reason'] ?? '')); });
+            flash(!$ran ? 'info' : ($res === 'pending' ? 'info' : 'success'), !$ran ? 'This adjustment was already added. It was not added again.' : ($res === 'pending' ? 'Sent for approval. The assessment changes when an approver accepts it.' : 'Adjustment added.'));
+        } else {
+        $added = FormOnce::run($_POST, fn() => Registration::addAdjustment((int) $id, $label, $cents, 'Other Charges'));
         flash($added ? 'success' : 'info', $added ? 'Adjustment added.' : 'This adjustment was already added. It was not added again.');
+        }
     } elseif ($a === 'charge_labels') {
         $selected = $_POST['label_ids'] ?? [];
         $amounts = $_POST['amounts'] ?? [];
@@ -78,11 +84,20 @@ if ($isPost) {
         Registration::chargeLabel((int) $id, (int) ($_POST['label_id'] ?? 0), $amt === '' ? null : (int) In::money($_POST, 'amount', true, 'Amount', true));
         flash('success', 'Fee added to this student\'s assessment.');
     } elseif ($a === 'remove_label') {
-        Registration::removeLabel((int) $id, (int) ($_POST['label_id'] ?? 0));
-        flash('success', 'Fee taken off this student\'s assessment.');
+        $lid = (int) ($_POST['label_id'] ?? 0); $lname = (string) (Db::val('SELECT name FROM sis_fee_labels WHERE id = ?', [$lid]) ?? 'Fee');
+        $res = Reductions::request((int) $id, 'REMOVE_FEE', ['label_id' => $lid], 'Take off ' . $lname, (string) ($_POST['reason'] ?? ''));
+        flash($res === 'pending' ? 'info' : 'success', $res === 'pending' ? 'Sent for approval: ' . $lname . '. The assessment changes when an approver accepts it.' : 'Fee taken off this student\'s assessment.');
     } elseif ($a === 'skip_subject_fee' || $a === 'charge_subject_fee') { // v65.11
-        Registration::skipSubjectFee((int) $id, (string) ($_POST['subject_doc_id'] ?? ''), (int) ($_POST['label_id'] ?? 0), $a === 'skip_subject_fee');
-        flash('success', $a === 'skip_subject_fee' ? 'Fee taken off this student\'s assessment for that subject.' : 'Fee charged again for that subject.');
+        $sd = (string) ($_POST['subject_doc_id'] ?? ''); $lid = (int) ($_POST['label_id'] ?? 0);
+        if ($a === 'charge_subject_fee') { Registration::skipSubjectFee((int) $id, $sd, $lid, false); flash('success', 'Fee charged again for that subject.'); }
+        else {
+            $sub = GS::get('subjects', $sd); $lname = (string) (Db::val('SELECT name FROM sis_fee_labels WHERE id = ?', [$lid]) ?? 'Fee');
+            $res = Reductions::request((int) $id, 'SKIP_SUBJECT_FEE', ['subject_doc_id' => $sd, 'label_id' => $lid], 'Take off ' . $lname . ' · ' . ($sub['subjectCode'] ?? ''), (string) ($_POST['reason'] ?? ''));
+            flash($res === 'pending' ? 'info' : 'success', $res === 'pending' ? 'Sent for approval. The assessment changes when an approver accepts it.' : 'Fee taken off this student\'s assessment for that subject.');
+        }
+    } elseif ($a === 'cancel_change') { // v66: take back a request waiting for approval
+        Reductions::cancel((int) ($_POST['change_id'] ?? 0));
+        flash('success', 'Request cancelled.');
     } elseif ($a === 'reset_label') {
         Registration::resetLabel((int) $id, (int) ($_POST['label_id'] ?? 0));
         flash('success', 'Fee back to the assessment name\'s amount.');
@@ -90,8 +105,10 @@ if ($isPost) {
         Registration::removeAdjustment((int) $id, (int) $_POST['item_id']);
         flash('success', 'Adjustment removed.');
     } elseif ($a === 'give_discount') {
-        Discounts::give((int) $id, (int) In::int($_POST, 'discount_id', true, 'Scholarship / discount'), In::str($_POST, 'remarks', 255));
-        flash('success', 'Scholarship / discount given. The assessment was recomputed.');
+        $did = (int) In::int($_POST, 'discount_id', true, 'Scholarship / discount'); $remarks = (string) (In::str($_POST, 'remarks', 255) ?? '');
+        $dname = (string) (Db::val('SELECT name FROM sis_discounts WHERE id = ?', [$did]) ?? 'Scholarship / discount');
+        $res = Reductions::request((int) $id, 'GIVE_DISCOUNT', ['discount_id' => $did, 'remarks' => $remarks], 'Give ' . $dname, (string) ($_POST['reason'] ?? $remarks));
+        flash($res === 'pending' ? 'info' : 'success', $res === 'pending' ? 'Sent for approval: ' . $dname . '. The assessment changes when an approver accepts it.' : 'Scholarship / discount given. The assessment was recomputed.');
     } elseif ($a === 'remove_discount') {
         Discounts::remove((int) $id, (int) ($_POST['discount_id'] ?? 0));
         flash('success', 'Scholarship / discount removed. The assessment was recomputed.');
@@ -109,8 +126,9 @@ if ($isPost) {
         Registration::void((int) $id, (string) ($_POST['reason'] ?? ''));
         flash('success', 'Registration voided. It is kept for the record and can only be viewed.');
     } elseif ($a === 'reopen') {
-        Registration::reopen((int) $id, (string) ($_POST['reason'] ?? ''));
-        flash('success', 'Registration reopened for changes.');
+        Auth::require('enrollment.reopen');
+        $res = Reductions::request((int) $id, 'REOPEN', [], 'Reopen the confirmed enrollment', (string) ($_POST['reason'] ?? ''));
+        flash($res === 'pending' ? 'info' : 'success', $res === 'pending' ? 'Sent for approval. The registration stays confirmed until an approver accepts.' : 'Registration reopened for changes.');
     } elseif ($a === 'assign_teacher') {
         $r = Registration::get((int) $id);
         $subjectId = (string) ($_POST['subject_id'] ?? '');
@@ -406,6 +424,16 @@ if ($id) {
             <div class="or-grid-wrap auto"><table class="or-grid"><thead><tr><th>Official Receipt Number</th><th>Date</th><th>Method</th><th>Cashier Name</th><th class="n">Amount</th></tr></thead><tbody>
             <?php foreach ($pays as $p): ?><tr class="<?= $p['status'] === 'VOIDED' ? 'is-void' : '' ?>"><td class="mono"><a href="<?= url('receipt', ['id' => $p['id']]) ?>" data-frame="<?= url('receipt', ['id' => $p['id'], 'embed' => 1]) ?>" data-frame-title="Official receipt" data-frame-size="lg"><?= h($p['receipt_no']) ?></a></td><td><?= h(date('m/d/Y g:i A', strtotime($p['paid_at']))) ?></td><td><?= h($p['method']) ?></td><td><?= h($p['full_name']) ?></td><td class="n"><?= Money::fmt(Money::cents($p['amount'])) ?></td></tr><?php endforeach; ?>
             <?php if (!$pays): ?><tr class="empty"><td colspan="5">No payments yet.</td></tr><?php endif; ?></tbody></table></div></div>
+          <?php $changes = Reductions::forRegistration((int) $id); if ($changes): /* v66 */ ?>
+          <div class="or-panel mt-2 d-print-none" id="regChanges"><div class="or-panel-title">Changes and approvals</div>
+            <div class="or-grid-wrap auto"><table class="or-grid"><thead><tr><th>Date</th><th>Change</th><th>Reason</th><th>Asked by</th><th>Status</th><th class="n">Total before → after</th><th></th></tr></thead><tbody>
+            <?php foreach ($changes as $c): ?><tr class="<?= $c['status'] === 'PENDING' ? 'is-pending' : '' ?>">
+              <td class="text-nowrap"><?= h(date('M j, Y g:i A', strtotime($c['requested_at']))) ?></td><td><?= h($c['summary']) ?></td><td><?= h($c['reason'] !== '' ? $c['reason'] : '—') ?></td><td><?= h($c['requested_by_name'] ?? '') ?></td>
+              <td><span class="chg-status chg-<?= strtolower($c['status']) ?>"><?= h(Reductions::STATUSES[$c['status']]) ?></span><?= $c['decided_by_name'] && $c['status'] !== 'APPLIED' ? '<div class="small text-muted">' . h($c['decided_by_name']) . ($c['decision_note'] ? ': ' . h($c['decision_note']) : '') . '</div>' : '' ?></td>
+              <td class="n text-nowrap"><?= $c['total_before'] !== null ? '₱' . Money::fmt(Money::cents($c['total_before'])) : '' ?><?= $c['total_after'] !== null ? ' → ₱' . Money::fmt(Money::cents($c['total_after'])) : '' ?></td>
+              <td class="text-end"><?php if ($c['status'] === 'PENDING'): ?><?php if (Reductions::canApprove()): ?><a class="btn btn-sm btn-primary" href="<?= url('approvals') ?>">Review</a><?php elseif ((int) $c['requested_by'] === (int) Auth::id()): ?><?= post_button('registration', ['id' => $id], ['action' => 'cancel_change', 'change_id' => $c['id']], 'Cancel', 'btn-sm btn-outline-secondary', 'Cancel this request?') ?><?php endif; ?><?php endif; ?></td></tr><?php endforeach; ?>
+            </tbody></table></div></div>
+          <?php endif; ?>
         </div>
 
         <aside class="or-side tools-first d-print-none" data-keep-side aria-label="Registration tools">
@@ -515,7 +543,8 @@ if ($id) {
       <div class="modal-body">
         <?php if ($progs): ?>
         <label class="form-label small" for="mDprog">Program</label><select class="form-select mb-3" id="mDprog" name="discount_id" required><option value="">— choose a program —</option><?php foreach ($progs as $d): ?><option value="<?= (int) $d['id'] ?>"><?= h($d['name'] . ' — ' . Discounts::describe($d)) ?></option><?php endforeach; ?></select>
-        <label class="form-label small" for="mDrem">Remarks (optional)</label><input class="form-control" id="mDrem" name="remarks" maxlength="255" placeholder="e.g. Dean's lister, 2nd Semester">
+        <label class="form-label small" for="mDrem">Reason<?= Reductions::reasonRequired() ? ' *' : ' (optional)' ?></label><input class="form-control" id="mDrem" name="reason" maxlength="255" placeholder="e.g. Dean's lister, 2nd Semester"<?= Reductions::reasonRequired() ? ' required' : '' ?>>
+        <?php if (Reductions::needsApproval((int) $id, 'GIVE_DISCOUNT') && !Reductions::canApprove()): ?><div class="alert alert-info small py-2 mt-2 mb-0"><i class="bi bi-hourglass-split me-1"></i>This enrollment was reopened, so this waits for an approver.</div><?php endif; ?>
         <div class="form-text">The amount is computed from this student’s fees and updates when subjects or fees change.</div>
         <?php else: ?><p class="mb-0 text-muted">No other active programs. Add them in <a href="<?= url('discounts') ?>">Scholarships &amp; Discounts</a>.</p><?php endif; ?>
       </div>
@@ -576,7 +605,9 @@ if ($id) {
       <div class="modal-body">
         <div class="row g-2"><div class="col-5"><label class="form-label small" for="mAkind">Type</label><select class="form-select" id="mAkind" name="kind"><option value="charge">Charge</option><option value="less">Less / discount</option></select></div>
           <div class="col-7"><label class="form-label small" for="mAamt">Amount ₱</label><input class="form-control" id="mAamt" name="amount" required inputmode="decimal"></div>
-          <div class="col-12"><label class="form-label small" for="mAlabel">Description</label><input class="form-control" id="mAlabel" name="label" required maxlength="100" placeholder="e.g. Late registration, Sibling discount"></div></div>
+          <div class="col-12"><label class="form-label small" for="mAlabel">Description</label><input class="form-control" id="mAlabel" name="label" required maxlength="100" placeholder="e.g. Late registration, Sibling discount"></div>
+          <div class="col-12"><label class="form-label small" for="mAreason">Reason <span class="text-muted">(needed for Less / discount)</span></label><input class="form-control" id="mAreason" name="reason" maxlength="255" placeholder="Why is the student charged less?"></div></div>
+        <?php if (Reductions::needsApproval((int) $id, 'LESS') && !Reductions::canApprove()): ?><div class="alert alert-info small py-2 mt-2 mb-0"><i class="bi bi-hourglass-split me-1"></i>This enrollment was reopened: a Less / discount waits for an approver.</div><?php endif; ?>
       </div>
       <div class="modal-footer"><button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button><button class="btn btn-primary">Add</button></div>
       </form>
@@ -601,8 +632,8 @@ if ($id) {
     <div class="modal fade" id="mReopen" tabindex="-1" aria-labelledby="mReopenT" aria-hidden="true"><div class="modal-dialog modal-dialog-centered"><div class="modal-content">
       <form method="post" data-confirm="Reopen this registration for changes?"><?= csrf_field() ?><input type="hidden" name="action" value="reopen">
       <div class="modal-header"><h2 class="modal-title fs-5" id="mReopenT">Reopen registration</h2><button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button></div>
-      <div class="modal-body"><label class="form-label small" for="mRreason">Reason for reopening</label><input class="form-control" id="mRreason" name="reason" required maxlength="255"><div class="form-text">Saved in the activity log.</div></div>
-      <div class="modal-footer"><button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button><button class="btn btn-primary">Reopen</button></div>
+      <div class="modal-body"><?php if (Reductions::needsApproval((int) $id, 'REOPEN') && !Reductions::canApprove()): ?><div class="alert alert-info small py-2"><i class="bi bi-hourglass-split me-1"></i>Reopening waits for an approver. The registration stays confirmed until it is approved.</div><?php endif; ?><label class="form-label small" for="mRreason">Reason for reopening</label><input class="form-control" id="mRreason" name="reason" required maxlength="255"><div class="form-text">Saved in the activity log.</div></div>
+      <div class="modal-footer"><button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button><button class="btn btn-primary"><?= Reductions::needsApproval((int) $id, 'REOPEN') && !Reductions::canApprove() ? 'Ask to reopen' : 'Reopen' ?></button></div>
       </form>
     </div></div></div>
     <?php endif; ?>

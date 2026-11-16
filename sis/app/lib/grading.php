@@ -628,7 +628,7 @@ final class GS
         return self::get('curriculum', self::curriculumId($program, $yearLevel, $term));
     }
 
-    public static function saveCurriculum(string $program, string $yearLevel, string $term, array $subjectIds, ?array $subjectTeachers=null, ?string $name=null): string
+    public static function saveCurriculum(string $program, string $yearLevel, string $term, array $subjectIds, ?array $subjectTeachers=null, ?string $name=null, ?string $fromId=null): string
     {
         Auth::require('curriculum.edit');
         $program = strtoupper(trim($program));
@@ -637,15 +637,30 @@ final class GS
         if ($term !== '' && !in_array($term, TERMS, true)) throw new AppError('Choose a term.');
         if ($term === '' && !self::get('curriculum', self::curriculumId($program, $yearLevel, ''))) throw new AppError('Choose the semester: 1st Semester, 2nd Semester, 3rd Semester or Summer.');
         if ($name !== null) { $name = trim(preg_replace('/\s+/u', ' ', $name)); if (mb_strlen($name) > 80) throw new AppError('Keep the curriculum name to 80 characters.'); }
-        return CurriculumAssignments::locked(Db::pdo(),function()use($program,$yearLevel,$term,$subjectIds,$subjectTeachers,$name){
-            return Db::tx(function()use($program,$yearLevel,$term,$subjectIds,$subjectTeachers,$name){
+        return CurriculumAssignments::locked(Db::pdo(),function()use($program,$yearLevel,$term,$subjectIds,$subjectTeachers,$name,$fromId){
+            return Db::tx(function()use($program,$yearLevel,$term,$subjectIds,$subjectTeachers,$name,$fromId){
                 $id=self::curriculumId($program,$yearLevel,$term);$before=self::get('curriculum',$id);
-                $data=array_merge($before??['createdAt'=>self::ts()],['program'=>$program,'yearLevel'=>$yearLevel,'term'=>$term,'subjectIds'=>$subjectIds,'updatedAt'=>self::ts()]);
+                // v66: an existing curriculum given another program, year level or term moves there (it used to be copied,
+                // leaving the old one behind). Classes already made for sections stay as they are, with their grades.
+                $moved=null;
+                if ($fromId!==null && $fromId!=='' && $fromId!==$id) {
+                    $moved=self::get('curriculum',$fromId);
+                    if (!$moved) throw new AppError('That curriculum no longer exists. Reload the page.');
+                    if ($before) throw new AppError('There is already a curriculum for '.$program.' · '.$yearLevel.' · '.($term!==''?$term:'no term').'. Open that one to change it, or choose another program, year level or term.');
+                    $before=null;
+                }
+                $data=array_merge($before??($moved?array_diff_key($moved,['id'=>1]):['createdAt'=>self::ts()]),['program'=>$program,'yearLevel'=>$yearLevel,'term'=>$term,'subjectIds'=>$subjectIds,'updatedAt'=>self::ts()]);
                 if ($subjectTeachers!==null) $data['subjectTeachers']=$subjectTeachers;
                 if ($name!==null) $data['name']=$name; // v65.2: optional "BSBA First Year"
                 $service=new CurriculumAssignments(Db::pdo());
                 try {$data=$service->normalize($data,$before);}catch(RuntimeException $e){throw new AppError($e->getMessage());}
                 self::put('curriculum',$id,$data);
+                if ($moved) {
+                    Db::q("DELETE FROM docs WHERE col = 'curriculum' AND id = ?", [$fromId]);
+                    // classes made from it keep pointing to it
+                    Db::q("UPDATE docs SET data = JSON_SET(data, '$.curriculumId', ?) WHERE col = 'gradingAssignments' AND JSON_UNQUOTE(JSON_EXTRACT(data, '$.curriculumId')) = ?", [$id, $fromId]);
+                    Audit::log('curriculum_moved','grading_curriculum',$id,['from'=>$fromId]);
+                }
                 $n=$service->syncCurriculum($id,$before??['subjectIds'=>[],'subjectTeachers'=>[]]);
                 self::$lastCurriculumSync=['created'=>$n]+$service->teacherSync;
                 Audit::log('curriculum_saved','grading_curriculum',$id,['subjects'=>count($subjectIds),'assignments_created'=>$n,'teachers_updated'=>$service->teacherSync['updated'],'teachers_kept'=>$service->teacherSync['kept']]);

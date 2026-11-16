@@ -302,12 +302,19 @@ Array.prototype.forEach.call(document.querySelectorAll('input[placeholder]:not([
         var els = form.querySelectorAll('[name="' + CSS.escape(n + '[]') + '"]');
         if (els.length && els[0].type !== 'checkbox' && els[0].type !== 'radio') Array.prototype.forEach.call(els, function (el, i) { if (i < list.length) put(el, list[i]); });
         else Array.prototype.forEach.call(els, function (el) { put(el, list); });
-      } else Object.keys(v).forEach(function (k) { Array.prototype.forEach.call(form.querySelectorAll('[name="' + CSS.escape(n + '[' + k + ']') + '"]'), function (el) { put(el, v[k]); }); });
+      } else Object.keys(v).forEach(function (k) {
+        var inner = v[k];
+        if (inner !== null && typeof inner === 'object' && !Array.isArray(inner)) { // v66: gen[5][amount]
+          Object.keys(inner).forEach(function (k2) { Array.prototype.forEach.call(form.querySelectorAll('[name="' + CSS.escape(n + '[' + k + '][' + k2 + ']') + '"]'), function (el) { put(el, inner[k2]); }); });
+        } else Array.prototype.forEach.call(form.querySelectorAll('[name="' + CSS.escape(n + '[' + k + ']') + '"]'), function (el) { put(el, inner); });
+      });
     } else Array.prototype.forEach.call(form.querySelectorAll('[name="' + CSS.escape(n) + '"]'), function (el) { put(el, v); });
   });
   // Show the form again if it sits in a pop-up or a closed panel
   var modal = form.closest('.modal');
   if (modal && window.bootstrap) window.bootstrap.Modal.getOrCreateInstance(modal).show();
+  var dlg = form.closest('dialog'); // v66: forms in a <dialog> (e.g. Manage fees) open again too
+  if (dlg && !dlg.open && dlg.showModal) setTimeout(function () { try { if (!dlg.open) dlg.showModal(); } catch (e) {} }, 120);
   var hidden = form.closest('.collapse:not(.show), details:not([open])');
   if (hidden && hidden.tagName === 'DETAILS') hidden.open = true; else if (hidden && window.bootstrap) window.bootstrap.Collapse.getOrCreateInstance(hidden).show();
   form.setAttribute('data-restored', '1');
@@ -361,4 +368,32 @@ document.addEventListener('change', e => {
   window.addEventListener('pageshow', ev => { // coming back with the Back button: show the real page again
     if (ev.persisted) document.querySelectorAll('[data-bnav]').forEach(nav => move(nav, nav.dataset.home));
   });
+})();
+
+// v66: a form marked data-ask-reason (e.g. × on a fee) first asks why, in a small window; the reason is sent with it.
+(function () {
+  if (window.__askReason) return; window.__askReason = true;
+  document.addEventListener('submit', function (e) {
+    var form = e.target;
+    if (!form.matches || !form.matches('form[data-ask-reason]') || form.dataset.reasonGiven === '1') return;
+    e.preventDefault(); e.stopImmediatePropagation();
+    var d = document.createElement('dialog'); d.className = 'ask-reason';
+    var waits = form.dataset.approval === '1';
+    d.innerHTML = '<form method="dialog" class="ask-reason-body"><h2 class="ask-reason-title"></h2>' +
+      (waits ? '<p class="ask-reason-note"><i class="bi bi-hourglass-split" aria-hidden="true"></i> This enrollment was reopened, so this waits for an approver.</p>' : '') +
+      '<label class="form-label small" for="askReasonText">Reason</label><textarea id="askReasonText" class="form-control" rows="3" maxlength="500" required></textarea>' +
+      '<div class="ask-reason-foot"><button type="button" class="btn btn-outline-primary" value="cancel">Cancel</button><button class="btn btn-primary" value="ok">' + (waits ? 'Ask for approval' : 'Take it off') + '</button></div></form>';
+    d.querySelector('.ask-reason-title').textContent = form.dataset.askReason;
+    document.body.appendChild(d);
+    var text = d.querySelector('textarea');
+    d.querySelector('button[value=cancel]').addEventListener('click', function () { d.close(); });
+    d.querySelector('form').addEventListener('submit', function (ev) {
+      if (!text.value.trim()) { ev.preventDefault(); text.focus(); return; }
+      var input = form.querySelector('input[name=reason]') || form.appendChild(Object.assign(document.createElement('input'), { type: 'hidden', name: 'reason' }));
+      input.value = text.value.trim(); form.dataset.reasonGiven = '1';
+      setTimeout(function () { form.requestSubmit ? form.requestSubmit() : form.submit(); }, 0);
+    });
+    d.addEventListener('close', function () { d.remove(); });
+    d.showModal(); text.focus();
+  }, true);
 })();

@@ -316,10 +316,8 @@ test('v65.10: the banded menu in every workspace', function () {
         preg_match('/const ' . $nav . ' = \[(.*?)\n\];/s', $src, $mm); ok(str_contains($mm[1] ?? '', $g), "$nav has no $g group");
     }
     ok(str_contains((string) file_get_contents(SIS_ROOT . '/assets/theme.js'), "if(document.body.classList.contains('sis-easy')){ // v65.10"), 'groups not always open everywhere');
-    foreach (glob(dirname(SIS_ROOT) . '/pages/*.html') as $f) {
-        $h = (string) file_get_contents($f); if (!str_contains($h, 'nav-group-label')) continue;
-        ok(strpos($h, 'href="notifications.html" data-roles') < strpos($h, '>Overview</div>') && strpos($h, '>Overview</div>') < strpos($h, 'href="dashboard.html" data-roles'), basename($f) . ': Notifications, Overview, Dashboard');
-    }
+    $h = (string) file_get_contents(dirname(SIS_ROOT) . '/js/grading-menu.js'); // v66: the Grading menu is written once
+    ok(strpos($h, 'href=\\"notifications.html\\" data-roles') < strpos($h, '>Overview</div>') && strpos($h, '>Overview</div>') < strpos($h, 'href=\\"dashboard.html\\" data-roles'), 'Grading menu: Notifications, Overview, Dashboard');
 });
 
 test('v65.11: an × on each subject tuition line takes it off one student (and Charge again)', function () {
@@ -339,6 +337,40 @@ test('v65.12: an × on each scholarship / discount line of a registration', func
     ok(str_contains($sheet, "'action' => 'remove_discount', 'discount_id' => \$discountIdByLine[\$line['label_name']]"), 'no × on scholarship / discount lines');
     ok(str_contains($sheet, "mb_substr(\$g['name'] . ' (' . Discounts::describe(\$g) . ')', 0, 100)"), 'the line name does not match how the assessment writes it');
     ok(str_contains((string) file_get_contents(SIS_ROOT . '/app/lib/sis.php'), "'label' => \$g['name'] . ' (' . self::describe(\$g) . ')'"), 'discount line names changed: update the statement match');
+});
+
+test('v66: curriculum moves; reductions need a reason and wait after a reopen; menus, units, phones', function () {
+    // #1 a curriculum given another year level moves (no copy left behind), and cannot move onto an existing one
+    $adminId = (int) (Db::val("SELECT id FROM sis_users WHERE role = 'ADMIN' LIMIT 1") ?: Db::insert('sis_users', ['username' => 'v66admin', 'full_name' => 'V66 Admin', 'password_hash' => 'x', 'role' => 'ADMIN']));
+    Auth::actAs($adminId);
+    $doc = fn(string $col, string $id, array $d) => Db::q('INSERT INTO docs (col, id, data) VALUES (?, ?, ?)', [$col, $id, json_encode($d)]);
+    $doc('subjects', 'mv_s1', ['subjectCode' => 'MV1', 'subjectName' => 'Move One', 'units' => 3]);
+    $a = GS::saveCurriculum('MVP', '1st Year', '1st Semester', ['mv_s1'], null, 'MVP One');
+    $b = GS::saveCurriculum('MVP', '2nd Year', '1st Semester', ['mv_s1'], null, '', $a);
+    ok($b === GS::curriculumId('MVP', '2nd Year', '1st Semester') && !Db::val("SELECT 1 FROM docs WHERE col='curriculum' AND id=?", [$a]), 'the old curriculum was left behind');
+    ok((GS::get('curriculum', $b)['name'] ?? '') === '', 'the moved curriculum lost its saved fields');
+    GS::saveCurriculum('MVP', '1st Year', '1st Semester', ['mv_s1']);
+    $refused = false; try { GS::saveCurriculum('MVP', '1st Year', '1st Semester', ['mv_s1'], null, null, $b); } catch (AppError) { $refused = true; }
+    ok($refused, 'moving onto an existing curriculum must be refused');
+    // #2/#10 settings, permission, rules
+    ok(Settings::on('red_reason') && Settings::on('reopen_approval') && Settings::on('red_approve_reopened'), 'reduction controls are not on by default');
+    ok(in_array('red_reason', Settings::SWITCHES, true) && (bool) Db::val("SELECT 1 FROM central_permissions WHERE code='sis.reductions.approve'"), 'setting switch or approver permission missing');
+    ok((bool) Db::val("SELECT 1 FROM central_group_permissions gp JOIN central_groups g ON g.id=gp.group_id WHERE g.code='POWER_USER' AND gp.permission_code='sis.reductions.approve'"), 'the Power User cannot approve');
+    ok((bool) Reductions::needsApproval(999999, 'REOPEN') && !Reductions::needsApproval(999999, 'REMOVE_FEE'), 'reopen waits; a never-reopened registration only needs a reason');
+    Db::q("INSERT INTO sis_audit_logs (action, entity_type, entity_id) VALUES ('registration_reopened', 'registration', '999998')");
+    ok(Reductions::needsApproval(999998, 'REMOVE_FEE') && Reductions::needsApproval(999998, 'GIVE_DISCOUNT'), 'after a reopen, reductions must wait');
+    $pg = (string) file_get_contents(SIS_ROOT . '/app/pages/registration.php');
+    foreach (["Reductions::request((int) \$id, 'REMOVE_FEE'", "Reductions::request((int) \$id, 'SKIP_SUBJECT_FEE'", "Reductions::request((int) \$id, 'GIVE_DISCOUNT'", "Reductions::request((int) \$id, 'LESS'", "Reductions::request((int) \$id, 'REOPEN'"] as $needle)
+        ok(str_contains($pg, $needle), "not controlled: $needle");
+    $rm = substr($pg, (int) strpos($pg, "\$a === 'remove_label'"), 400); ok(!str_contains($rm, 'Registration::removeLabel') && str_contains($rm, "Reductions::request"), 'a fee is still taken off directly');
+    // #3 #4 #5 #6 #7 #8 #9
+    ok(method_exists('ScheduleTeacherSync', 'useClassTeachers') && method_exists('ScheduleAuto', 'draftAll'), 'term-wide schedule tools missing');
+    ok(str_contains((string) file_get_contents(SIS_ROOT . '/app/pages/curriculum.php'), "=== 'units') { // v66"), 'units of many subjects missing');
+    ok(str_contains((string) file_get_contents(SIS_ROOT . '/lib/core.php') ?: (string) file_get_contents(SIS_ROOT . '/app/lib/core.php'), "is_array(\$x) ? array_map(\$clip"), 'nested fields are lost after a refused save');
+    ok(str_contains((string) file_get_contents(SIS_ROOT . '/assets/standard-toolbar.js'), "newSource.classList.add('std-tb-copied')"), 'phones show New twice');
+    foreach (glob(dirname(SIS_ROOT) . '/pages/*.html') as $f) { $h = (string) file_get_contents($f); if (str_contains($h, 'id="sidebar"')) ok(str_contains($h, 'data-grading-menu') && !str_contains($h, 'class="side-link" href="subjects.html"'), basename($f) . ' keeps its own copy of the menu'); }
+    ok(is_file(SIS_ROOT . '/tests/browser-flows.mjs') && str_contains((string) file_get_contents(dirname(SIS_ROOT) . '/.github/workflows/tests.yml'), 'browser-flows.mjs'), 'browser flows not run in GitHub');
+    Auth::actAs(null);
 });
 
 $server->exec("DROP DATABASE IF EXISTS `$name`");

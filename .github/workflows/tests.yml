@@ -132,6 +132,9 @@ jobs:
       - name: Open every system as each role
         run: node sis/tests/browser-smoke.mjs browser-smoke
 
+      - name: Real work in the browser (fees, prices, schedules, approvals)
+        run: node sis/tests/browser-flows.mjs browser-smoke/flows
+
       - name: Screenshots of pages with problems
         if: failure()
         uses: actions/upload-artifact@v4

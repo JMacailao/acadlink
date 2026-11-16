@@ -78,6 +78,15 @@ page_title('Settings', '', 'How the assessment statement and official receipt lo
         <div class="col-md-4"><label class="form-label small" for="rSign">Signature label</label><input class="form-control" id="rSign" name="or_sign" maxlength="60" value="<?= $v('or_sign') ?>" placeholder="e.g. Cashier"></div>
       </div>
     </section>
+    <section class="form-section" id="reductions" aria-labelledby="redTitle">
+      <h2 class="h6" id="redTitle"><i class="bi bi-shield-check me-1" aria-hidden="true"></i>Fee reductions and reopening</h2>
+      <p class="small text-muted">Taking a fee or tuition off, giving a scholarship / discount, or a Less adjustment lowers what a student pays. Every change is listed in Operations → Approvals with its reason. Approvers are the accounts with “Approve fee reductions and reopening” (Users and Groups); the Power User always has it.</p>
+      <div class="d-flex flex-column gap-2">
+        <label class="form-check"><input class="form-check-input" type="checkbox" name="red_reason" value="1"<?= $chk('red_reason') ?>> Ask for a reason when what a student pays is lowered</label>
+        <label class="form-check"><input class="form-check-input" type="checkbox" name="reopen_approval" value="1"<?= $chk('reopen_approval') ?>> Reopening a confirmed enrollment waits for an approver (it stays confirmed until approved)</label>
+        <label class="form-check"><input class="form-check-input" type="checkbox" name="red_approve_reopened" value="1"<?= $chk('red_approve_reopened') ?>> After an enrollment was reopened, lowering its fees waits for an approver</label>
+      </div>
+    </section>
     <section class="form-section">
       <h2 class="h6"><i class="bi bi-calendar-range me-1"></i>Academic terms and deadlines</h2>
       <?php $cal = TermCalendar::all(); ?>

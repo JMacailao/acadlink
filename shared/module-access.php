@@ -32,7 +32,7 @@ final class ModuleAccess
             'grading.reports'    => ['GRADING', 'Academic reports', ['grading.reports.view'], [], []],
             'sis.students'       => ['SIS', 'Students', ['sis.students.view'], ['sis.students.manage'], []],
             'sis.admission'      => ['SIS', 'Admission and enrollment applications', ['sis.admission.view'], ['sis.admission.manage'], ['sis.admission.approve' => 'Admit, reject or cancel admission']],
-            'sis.registration'   => ['SIS', 'Registration', ['sis.registration.view'], ['sis.registration.manage'], ['sis.enrollment.confirm' => 'Confirm enrollment', 'sis.enrollment.reopen' => 'Reopen a confirmed enrollment']],
+            'sis.registration'   => ['SIS', 'Registration', ['sis.registration.view'], ['sis.registration.manage'], ['sis.enrollment.confirm' => 'Confirm enrollment', 'sis.enrollment.reopen' => 'Reopen a confirmed enrollment', 'sis.reductions.approve' => 'Approve fee reductions and reopening']],
             'sis.eligibility'    => ['SIS', 'Enrollment eligibility and holds', ['sis.eligibility.view'], ['sis.eligibility.holds.manage'], []],
             'sis.assessment'     => ['SIS', 'Assessment and fees', ['sis.assessment.view'], ['sis.assessment.manage'], ['sis.discounts.manage' => 'Scholarships and discounts']],
             'sis.cashier'        => ['FINANCE', 'Cashier and receipts (opens in the SIS and in Finance)', ['sis.receipts.view'], ['sis.payments.receive'], ['sis.payments.void' => 'Void payments']],
@@ -187,6 +187,12 @@ final class ModuleAccess
         self::installV60($db);
         self::installV62($db);
         $db->exec("INSERT IGNORE INTO central_permissions(code,workspace,label) VALUES ('lms.manage.all','LMS','Open and manage every LMS class (coordinator)')"); // v61
+        // v66: approvers of fee reductions and of reopening a confirmed enrollment; the Power User has it from the start
+        $db->exec("INSERT IGNORE INTO central_permissions(code,workspace,label) VALUES ('sis.reductions.approve','SIS','Approve fee reductions and reopening')");
+        if (!$db->query("SELECT 1 FROM central_schema_migrations WHERE migration_key='reductions_v66'")->fetchColumn()) {
+            $db->exec("INSERT IGNORE INTO central_group_permissions(group_id,permission_code,access_scope) SELECT id,'sis.reductions.approve','ALL' FROM central_groups WHERE code='POWER_USER'");
+            $db->exec("INSERT IGNORE INTO central_schema_migrations(migration_key) VALUES ('reductions_v66')");
+        }
     }
 
     /** v60: Library permissions and the Librarian group. */

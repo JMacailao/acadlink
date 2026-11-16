@@ -32,7 +32,7 @@ final class ScheduleAuto
      * The draft: ['subjects' => [per subject: code, name, lec, lab, total, need/have hours, teacher], 'rows' => [meetings],
      * 'unplaced' => [messages], 'none' => bool (no classes)].
      */
-    public static function draft(string $section, string $sy, string $term, array $o): array
+    public static function draft(string $section, string $sy, string $term, array $o, array $planned = []): array
     {
         $classes = GS::sectionAssignments($section, $sy, $term);
         $subjects = array_column(GS::subjects(), null, 'id');
@@ -42,6 +42,7 @@ final class ScheduleAuto
         $busy = [];
         foreach (Db::all('SELECT section_doc_id, teacher_doc_id, room_id, days, start_time, end_time, subject_doc_id, kind FROM sis_class_schedules WHERE school_year = ? AND term = ?', [$sy, $term]) as $r)
             foreach (array_filter(explode(',', (string) $r['days'])) as $d) $busy[] = [$d, self::min($r['start_time']), self::min($r['end_time']), (string) $r['section_doc_id'], (string) ($r['teacher_doc_id'] ?? ''), (int) ($r['room_id'] ?? 0)];
+        foreach ($planned as $b) $busy[] = $b; // v66: meetings already drafted for other sections in this run
         // hours this section already has per subject and kind
         $have = [];
         foreach (Db::all('SELECT subject_doc_id, kind, days, start_time, end_time FROM sis_class_schedules WHERE school_year = ? AND term = ? AND section_doc_id = ?', [$sy, $term, $section]) as $r) {
@@ -74,7 +75,7 @@ final class ScheduleAuto
                 if ($placed) {
                     [$from, $room] = $placed;
                     foreach ($days as $d) $busy[] = [$d, $from, $from + $mins, $section, $j['subject']['teacher'], (int) ($room['id'] ?? 0)];
-                    $out['rows'][] = ['subject' => $j['subject']['id'], 'code' => $j['subject']['code'], 'name' => $j['subject']['name'], 'kind' => $j['kind'], 'days' => $days,
+                    $out['rows'][] = ['section' => $section, 'teacher' => $j['subject']['teacher'], 'subject' => $j['subject']['id'], 'code' => $j['subject']['code'], 'name' => $j['subject']['name'], 'kind' => $j['kind'], 'days' => $days,
                         'start' => self::hhmm($from), 'end' => self::hhmm($from + $mins), 'room' => (int) ($room['id'] ?? 0), 'teacher_name' => $j['subject']['teacher_name']];
                     break;
                 }
@@ -82,6 +83,22 @@ final class ScheduleAuto
             if (!$placed) $out['unplaced'][] = $j['subject']['code'] . ' ' . ($j['kind'] === 'LAB' ? 'laboratory' : 'lecture') . ' (' . self::hoursText($j['hours']) . ' a week): no free time for the section' . ($j['subject']['teacher'] !== '' ? ' and ' . $j['subject']['teacher_name'] : '') . ($rooms ? ' with a free room' : '') . '. Add it by hand.';
         }
         usort($out['rows'], fn($a, $b) => [array_search($a['days'][0], array_keys(Schedules::DAYS)), $a['start']] <=> [array_search($b['days'][0], array_keys(Schedules::DAYS)), $b['start']]);
+        return $out;
+    }
+
+    /**
+     * v66: drafts for every section of the term, one after another, so later sections see the teachers and rooms the
+     * earlier ones already use. Returns [section id => ['name' => …, 'draft' => draft()]] (sections without classes left out).
+     */
+    public static function draftAll(string $sy, string $term, array $o): array
+    {
+        $planned = []; $out = [];
+        foreach (GS::sections($sy) as $sec) {
+            $d = self::draft((string) $sec['id'], $sy, $term, $o, $planned);
+            if ($d['none']) continue;
+            foreach ($d['rows'] as $r) foreach ($r['days'] as $day) $planned[] = [$day, self::min($r['start']), self::min($r['end']), (string) $sec['id'], (string) $r['teacher'], (int) $r['room']];
+            $out[(string) $sec['id']] = ['name' => (string) ($sec['sectionName'] ?? ''), 'draft' => $d];
+        }
         return $out;
     }
 
@@ -144,14 +161,16 @@ final class ScheduleAuto
         if (!$subs) throw new AppError('There is nothing to save. Make the draft again.');
         $keep = array_flip(array_map('strval', (array) ($in['a_keep'] ?? [])));
         $col = fn(string $k) => array_values((array) ($in[$k] ?? []));
-        [$kinds, $days, $starts, $ends, $roomsIn] = [$col('a_kind'), $col('a_days'), $col('a_start'), $col('a_end'), $col('a_room')];
+        [$kinds, $days, $starts, $ends, $roomsIn, $secs] = [$col('a_kind'), $col('a_days'), $col('a_start'), $col('a_end'), $col('a_room'), $col('a_section')];
         $n = 0;
-        Db::tx(function () use ($subs, $keep, $kinds, $days, $starts, $ends, $roomsIn, $section, $sy, $term, &$n) {
+        Db::tx(function () use ($subs, $keep, $kinds, $days, $starts, $ends, $roomsIn, $secs, $section, $sy, $term, &$n) {
             foreach ($subs as $i => $sid) {
                 if (!isset($keep[(string) $i])) continue;
                 $s = GS::get('subjects', (string) $sid);
                 try {
-                    Schedules::save(null, ['school_year' => $sy, 'term' => $term, 'section_doc_id' => $section, 'subject_doc_id' => (string) $sid, 'teacher_doc_id' => '',
+                    $rowSection = (string) ($secs[$i] ?? $section); // v66: Auto-schedule all sections sends each row's section
+                    if ($rowSection === '' || !GS::get('sections', $rowSection)) throw new AppError('Choose the section.');
+                    Schedules::save(null, ['school_year' => $sy, 'term' => $term, 'section_doc_id' => $rowSection, 'subject_doc_id' => (string) $sid, 'teacher_doc_id' => '',
                         'room_id' => (string) ($roomsIn[$i] ?? ''), 'days' => (string) ($days[$i] ?? ''), 'start_time' => (string) ($starts[$i] ?? ''), 'end_time' => (string) ($ends[$i] ?? ''),
                         'kind' => in_array($kinds[$i] ?? '', ['LEC', 'LAB'], true) ? $kinds[$i] : 'LEC']);
                 } catch (AppError $e) { throw new AppError(($s['subjectCode'] ?? 'A subject') . ' (row ' . ($i + 1) . '): ' . $e->getMessage()); }
