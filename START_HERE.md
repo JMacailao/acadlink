@@ -1,4 +1,4 @@
-**Updating to v66.4?** Hostinger deploys from GitHub; press Ctrl+F5 once. The Activity Log is sealed and has a tamper check; the database gets two columns automatically.
+**Updating to v66.5?** Hostinger deploys from GitHub; press Ctrl+F5 once. Activity Log: the "Check the log" button and the list show again. Pop-up windows (Receive payment, …) use the blue and orange design.
 
 **Updating to v63.24?** Deploy or upload the changed files (see V63_UPDATE.md) and press Ctrl+F5 once. No database change.
 

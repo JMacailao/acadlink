@@ -757,3 +757,17 @@ Files: `sis/app/lib/core.php` (`Audit`), `sis/app/pages/activity.php`, `sis/app/
 The units editor (Curriculum → Subjects → Edit units) listed every subject with three fields each, so a school with more than about 330 subjects went over the server's limit of 1000 fields per save and the save failed. Now only the rows you changed are sent. You can change up to 300 subjects in one save. If you need to change more, save, then change the rest.
 
 Files: `sis/assets/subject-units.js`, `sis/app/pages/curriculum.php`.
+
+## v66.5 — Activity Log: the list shows under the tamper check again
+
+In v66.4 the new "Tamper check" box took the full height of the page, so the list of entries started far below it and the page looked empty. The box is now only as tall as its contents.
+
+Also: the "Check the log" button was moved by the page into the hidden Actions panel, so on the page it could not be seen. It is now a small form, so it stays in the box (desktop and phones).
+
+Also: pages that open inside a pop-up window (Receive payment in Finance and SIS, New applicant, Register a student, O.R. series, Terms) still had the old green buttons. They now use the blue and orange design too (`body.al-embed`).
+
+Also: on the SIS dashboard a large amount such as ₱12,210,450.00 broke onto two lines in its card. The amounts now stay on one line and their size follows the card's width.
+
+Also: outline buttons in the SIS ("Check the log", "Show", …) still had green text from an older stylesheet, and when pointed at they showed green text on blue, which could not be read. They are now blue, with white text when pointed at. The "default" and "Scholarship" badges and the ticked parts on Backup are blue too.
+
+Files: `sis/assets/blue-theme.css` (version tag 66.5 in `sis/app/views/layout.php`), `sis/app/views/layout.php`, `sis/app/pages/activity.php`.
