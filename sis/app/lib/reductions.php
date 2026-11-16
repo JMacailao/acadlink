@@ -19,6 +19,8 @@ final class Reductions
         'SKIP_SUBJECT_FEE' => 'Take a subject fee off',
         'GIVE_DISCOUNT' => 'Give a scholarship / discount',
         'LESS' => 'Less (discount)',
+        'LOWER_FEE' => 'Charge a fee at a lower amount',
+        'CHANGE_TEMPLATE' => 'Change to a cheaper fee template',
     ];
     public const STATUSES = ['APPLIED' => 'Done', 'PENDING' => 'Waiting for approval', 'APPROVED' => 'Approved', 'REJECTED' => 'Declined', 'CANCELLED' => 'Cancelled'];
     public const PERMISSION = 'sis.reductions.approve';
@@ -28,7 +30,7 @@ final class Reductions
         Db::q("CREATE TABLE IF NOT EXISTS sis_registration_changes (
             id INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
             registration_id INT UNSIGNED NOT NULL,
-            kind ENUM('REOPEN','REMOVE_FEE','SKIP_SUBJECT_FEE','GIVE_DISCOUNT','LESS') NOT NULL,
+            kind ENUM('REOPEN','REMOVE_FEE','SKIP_SUBJECT_FEE','GIVE_DISCOUNT','LESS','LOWER_FEE','CHANGE_TEMPLATE') NOT NULL,
             params TEXT NULL,
             summary VARCHAR(255) NOT NULL,
             reason VARCHAR(500) NOT NULL DEFAULT '',
@@ -39,6 +41,26 @@ final class Reductions
             KEY k_sis_rchg_reg (registration_id), KEY k_sis_rchg_status (status, requested_at),
             CONSTRAINT fk_sis_rchg_reg FOREIGN KEY (registration_id) REFERENCES sis_registrations (id) ON DELETE CASCADE
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci");
+        // v66.1: two more kinds (a fee charged lower than usual; a cheaper fee template)
+        $type = (string) Db::val("SELECT COLUMN_TYPE FROM information_schema.columns WHERE table_schema = DATABASE() AND table_name = 'sis_registration_changes' AND column_name = 'kind'");
+        if ($type !== '' && !str_contains($type, 'CHANGE_TEMPLATE'))
+            Db::q("ALTER TABLE sis_registration_changes MODIFY kind ENUM('REOPEN','REMOVE_FEE','SKIP_SUBJECT_FEE','GIVE_DISCOUNT','LESS','LOWER_FEE','CHANGE_TEMPLATE') NOT NULL");
+    }
+
+    /** v66.1: the usual amount of a fee for this registration: its fee template's amount, else the fee's default. In cents. */
+    public static function usualCents(array $r, int $labelId): int
+    {
+        if ($r['assessment_name_id']) {
+            $v = Db::val('SELECT amount FROM sis_assessment_name_items WHERE assessment_name_id = ? AND label_id = ?', [$r['assessment_name_id'], $labelId]);
+            if ($v !== null) return Money::cents((string) $v);
+        }
+        return Money::cents((string) (Db::val('SELECT default_amount FROM sis_fee_labels WHERE id = ?', [$labelId]) ?? '0'));
+    }
+
+    /** v66.1: the total this registration would have with another fee template (null = none). In cents. */
+    public static function totalWithTemplate(array $r, ?int $nameId): int
+    {
+        return (int) Registration::build(array_replace($r, ['assessment_name_id' => $nameId]))['total_cents'];
     }
 
     public static function canApprove(): bool { return Auth::can('registration.approve'); }
@@ -133,6 +155,8 @@ final class Reductions
             'SKIP_SUBJECT_FEE' => Registration::skipSubjectFee($regId, (string) ($p['subject_doc_id'] ?? ''), (int) ($p['label_id'] ?? 0)),
             'GIVE_DISCOUNT' => Discounts::give($regId, (int) ($p['discount_id'] ?? 0), ($p['remarks'] ?? '') !== '' ? (string) $p['remarks'] : $reason),
             'LESS' => Registration::addAdjustment($regId, (string) ($p['label'] ?? 'Less'), -abs((int) ($p['cents'] ?? 0)), 'Less / Discount'),
+            'LOWER_FEE' => Registration::chargeLabel($regId, (int) ($p['label_id'] ?? 0), (int) ($p['cents'] ?? 0)),
+            'CHANGE_TEMPLATE' => Registration::update($regId, ($p['name_id'] ?? null) !== null ? (int) $p['name_id'] : null, array_column(Db::all('SELECT subject_doc_id FROM sis_registration_subjects WHERE registration_id = ?', [$regId]), 'subject_doc_id'), true),
         };
     }
 
