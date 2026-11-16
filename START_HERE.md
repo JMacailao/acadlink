@@ -1,4 +1,4 @@
-**Updating to v66.3?** Hostinger deploys from GitHub; press Ctrl+F5 once. The Grading System menu no longer has Academic setup (managed in the SIS); no database step.
+**Updating to v66.4?** Hostinger deploys from GitHub; press Ctrl+F5 once. The Activity Log is sealed and has a tamper check; the database gets two columns automatically.
 
 **Updating to v63.24?** Deploy or upload the changed files (see V63_UPDATE.md) and press Ctrl+F5 once. No database change.
 
