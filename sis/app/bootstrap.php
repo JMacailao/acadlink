@@ -129,7 +129,7 @@ function sis_boot(): void
  * v63.21: the version of the tables this code expects. Raise it whenever sis_upgrade() (or an install() it calls) gains
  * a new step, so every school's database runs the upgrade once more; otherwise sis_upgrade() is one small query.
  */
-const SIS_SCHEMA_VERSION = 37; // v66: sis_registration_changes (v65.11: sis_registration_subject_skips)
+const SIS_SCHEMA_VERSION = 38; // v66.1: more change kinds; v66: sis_registration_changes (v65.11: sis_registration_subject_skips)
 
 function sis_upgrade(): void
 {

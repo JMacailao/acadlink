@@ -713,3 +713,14 @@ Files: `sis/app/views/assessment_sheet.php`; test in `sis/tests/v63-fixes.php`.
 Database: `sis_registration_changes` (schema 37) and the permission `sis.reductions.approve` are added automatically.
 
 Files: `sis/app/lib/reductions.php` (new), `sis/app/pages/approvals.php` (new), `js/grading-menu.js` (new), `sis/tests/browser-flows.mjs` (new), `sis/app/pages/{registration,schedules,curriculum,settings}.php`, `sis/app/views/{layout,assessment_sheet}.php`, `sis/app/lib/{grading,schedule-auto,core,auth}.php`, `shared/{module-access,schedule-teacher-sync}.php`, `sis/app/bootstrap.php`, `sis/index.php`, `sis/assets/{app.js,standard-toolbar.js,subject-units.js,blue-theme.css}`, `pages/*.html`, `.github/workflows/tests.yml`, `sis/tests/{v63-fixes.php,browser-smoke.mjs}`.
+
+## v66.1 — The last two ways to lower fees are controlled too
+
+v66 controls the × on fees and tuition, scholarships, Less adjustments and reopening. Two other ways to lower what a student pays did not ask anything; now they work the same way (a reason; after a reopen, an approver; listed in Operations → Approvals → History with the total before → after):
+- **Add a fee at a lower amount** — e.g. Registration Fee ₱100 when its usual amount (the student's fee template, else the fee's default) is ₱500. Fees at their usual amount or higher are added as before, with no reason.
+- **A cheaper fee template** (Assessment name), including "none (no fees)", when the new total is lower than the current one.
+Both windows have a **Reason** box.
+
+Database: the change kinds LOWER_FEE and CHANGE_TEMPLATE are added to `sis_registration_changes` automatically (schema 38).
+
+Files: `sis/app/lib/reductions.php`, `sis/app/pages/registration.php`, `sis/app/bootstrap.php`; test in `sis/tests/v63-fixes.php`.

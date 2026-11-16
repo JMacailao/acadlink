@@ -373,6 +373,20 @@ test('v66: curriculum moves; reductions need a reason and wait after a reopen; m
     Auth::actAs(null);
 });
 
+test('v66.1: a lower fee amount and a cheaper fee template go through the reduction rules', function () {
+    $pg = (string) file_get_contents(SIS_ROOT . '/app/pages/registration.php');
+    ok(str_contains($pg, "Reductions::request((int) \$id, 'LOWER_FEE'") && substr_count($pg, "'LOWER_FEE'") >= 2, 'Add a fee at a lower amount is not controlled');
+    ok(str_contains($pg, "Reductions::request((int) \$id, 'CHANGE_TEMPLATE'") && str_contains($pg, 'Reductions::totalWithTemplate($r, $nameId)'), 'a cheaper fee template is not controlled');
+    ok(str_contains($pg, 'id="mFeeReason" name="reason"') && str_contains($pg, 'id="mAnameReason" name="reason"'), 'no reason boxes');
+    ok(isset(Reductions::KINDS['LOWER_FEE'], Reductions::KINDS['CHANGE_TEMPLATE']), 'kinds missing');
+    ok(str_contains((string) Db::val("SELECT COLUMN_TYPE FROM information_schema.columns WHERE table_schema = DATABASE() AND table_name = 'sis_registration_changes' AND column_name = 'kind'"), 'CHANGE_TEMPLATE'), 'table cannot store the new kinds');
+    $name = (int) Db::insert('sis_assessment_names', ['name' => 'V661 template', 'is_active' => 1]);
+    $cat = (int) (Db::val('SELECT id FROM sis_fee_categories LIMIT 1') ?: Db::insert('sis_fee_categories', ['name' => 'V661 cat']));
+    $lab = (int) Db::insert('sis_fee_labels', ['category_id' => $cat, 'name' => 'V661 fee', 'charge_type' => 'FIXED', 'default_amount' => '300.00', 'is_active' => 1]);
+    Db::insert('sis_assessment_name_items', ['assessment_name_id' => $name, 'label_id' => $lab, 'charge_type' => 'FIXED', 'amount' => '450.00']);
+    ok(Reductions::usualCents(['assessment_name_id' => $name], $lab) === 45000 && Reductions::usualCents(['assessment_name_id' => null], $lab) === 30000, 'usual amount: the template first, else the fee default');
+});
+
 $server->exec("DROP DATABASE IF EXISTS `$name`");
 echo "$pass passed, $fail failed\n";
 exit($fail ? 1 : 0);

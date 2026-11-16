@@ -42,8 +42,15 @@ if ($isPost) {
         $nameId = $a === 'subjects' ? ($r['assessment_name_id'] ? (int) $r['assessment_name_id'] : null) : In::int($_POST, 'assessment_name_id');
         $subjectIds = $a === 'aname' ? array_column(Db::all('SELECT subject_doc_id FROM sis_registration_subjects WHERE registration_id = ?', [(int) $id]), 'subject_doc_id')
             : array_values(array_filter((array) ($_POST['subjects'] ?? []), 'is_string'));
+        // v66.1: a cheaper fee template lowers what the student pays: reason, and approval after a reopen
+        if ($a === 'aname' && (int) ($nameId ?? 0) !== (int) ($r['assessment_name_id'] ?? 0) && ($newTotal = Reductions::totalWithTemplate($r, $nameId)) < Money::cents($r['total_amount'])) {
+            $nname = $nameId ? (string) (Db::val('SELECT name FROM sis_assessment_names WHERE id = ?', [$nameId]) ?? '') : 'none (no fees)';
+            $res = Reductions::request((int) $id, 'CHANGE_TEMPLATE', ['name_id' => $nameId], 'Change the fee template to ' . $nname . ' (₱' . Money::fmt(Money::cents($r['total_amount'])) . ' → about ₱' . Money::fmt($newTotal) . ')', (string) ($_POST['reason'] ?? ''));
+            flash($res === 'pending' ? 'info' : 'success', $res === 'pending' ? 'Sent for approval: the cheaper fee template. The assessment changes when an approver accepts it.' : 'Assessment name changed. The fees were recomputed.');
+        } else {
         Registration::update((int) $id, $nameId, $subjectIds, $a === 'aname', In::str($_POST, 'prereq_override', 255));
         flash('success', $a === 'aname' ? 'Assessment name changed. The fees were recomputed.' : 'Subjects saved. The assessment was recomputed.');
+        }
     } elseif ($a === 'curriculum') {
         $r = Registration::get((int) $id);
         $curId = trim((string) ($_POST['curriculum_id'] ?? ''));
@@ -77,12 +84,29 @@ if ($isPost) {
             $amountText = trim((string) $rawAmount);
             $charges[$labelId] = $amountText === '' ? null : In::money(['amount' => $amountText], 'amount', true, 'Fee amount', true);
         }
-        Registration::chargeLabels((int) $id, $charges);
-        flash('success', count($charges) . ' fee item(s) added to this student\'s assessment.');
+        // v66.1: a fee charged lower than its usual amount lowers what the student pays: reason, approval after a reopen
+        $reg = Registration::get((int) $id); $lowered = []; $pending = 0;
+        foreach ($charges as $lid => $cents) if ($cents !== null && $cents < Reductions::usualCents($reg, (int) $lid)) { $lowered[(int) $lid] = (int) $cents; unset($charges[$lid]); }
+        if ($lowered && trim((string) ($_POST['reason'] ?? '')) === '' && Reductions::reasonRequired()) throw new AppError('Give the reason: ' . count($lowered) . ' fee(s) are lower than their usual amount.');
+        if ($charges) Registration::chargeLabels((int) $id, $charges);
+        foreach ($lowered as $lid => $cents) {
+            $lname = (string) (Db::val('SELECT name FROM sis_fee_labels WHERE id = ?', [$lid]) ?? 'Fee');
+            if (Reductions::request((int) $id, 'LOWER_FEE', ['label_id' => $lid, 'cents' => $cents], $lname . ' at ₱' . Money::fmt($cents) . ' (usually ₱' . Money::fmt(Reductions::usualCents($reg, $lid)) . ')', (string) ($_POST['reason'] ?? '')) === 'pending') $pending++;
+        }
+        $done = count($charges) + count($lowered) - $pending;
+        flash($pending ? 'info' : 'success', ($done ? $done . ' fee item(s) added to this student\'s assessment.' : '') . ($pending ? ($done ? ' ' : '') . $pending . ' fee(s) at a lower amount sent for approval. The assessment changes when an approver accepts.' : ''));
     } elseif ($a === 'charge_label') {
         $amt = trim((string) ($_POST['amount'] ?? ''));
-        Registration::chargeLabel((int) $id, (int) ($_POST['label_id'] ?? 0), $amt === '' ? null : (int) In::money($_POST, 'amount', true, 'Amount', true));
-        flash('success', 'Fee added to this student\'s assessment.');
+        $lid = (int) ($_POST['label_id'] ?? 0); $cents = $amt === '' ? null : (int) In::money($_POST, 'amount', true, 'Amount', true);
+        $reg = Registration::get((int) $id);
+        if ($cents !== null && $cents < Reductions::usualCents($reg, $lid)) { // v66.1
+            $lname = (string) (Db::val('SELECT name FROM sis_fee_labels WHERE id = ?', [$lid]) ?? 'Fee');
+            $res = Reductions::request((int) $id, 'LOWER_FEE', ['label_id' => $lid, 'cents' => $cents], $lname . ' at ₱' . Money::fmt($cents) . ' (usually ₱' . Money::fmt(Reductions::usualCents($reg, $lid)) . ')', (string) ($_POST['reason'] ?? ''));
+            flash($res === 'pending' ? 'info' : 'success', $res === 'pending' ? 'Sent for approval: ' . $lname . ' at a lower amount.' : 'Fee added to this student\'s assessment.');
+        } else {
+            Registration::chargeLabel((int) $id, $lid, $cents);
+            flash('success', 'Fee added to this student\'s assessment.');
+        }
     } elseif ($a === 'remove_label') {
         $lid = (int) ($_POST['label_id'] ?? 0); $lname = (string) (Db::val('SELECT name FROM sis_fee_labels WHERE id = ?', [$lid]) ?? 'Fee');
         $res = Reductions::request((int) $id, 'REMOVE_FEE', ['label_id' => $lid], 'Take off ' . $lname, (string) ($_POST['reason'] ?? ''));
@@ -531,6 +555,7 @@ if ($id) {
         <select class="form-select" id="mAname2" name="assessment_name_id"><option value="">— none (no fees) —</option>
           <?php foreach (Assessment::names(true) as $n): $isMatch = (int) $n['id'] === (int) ($matchName['id'] ?? 0); ?><option value="<?= (int) $n['id'] ?>"<?= (int) $n['id'] === (int) $r['assessment_name_id'] ? ' selected' : '' ?>><?= h($n['name']) ?><?= $isMatch ? ' — best match' : '' ?></option><?php endforeach; ?>
         </select>
+        <label class="form-label small mt-2" for="mAnameReason">Reason <span class="text-muted">(needed when the new template is cheaper)</span></label><input class="form-control mb-2" id="mAnameReason" name="reason" maxlength="255" placeholder="Why does this student get a cheaper template?">
         <div class="form-text">All the fees of the chosen name are charged, including any you took off earlier; fees you added or changed for this student stay as they are. Set up names in <a href="<?= url('assessment', ['tab' => 'names']) ?>">Assessment → Names</a>.</div>
       </div>
       <div class="modal-footer"><button type="button" class="btn btn-sm btn-outline-secondary" data-bs-dismiss="modal">Cancel</button><button class="btn btn-sm btn-primary">Save and recompute</button></div>
@@ -579,6 +604,7 @@ if ($id) {
         <?php else: ?><p class="alert alert-light border mb-0">No active fee labels are available. Add labels in Assessment before charging an extra fee.</p><?php endif; ?>
         <p class="small text-muted mt-2 mb-0" data-fee-empty<?= $feeLabels ? '' : ' hidden' ?>>Select fee items above to review them here. Leave a custom rate blank to use the label's default; per-unit and per-subject fees use the student's registered units or subjects.</p>
       </div>
+      <div class="px-3 pb-2"><label class="form-label small mb-1" for="mFeeReason">Reason <span class="text-muted">(needed when an amount is lower than usual)</span></label><input class="form-control form-control-sm" id="mFeeReason" name="reason" maxlength="255" placeholder="Why is this fee lower for this student?"></div>
       <div class="modal-footer"><button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button><button type="submit" class="btn btn-primary" data-fee-submit disabled>Add selected fees</button></div>
       </form>
     </div></div></div>
