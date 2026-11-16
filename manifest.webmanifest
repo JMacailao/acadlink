@@ -1,13 +1,14 @@
 {
-  "name": "AcadLink Grading System",
+  "id": "./",
+  "name": "AcadLink",
   "short_name": "AcadLink",
-  "description": "Subjects, sections, students, grading assignments and final grades.",
-  "start_url": "./",
+  "description": "AcadLink school management system: enrollment, cashier, grading, LMS, library, canteen and the Student Portal.",
+  "start_url": "sis/index.php?r=workspaces",
   "scope": "./",
   "display": "standalone",
   "orientation": "any",
-  "background_color": "#f4f5f7",
-  "theme_color": "#14203a",
+  "background_color": "#ffffff",
+  "theme_color": "#123D70",
   "icons": [
     {
       "src": "icons/icon-192.png",
