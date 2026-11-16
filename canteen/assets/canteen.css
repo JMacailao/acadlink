@@ -1,6 +1,5 @@
 /* v59 Canteen POS: orange accents on the shared AcadLink shell, and the Cashier screen. */
 html[data-app="canteen"] { --canteen: #e0650f; --canteen-dark: #b84e08; --canteen-soft: #fff1e6; --canteen-line: #f6d3b8; --cpos-card: #fff; --cpos-ink: #1f2a37; --cpos-muted: #6b7280; --cpos-border: #e6e8ec; }
-@media (prefers-color-scheme: dark) { html[data-app="canteen"]:not([data-theme="light"]) { --canteen-soft: #3a2212; --canteen-line: #6b3a17; --cpos-card: #1b222c; --cpos-ink: #eef1f6; --cpos-muted: #a7b0bd; --cpos-border: #303846; } }
 html[data-app="canteen"][data-theme="dark"] { --canteen-soft: #3a2212; --canteen-line: #6b3a17; --cpos-card: #1b222c; --cpos-ink: #eef1f6; --cpos-muted: #a7b0bd; --cpos-border: #303846; }
 
 html[data-app="canteen"] #sidebar .side-link.active { background: var(--canteen) !important; color: #fff !important; }

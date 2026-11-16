@@ -1,3 +1,5 @@
+/* v66.8: AcadLink is light only, even when the phone is in Dark Mode (form boxes and scrollbars too). */
+:root { color-scheme: light; }
 /* v64 AcadLink design: white sidebar and header, light blue-gray page, deep-blue headings and banner, royal-blue icons
    and links, orange for the selected menu item and the primary action. Loaded last for the staff SIS; screen only. */
 @media screen {

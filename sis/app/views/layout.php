@@ -272,6 +272,7 @@ function layout_start(string $title, bool $bare = false): void
 <title><?= h($title) ?> · <?= h($school) ?></title>
 <script src="../js/no-inspect.js?v=64.6" defer></script>
 <link rel="icon" type="image/png" sizes="32x32" href="../icons/favicon-32.png">
+<meta name="color-scheme" content="light">
 <link rel="manifest" href="../manifest.webmanifest"><!-- v66.6: "Add to Home Screen" on Android and iPhone opens AcadLink like an app -->
 <link rel="apple-touch-icon" href="../icons/apple-touch-icon.png">
 <meta name="mobile-web-app-capable" content="yes">
@@ -283,7 +284,7 @@ function layout_start(string $title, bool $bare = false): void
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@400;500;600;700&amp;family=Source+Serif+4:opsz,wght@8..60,600;8..60,700&amp;display=swap">
 <link rel="stylesheet" href="../vendor/bootstrap-5.3.8/css/bootstrap.min.css">
 <link rel="stylesheet" href="../vendor/bootstrap-icons-1.13.1/font/bootstrap-icons.min.css">
-<link rel="stylesheet" href="../css/style.css?v=65b"><!-- the grading system's own theme: both systems look the same -->
+<link rel="stylesheet" href="../css/style.css?v=66.8"><!-- the grading system's own theme: both systems look the same -->
 <link rel="stylesheet" href="<?= sis_web() ?>assets/app.css?v=56b">
 <link rel="stylesheet" href="<?= sis_web() ?>assets/activity.css?v=64.6">
 <link rel="stylesheet" href="<?= sis_web() ?>assets/navigation.css?v=64.3">
@@ -295,21 +296,21 @@ function layout_start(string $title, bool $bare = false): void
 <link rel="stylesheet" href="<?= sis_web() ?>assets/sis-actions.css?v=65b">
 <link rel="stylesheet" href="<?= sis_web() ?>assets/compact-workspace.css?v=20261025toolbar11">
 <link rel="stylesheet" href="<?= sis_web() ?>assets/theme.css?v=53">
-<link rel="stylesheet" href="<?= sis_web() ?>assets/people.css?v=63">
-<link rel="stylesheet" href="<?= sis_web() ?>assets/schedule-grid.css?v=63.4">
+<link rel="stylesheet" href="<?= sis_web() ?>assets/people.css?v=66.8">
+<link rel="stylesheet" href="<?= sis_web() ?>assets/schedule-grid.css?v=66.8">
 <link rel="stylesheet" href="<?= sis_web() ?>assets/unified-toolbar.css?v=60">
 <link rel="stylesheet" href="../css/standard-toolbar.css?v=64.8">
 <link rel="stylesheet" href="<?= sis_web() ?>assets/registration-fees.css?v=4">
 <link rel="stylesheet" href="<?= sis_web() ?>assets/assessment-fee-templates.css?v=65.3b">
-<?php if (app_system() === 'CANTEEN'): ?><link rel="stylesheet" href="assets/canteen.css?v=63.5"><?php endif; ?>
-<?php if (app_system() === 'LIBRARY'): ?><link rel="stylesheet" href="assets/library.css?v=63.6"><?php endif; ?>
-<?php if (app_system() === 'LMS'): ?><link rel="stylesheet" href="assets/lms.css?v=63.5"><?php endif; ?>
-<?php if (in_array(app_system(), ['LMS', 'CANTEEN', 'LIBRARY', 'SIS', 'FINANCE'], true) && !$bare && $u): // v64.6: not on sign-in or the workspace chooser ?><link rel="stylesheet" href="<?= sis_web() ?>assets/bottom-nav.css?v=64.6"><?php endif; ?>
+<?php if (app_system() === 'CANTEEN'): ?><link rel="stylesheet" href="assets/canteen.css?v=66.8"><?php endif; ?>
+<?php if (app_system() === 'LIBRARY'): ?><link rel="stylesheet" href="assets/library.css?v=66.8"><?php endif; ?>
+<?php if (app_system() === 'LMS'): ?><link rel="stylesheet" href="assets/lms.css?v=66.8"><?php endif; ?>
+<?php if (in_array(app_system(), ['LMS', 'CANTEEN', 'LIBRARY', 'SIS', 'FINANCE'], true) && !$bare && $u): // v64.6: not on sign-in or the workspace chooser ?><link rel="stylesheet" href="<?= sis_web() ?>assets/bottom-nav.css?v=66.8"><?php endif; ?>
 <?php if ($route === 'assessment' && ($_GET['tab'] ?? '') === 'names'): ?><script src="<?= sis_web() ?>assets/fee-templates.js?v=1" defer></script><?php endif; ?>
 <?php if ($route === 'documents' && ($_GET['tab'] ?? '') === 'settings'): ?><script src="<?= sis_web() ?>assets/documents-template-preview.js?v=1" defer></script><?php endif; ?>
 <?php if ($route === 'admission'): ?><link rel="stylesheet" href="<?= sis_web() ?>assets/admission-form.css?v=1"><?php endif; ?>
-<?php $alEmbed = $system === 'sis' && $bare && $u && isset($_GET['embed']); if ($alEmbed): // v66.5: pop-up pages (Receive payment, …) get the blue and orange design too ?><link rel="stylesheet" href="<?= sis_web() ?>assets/blue-theme.css?v=66.5"><?php endif; ?>
-<?php if ($system === 'sis' && !$bare && $u): ?><link rel="stylesheet" href="<?= sis_web() ?>assets/easy-navigation.css?v=65.7"><link rel="stylesheet" href="<?= sis_web() ?>assets/dashboard.css?v=2"><link rel="stylesheet" href="<?= sis_web() ?>assets/blue-theme.css?v=66.5"><?php endif; // v64: the blue and orange design, loaded last ?>
+<?php $alEmbed = $system === 'sis' && $bare && $u && isset($_GET['embed']); if ($alEmbed): // v66.5: pop-up pages (Receive payment, …) get the blue and orange design too ?><link rel="stylesheet" href="<?= sis_web() ?>assets/blue-theme.css?v=66.8"><?php endif; ?>
+<?php if ($system === 'sis' && !$bare && $u): ?><link rel="stylesheet" href="<?= sis_web() ?>assets/easy-navigation.css?v=65.7"><link rel="stylesheet" href="<?= sis_web() ?>assets/dashboard.css?v=2"><link rel="stylesheet" href="<?= sis_web() ?>assets/blue-theme.css?v=66.8"><?php endif; // v64: the blue and orange design, loaded last ?>
 </head>
 <?php $embedFlashes = $bare && isset($_GET['embed']) ? take_flashes() : []; // pop-up pages show their own messages ?>
 <body data-client-scope="<?= h($u ? acadlink_client_scope(Auth::central()) : '') ?>" class="<?= $bare ? 'bare' . (!empty($alEmbed) ? ' al-embed' : '') : ('sis-theme' . ($system === 'sis' && $u ? ' sis-easy' : '')) ?>" data-user-id="<?= h((string) ($u['id'] ?? 'guest')) ?>" data-route="<?= h((string) $route) ?>"<?= array_filter($embedFlashes, fn($f) => $f[0] === 'success') ? ' data-changed="1"' : '' ?>>

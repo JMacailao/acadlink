@@ -1,6 +1,5 @@
 /* v61.1 LMS design: deep green sidebar with the AcadLink LMS brand, blue accents, white cards, dashboard with stats and timetable. */
 html[data-app="lms"] { --lms: #2563eb; --lms-dark: #1d4ed8; --lms-soft: #e8f0fe; --lms-line: #e2e8f0; --lms-card: #fff; --lms-ink: #111827; --lms-muted: #64748b; --lms-bg: #f4f6fa; --lms-side: #0f4a33; --lms-side-2: #0b3d2a; }
-@media (prefers-color-scheme: dark) { html[data-app="lms"]:not([data-theme="light"]) { --lms: #60a5fa; --lms-dark: #93c5fd; --lms-soft: #1e2a44; --lms-line: #2b3445; --lms-card: #161b24; --lms-ink: #e5e9f0; --lms-muted: #9aa6b8; --lms-bg: #0f131a; } }
 html[data-app="lms"][data-theme="dark"] { --lms: #60a5fa; --lms-dark: #93c5fd; --lms-soft: #1e2a44; --lms-line: #2b3445; --lms-card: #161b24; --lms-ink: #e5e9f0; --lms-muted: #9aa6b8; --lms-bg: #0f131a; }
 html[data-app="lms"] body.sis-theme { background: var(--lms-bg); }
 html[data-app="lms"] .sis-module-title { display: none; }
@@ -231,7 +230,6 @@ a.lms-stat:hover { border-color: #bfd3fb; box-shadow: 0 6px 18px #0f172a14; }
 .lms-bubble small { display: block; font-size: .72rem; opacity: .75; margin-top: 3px; }
 .lms-msg-form { display: flex; gap: 8px; align-items: flex-end; border-top: 1px solid var(--lms-line); padding-top: 10px; } .lms-msg-form textarea { resize: vertical; }
 html[data-theme="dark"][data-app="lms"] .lms-tt thead th, html[data-theme="dark"][data-app="lms"] .lms-bubble:not(.is-mine) { background: #1e2533; }
-@media (prefers-color-scheme: dark) { html[data-app="lms"]:not([data-theme="light"]) .lms-tt thead th, html[data-app="lms"]:not([data-theme="light"]) .lms-bubble:not(.is-mine) { background: #1e2533; } html[data-app="lms"]:not([data-theme="light"]) .lms-tt .is-today { background: #1a2a4a !important; } }
 @media (max-width: 1200px) { .lms-stats { grid-template-columns: repeat(2, minmax(0, 1fr)); } .lms-dash { grid-template-columns: minmax(0, 1fr); } }
 @media (max-width: 900px) { .lms-msg { grid-template-columns: minmax(0, 1fr); } .lms-msg-list { max-height: none; } }
 @media (max-width: 560px) { .lms-stats { grid-template-columns: minmax(0, 1fr); gap: 10px; } .lms-stat { padding: 14px; } .lms-tc { grid-template-columns: auto minmax(0, 1fr) auto; } .lms-tc-time { grid-column: 2; grid-row: 2; } .lms-tc-btn { grid-column: 3; grid-row: 1 / span 2; }

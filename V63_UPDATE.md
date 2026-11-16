@@ -788,3 +788,15 @@ Help (SIS → Help, `sis/app/pages/help.php`) has a new section, "Put AcadLink o
 Found by a full-system Playwright test of the test site: on My profile opened from Finance, LMS, Library or Canteen, the e-signature drawing script (`esign.js`) was not found (404), so a signature could not be drawn or uploaded there. It worked only from the SIS. The page now loads the script from the SIS folder wherever it is opened.
 
 Files: `sis/app/pages/profile.php`.
+
+## v66.8 — AcadLink stays light on phones in Dark Mode
+
+Reported from an iPhone: the sign-in page showed dark-green text boxes and help box. The cause was leftover `prefers-color-scheme: dark` rules from the old green theme; the v64 blue/orange design is light only, so on a phone set to Dark Mode some parts turned dark while the rest stayed light.
+
+- Removed all 11 leftover dark-mode blocks: sign-in (`css/style.css`), Student Portal (whole page went dark brown), LMS (calendar "today" cell), Library, Canteen, bottom navigation, people and schedule grid.
+- `:root { color-scheme: light; }` in `css/style.css` and `sis/assets/blue-theme.css`, and `<meta name="color-scheme" content="light">` in the SIS and Portal layouts, so form boxes, dropdowns and scrollbars stay light too. (The Grading app already had it.)
+- Bumped the stylesheet version tags to `?v=66.8` so phones load the new files.
+
+Checked with Playwright on an iPhone 13 screen in Dark Mode: sign-in, Workspaces, SIS dashboard, Students, Schedules, Finance, LMS, Library, Canteen, Grading and the Student Portal all stay light. Before the fix the same test flagged sign-in, LMS and the Student Portal.
+
+Files: `css/style.css`, `sis/assets/blue-theme.css`, `sis/assets/bottom-nav.css`, `sis/assets/people.css`, `sis/assets/schedule-grid.css`, `portal/assets/portal.css`, `lms/assets/lms.css`, `library/assets/library.css`, `canteen/assets/canteen.css`, `sis/app/views/layout.php`, `portal/views/layout.php`, plus pages whose stylesheet version tag changed.

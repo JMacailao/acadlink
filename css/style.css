@@ -1,3 +1,5 @@
+/* v66.8: AcadLink is light only, even when the phone is in Dark Mode (form boxes and scrollbars too). */
+:root { color-scheme: light; }
 /* ==========================================================
    College Grading System — shared styles
    Bootstrap handles components; Tailwind (tw- prefix) handles
@@ -2032,11 +2034,6 @@ html[data-system] .nav-tabs .nav-link.active { color: var(--ui-primary); }
   .sl-m-foot { display: flex; align-items: center; justify-content: center; gap: 8px; margin: auto 0 0; padding-top: 28px; color: var(--m-muted); font-size: .92rem; text-align: center; }
   .sl-m-foot .bi { font-size: 1.15rem; color: var(--m-ink); }
   .sl-card .alert { margin: 0 0 6px; border-radius: 12px; }
-}
-@media (max-width: 767.98px) and (prefers-color-scheme: dark) {
-  :root:not([data-theme="light"]) .sl { --m-sheet: #101a17; --m-ink: #e8f2ed; --m-muted: #a9bab3; --m-line: #3f6b56; }
-  :root:not([data-theme="light"]) .sl-field { background: #15221e !important; }
-  :root:not([data-theme="light"]) .sl-m-helpbox { background: #15221e; border-color: #2b3d36; }
 }
 
 /* ==========================================================================================================

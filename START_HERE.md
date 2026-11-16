@@ -1,4 +1,4 @@
-**Updating to v66.7?** Hostinger deploys from GitHub; press Ctrl+F5 once. My profile: the e-signature can now be drawn from Finance, LMS, Library and Canteen too.
+**Updating to v66.8?** Hostinger deploys from GitHub; press Ctrl+F5 once. Phones in Dark Mode: the sign-in page, Student Portal and LMS calendar now stay light (no more dark-green or dark-brown boxes).
 
 **Updating to v63.24?** Deploy or upload the changed files (see V63_UPDATE.md) and press Ctrl+F5 once. No database change.
 
