@@ -388,6 +388,12 @@ test('v66.1: a lower fee amount and a cheaper fee template go through the reduct
     ok(Reductions::usualCents(['assessment_name_id' => $name], $lab) === 45000 && Reductions::usualCents(['assessment_name_id' => null], $lab) === 30000, 'usual amount: the template first, else the fee default');
 });
 
+test('v66.3: the Grading System menu has no Academic setup group', function () {
+    $m = (string) file_get_contents(dirname(SIS_ROOT) . '/js/grading-menu.js');
+    foreach (['subjects.html', 'curriculum.html', 'teachers.html', 'sections.html', 'students.html', '>Academic setup<'] as $gone) ok(!str_contains($m, $gone), "still in the Grading menu: $gone");
+    ok(str_contains($m, 'assignments.html') && str_contains($m, 'grading.html') && str_contains($m, 'final-grades.html'), 'Grading items lost');
+});
+
 $server->exec("DROP DATABASE IF EXISTS `$name`");
 echo "$pass passed, $fail failed\n";
 exit($fail ? 1 : 0);
