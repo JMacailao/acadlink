@@ -780,3 +780,5 @@ Files: `sis/assets/blue-theme.css` (version tag 66.5 in `sis/app/views/layout.ph
 - `sis/app/views/layout.php` and `portal/views/layout.php`: link the manifest and add the iPhone home-screen tags (icon, title, full screen). The Grading System pages already had them.
 
 No service worker and nothing stored on the phone: every page still loads live from the server.
+
+Help (SIS → Help, `sis/app/pages/help.php`) has a new section, "Put AcadLink on your phone's home screen", with the steps for iPhone/iPad (Safari: Share → Add to Home Screen) and Android (Chrome: ⋮ → Add to Home screen / Install app).

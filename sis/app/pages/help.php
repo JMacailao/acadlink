@@ -50,6 +50,32 @@ page_title('How to use the SIS', '<a class="btn btn-outline-secondary" href="' .
   <p class="small text-muted mb-0">New students start at step 1. Continuing students start at step 2 with their Student ID. After the term, the registrar tags the final grades complete in the grading system, and students see them in the Student Portal.</p>
 </div>
 
+<div class="form-section" id="home-screen"><?php /* v66.6 */ ?>
+  <h2 class="h6"><i class="bi bi-phone me-1" aria-hidden="true"></i>Put AcadLink on your phone's home screen</h2>
+  <p class="mb-3">Open AcadLink from an icon on your phone, like an app, without typing the address each time. Nothing to download from an app store.</p>
+  <div class="row g-3">
+    <div class="col-md-6"><div class="border rounded p-3 h-100">
+      <h3 class="h6"><i class="bi bi-apple me-1" aria-hidden="true"></i>iPhone or iPad (Safari)</h3>
+      <ol class="mb-0">
+        <li>Open <b>Safari</b> (not Chrome or the Facebook browser) and go to AcadLink.</li>
+        <li>Tap the <b>Share</b> button <i class="bi bi-box-arrow-up" aria-label="Share icon"></i> at the bottom of the screen.</li>
+        <li>Scroll down and tap <b>Add to Home Screen</b>.</li>
+        <li>Keep the name “AcadLink” and tap <b>Add</b>.</li>
+      </ol>
+    </div></div>
+    <div class="col-md-6"><div class="border rounded p-3 h-100">
+      <h3 class="h6"><i class="bi bi-android2 me-1" aria-hidden="true"></i>Android (Chrome)</h3>
+      <ol class="mb-0">
+        <li>Open <b>Chrome</b> and go to AcadLink.</li>
+        <li>Tap the menu <i class="bi bi-three-dots-vertical" aria-label="Menu icon"></i> at the top right.</li>
+        <li>Tap <b>Add to Home screen</b> or <b>Install app</b>.</li>
+        <li>Tap <b>Add</b> (or <b>Install</b>).</li>
+      </ol>
+    </div></div>
+  </div>
+  <p class="small text-muted mt-3 mb-0">The AcadLink icon now opens straight to AcadLink. Tick <b>Remember me</b> when you sign in so you don't have to sign in every time. On a shared or borrowed phone, don't add the icon, and always sign out.</p>
+</div>
+
 <?php if (Auth::can('self') && !Auth::can('students')): ?>
 <div class="form-section"><h2 class="h6">For students</h2>
   <ul class="mb-0"><li>Open <?= $link('My Account', 'my') ?> to see your final grades, your assessment (what you pay), your balance and your receipts.</li>
