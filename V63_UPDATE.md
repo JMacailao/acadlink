@@ -621,6 +621,25 @@ Tested: changing a class's teacher in the Grading System moved its schedule; a c
 
 Files: `shared/schedule-teacher-sync.php` (new), `shared/curriculum-assignments.php`, `sis/app/lib/grading.php`, `sis/app/lib/schedules.php` (the unused `assignedTeacher` helper removed), `sis/app/pages/schedules.php`, `sis/assets/schedule-teacher.js` (new), `sis/assets/blue-theme.css`, version tag in `sis/app/views/layout.php`; tests in `sis/tests/v63-fixes.php`.
 
+## v65.6 — Auto-schedule; lecture, lab and total units
+
+**Subjects: lecture units + lab units = total units.** Curriculum → Subjects always asks for **Lecture units** and **Lab units** and shows the **Total units** as you type; the list shows Lec units, Lab units and Total units. (Before, this needed Settings → "Separate lecture and laboratory units"; that switch now only adds the "Charged per" choice to subject fees.) Subjects saved before keep counting as all lecture until they are edited.
+
+**Class Schedules → Auto-schedule.** Open a section and press **Auto-schedule**:
+- It lists the section's subjects with **Lec units, Lab units, Total units**, the hours a week they need (1 hour per lecture unit, 3 hours per lab unit — both can be changed) and what is already scheduled.
+- It makes a **draft**: lectures as MWF 1 hr, TTh 1.5 hrs (alternating to use the whole week) or similar; a lab as one block (up to 3 hours) a day. Every meeting is at a time when the section **and the subject's teacher** are free, within the school hours (7:30 AM–6:00 PM, Monday–Friday by default, Saturday can be added) and keeping 12:00–1:00 free.
+- **Rooms**: there are no rooms yet, so rooms show TBA. When rooms are added in the Rooms tab, it picks a free room big enough for the section (a laboratory room for labs).
+- Every draft row can be changed (type, days, start, end, room) or unticked; **Save schedule** saves them together and checks clashes again (if one clashes, nothing is saved and the message names the row). Saved schedules stay editable with **Edit**, and their teacher follows the class (v65.5).
+- Subjects that cannot fit are listed to be added by hand; running it again only adds what is still missing.
+
+Files: `sis/app/lib/schedule-auto.php` (new), `sis/app/pages/schedules.php`, `sis/app/pages/curriculum.php`, `sis/assets/subject-units.js` (new), `sis/assets/blue-theme.css`, `sis/app/bootstrap.php`, version tag in `sis/app/views/layout.php`; tests in `sis/tests/v63-fixes.php`.
+
+## v65.7 — Fix: the search box covered Void on a registration
+
+On screens 1700 px wide and more, the toolbar sits in the top bar beside the School Year and was limited to 860 px. A registration's toolbar (Back, Print Assessment, Confirm Enrollment, Pay at Cashier, Void, search, Refresh, More Actions) needs about 890 px, so its buttons were squeezed and the search box covered **Pay at Cashier** and **Void**. The toolbar is now as wide as its buttons need; only the search box gets narrower. Checked on 10 pages at 1366, 1600, 1700 and 1920 px: no overlapping buttons.
+
+Files: `sis/assets/easy-navigation.css`, version tag in `sis/app/views/layout.php`; test in `sis/tests/v63-fixes.php`.
+
 ## v65.8 — A registration's Tools beside the statement; Class schedule opens again
 
 - On a registration, the **Tools** (Class schedule, Subjects, Assessment name, Scholarship / discount, Add a fee, Charge or less, Teachers, Payment plan — or Class schedule, Add / drop subjects and Payment plan once confirmed) and the **Summaries** are shown on the right of the statement again, as a list with icons. Since v64.8 they were only in **More Actions** (still there too). On phones they are above the statement.

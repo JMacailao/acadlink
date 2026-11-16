@@ -17,6 +17,13 @@ if ($isPost) {
         flash($res['warnings'] ? 'warning' : 'success', 'Schedule saved.' . ($res['warnings'] ? "\n" . implode("\n", $res['warnings']) : ''));
         redirect('schedules', $keep + ['section' => (string) ($_POST['section_doc_id'] ?? '')]);
     }
+    if ($a === 'auto_save') { // v65.6: Auto-schedule → Save
+        $sec = (string) ($_POST['section_doc_id'] ?? '');
+        if (!GS::get('sections', $sec)) throw new AppError('Choose the section.');
+        $n = ScheduleAuto::save($sec, $sy, $term, $_POST);
+        flash('success', "$n class schedule" . ($n === 1 ? '' : 's') . ' saved. Each one can still be changed with Edit.');
+        redirect('schedules', $keep + ['section' => $sec]);
+    }
     if ($a === 'delete') { Schedules::delete((int) ($_POST['id'] ?? 0)); flash('success', 'Schedule removed.'); redirect('schedules', $keep + ['section' => $section]); }
     if ($a === 'room') { Schedules::saveRoom(In::int($_POST, 'id'), $_POST); flash('success', 'Room saved.'); redirect('schedules', ['tab' => 'rooms']); }
     if ($a === 'copy') {
@@ -98,9 +105,57 @@ page_title('Class Schedules', '', 'Days, times, rooms and teachers of each secti
 </form>
 <?php if ($section === ''): ?><div class="alert alert-info">Choose a section to see and set its class schedule.</div>
 <?php else: ?>
+<?php if ($canEdit && isset($_GET['auto'])): $ao = ScheduleAuto::options($_GET); $draft = ScheduleAuto::draft($section, $sy, $term, $ao); $allRooms = Schedules::rooms(true); ?>
+<section class="form-section auto-card" aria-labelledby="autoTitle" data-record-detail>
+  <div class="auto-head"><h2 class="h6 mb-0" id="autoTitle"><i class="bi bi-magic" aria-hidden="true"></i> Auto-schedule · <?= h(($secRow['sectionName'] ?? '') . ' · ' . $term . ' ' . $sy) ?></h2>
+    <a class="btn btn-sm btn-link" href="<?= url('schedules', $keep + ['section' => $section]) ?>">Close</a></div>
+  <form method="get" class="auto-opts"><input type="hidden" name="r" value="schedules"><input type="hidden" name="school_year" value="<?= h($sy) ?>"><input type="hidden" name="term" value="<?= h($term) ?>"><input type="hidden" name="section" value="<?= h($section) ?>"><input type="hidden" name="auto" value="1"><input type="hidden" name="o_go" value="1">
+    <fieldset><legend>Days</legend><?php foreach (Schedules::DAYS as $k => $l): if ($k === 'Su') continue; ?><label class="form-check form-check-inline m-0"><input class="form-check-input" type="checkbox" name="o_wd[]" value="<?= $k ?>"<?= in_array($k, $ao['days'], true) ? ' checked' : '' ?>><span class="form-check-label"><?= $k ?></span></label><?php endforeach; ?></fieldset>
+    <label>From <input class="form-control form-control-sm" type="time" name="o_start" step="1800" value="<?= h($ao['start']) ?>"></label>
+    <label>To <input class="form-control form-control-sm" type="time" name="o_end" step="1800" value="<?= h($ao['end']) ?>"></label>
+    <label class="form-check m-0"><input class="form-check-input" type="checkbox" name="o_lunch" value="1"<?= $ao['lunch'] ? ' checked' : '' ?>> <span class="form-check-label">Keep 12:00–1:00 free</span></label>
+    <label>Hours a week per lecture unit <input class="form-control form-control-sm auto-num" name="o_lec_hours" inputmode="decimal" value="<?= h(LecLab::text($ao['lec_hours'])) ?>"></label>
+    <label>per lab unit <input class="form-control form-control-sm auto-num" name="o_lab_hours" inputmode="decimal" value="<?= h(LecLab::text($ao['lab_hours'])) ?>"></label>
+    <?php if ($allRooms): ?><label class="form-check m-0"><input class="form-check-input" type="checkbox" name="o_rooms" value="1"<?= $ao['rooms'] ? ' checked' : '' ?>> <span class="form-check-label">Assign rooms</span></label><?php endif; ?>
+    <button class="btn btn-sm btn-outline-primary">Make draft again</button>
+  </form>
+  <?php if (!$allRooms): ?><p class="small text-muted mb-2"><i class="bi bi-info-circle" aria-hidden="true"></i> No rooms yet, so rooms show TBA. Add rooms in the <a href="<?= url('schedules', ['tab' => 'rooms'] + $keep) ?>">Rooms</a> tab and they are filled in too.</p><?php endif; ?>
+  <?php if ($draft['none']): ?><div class="alert alert-info mb-0">This section has no subjects (classes) for <?= h($term . ' ' . $sy) ?> yet. Saving its curriculum, or Grading assignments, creates them.</div>
+  <?php else: ?>
+  <h3 class="auto-sub">Subjects of the section</h3>
+  <div class="table-responsive"><table class="table table-sm align-middle auto-units mb-3" data-plain-table><thead><tr><th>Subject</th><th class="text-center">Lec units</th><th class="text-center">Lab units</th><th class="text-center">Total units</th><th>Hours a week</th><th>Already scheduled</th><th>Teacher</th></tr></thead><tbody>
+  <?php $tu = [0, 0, 0]; foreach ($draft['subjects'] as $su): $tu[0] += $su['lec']; $tu[1] += $su['lab']; $tu[2] += $su['total']; ?><tr>
+    <td><span class="font-monospace fw-semibold"><?= h($su['code']) ?></span> <span class="small text-muted"><?= h($su['name']) ?></span></td>
+    <td class="text-center"><?= h(LecLab::text($su['lec'])) ?></td><td class="text-center"><?= h(LecLab::text($su['lab'])) ?></td><td class="text-center fw-semibold"><?= h(LecLab::text($su['total'])) ?></td>
+    <td class="small"><?= $su['need_lec'] > 0 ? 'Lecture ' . h(ScheduleAuto::hoursText($su['need_lec'])) : '' ?><?= $su['need_lec'] > 0 && $su['need_lab'] > 0 ? ' · ' : '' ?><?= $su['need_lab'] > 0 ? 'Lab ' . h(ScheduleAuto::hoursText($su['need_lab'])) : '' ?></td>
+    <td class="small"><?= $su['have_lec'] + $su['have_lab'] > 0 ? h(ScheduleAuto::hoursText($su['have_lec'] + $su['have_lab'])) : '<span class="text-muted">—</span>' ?></td>
+    <td class="small"><?= $su['teacher_name'] !== '' ? h($su['teacher_name']) : '<span class="text-muted">Needs teacher</span>' ?></td></tr><?php endforeach; ?>
+  </tbody><tfoot><tr><th>Total</th><th class="text-center"><?= h(LecLab::text($tu[0])) ?></th><th class="text-center"><?= h(LecLab::text($tu[1])) ?></th><th class="text-center"><?= h(LecLab::text($tu[2])) ?></th><th colspan="3"></th></tr></tfoot></table></div>
+  <?php if ($draft['unplaced']): ?><div class="alert alert-warning small"><strong>Could not place:</strong><ul class="mb-0 ps-3"><?php foreach ($draft['unplaced'] as $u): ?><li><?= h($u) ?></li><?php endforeach; ?></ul></div><?php endif; ?>
+  <?php if ($draft['rows']): ?>
+  <h3 class="auto-sub">Draft schedule <span class="small text-muted fw-normal">· change anything, untick a row to leave it out, then Save</span></h3>
+  <form method="post" class="auto-draft"><?= csrf_field() ?><input type="hidden" name="action" value="auto_save"><input type="hidden" name="section_doc_id" value="<?= h($section) ?>">
+    <div class="table-responsive"><table class="table table-sm align-middle mb-2" data-plain-table><thead><tr><th><span class="visually-hidden">Keep</span></th><th>Subject</th><th>Type</th><th>Days</th><th>Start</th><th>End</th><th>Room</th><th>Teacher</th></tr></thead><tbody>
+    <?php foreach ($draft['rows'] as $i => $dr): ?><tr>
+      <td><input class="form-check-input" type="checkbox" name="a_keep[]" value="<?= $i ?>" checked aria-label="Keep <?= h($dr['code']) ?>"><input type="hidden" name="a_subject[]" value="<?= h($dr['subject']) ?>"></td>
+      <td><span class="font-monospace fw-semibold"><?= h($dr['code']) ?></span> <span class="small text-muted"><?= h($dr['name']) ?></span></td>
+      <td><select class="form-select form-select-sm" name="a_kind[]" aria-label="Type"><?php foreach (['LEC' => 'Lecture', 'LAB' => 'Laboratory'] as $k => $l): ?><option value="<?= $k ?>"<?= $dr['kind'] === $k ? ' selected' : '' ?>><?= $l ?></option><?php endforeach; ?></select></td>
+      <td><input class="form-control form-control-sm auto-days" name="a_days[]" value="<?= h(implode('', $dr['days'])) ?>" aria-label="Days, e.g. MWF or TTh" pattern="^\s*((Su|Th|M|T|W|F|S)[\s,]*)+$" required></td>
+      <td><input class="form-control form-control-sm" type="time" name="a_start[]" step="300" value="<?= h($dr['start']) ?>" required aria-label="Start"></td>
+      <td><input class="form-control form-control-sm" type="time" name="a_end[]" step="300" value="<?= h($dr['end']) ?>" required aria-label="End"></td>
+      <td><select class="form-select form-select-sm" name="a_room[]" aria-label="Room"><option value="">TBA</option><?php foreach ($allRooms as $rm): ?><option value="<?= (int) $rm['id'] ?>"<?= (int) $dr['room'] === (int) $rm['id'] ? ' selected' : '' ?>><?= h($rm['code']) ?></option><?php endforeach; ?></select></td>
+      <td class="small"><?= $dr['teacher_name'] !== '' ? h($dr['teacher_name']) : '<span class="text-muted">Needs teacher</span>' ?></td></tr><?php endforeach; ?>
+    </tbody></table></div>
+    <p class="form-text mt-0">Days: M T W Th F S (e.g. MWF, TTh). The teacher is the class's teacher in Grading assignments and follows it. Saving checks every row again; if one clashes, nothing is saved and the message says which row.</p>
+    <button class="btn btn-primary"><i class="bi bi-check2 me-1" aria-hidden="true"></i>Save schedule</button> <a class="btn btn-link" href="<?= url('schedules', $keep + ['section' => $section]) ?>">Cancel</a>
+  </form>
+  <?php elseif (!$draft['unplaced']): ?><div class="alert alert-success mb-0">Every subject of this section already has its hours in the schedule.</div><?php endif; ?>
+  <?php endif; ?>
+</section>
+<?php endif; ?>
 <div class="row g-3" data-record-detail>
   <div class="col-xl-8">
-    <div class="form-section"><h2 class="h6"><?= h(($secRow['sectionName'] ?? '') . ' · ' . $term . ' ' . $sy) ?> <span class="small text-muted fw-normal">· <?= $size ?> student(s) registered</span></h2>
+    <div class="form-section"><h2 class="h6 d-flex flex-wrap align-items-center gap-2"><span><?= h(($secRow['sectionName'] ?? '') . ' · ' . $term . ' ' . $sy) ?> <span class="small text-muted fw-normal">· <?= $size ?> student(s) registered</span></span><?php if ($canEdit && !isset($_GET['auto'])): ?> <a class="btn btn-sm btn-primary ms-auto auto-btn" href="<?= url('schedules', $keep + ['section' => $section, 'auto' => 1]) ?>"><i class="bi bi-magic me-1" aria-hidden="true"></i>Auto-schedule</a><?php endif; ?></h2>
       <div class="table-responsive"><table class="table table-sm align-middle mb-0"><thead><tr><th>Subject</th><th>Days</th><th>Time</th><th>Room</th><th>Teacher</th><th></th></tr></thead><tbody>
       <?php foreach ($rows as $s): $over = $s['capacity'] !== null && $size > (int) $s['capacity']; ?><tr>
         <td><span class="font-monospace"><?= h($s['subject_code']) ?></span> <span class="small text-muted"><?= h(Schedules::KINDS[$s['kind']]) ?></span></td>

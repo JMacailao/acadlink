@@ -253,6 +253,39 @@ test('v65.5: a class schedule follows the teacher of its class (clashes are left
     ok(ScheduleTeacherSync::classTeachers($pdo, 'st_secA', $sy, $term)['st_sub2']['id'] === 'st_t3', 'class teacher lookup');
 });
 
+test('v65.6: Auto-schedule places lecture and lab hours where section and teacher are free', function () {
+    $doc = fn(string $col, string $id, array $d) => Db::q('INSERT INTO docs (col, id, data) VALUES (?, ?, ?)', [$col, $id, json_encode($d)]);
+    $sy = '2033-2034'; $term = '1st Semester';
+    $doc('teachers', 'au_t1', ['teacherId' => 'AU1', 'teacherName' => 'Auto Teacher']);
+    $doc('subjects', 'au_s1', ['subjectCode' => 'AU101', 'subjectName' => 'Auto Lab', 'units' => 3, 'lecUnits' => 2, 'labUnits' => 1]);
+    $doc('subjects', 'au_s2', ['subjectCode' => 'AU102', 'subjectName' => 'Auto Lecture', 'units' => 3]);
+    foreach (['au_s1' => 'AU101', 'au_s2' => 'AU102'] as $sid => $code)
+        $doc('gradingAssignments', "au_c_$sid", ['teacherDocId' => 'au_t1', 'teacherName' => 'Auto Teacher', 'subjectId' => $sid, 'subjectCode' => $code, 'schoolYear' => $sy, 'term' => $term, 'sectionId' => 'au_sec', 'sectionName' => 'AU 1A', 'studentIds' => []]);
+    // the teacher already teaches another section every weekday 7:30–9:30
+    Db::insert('sis_class_schedules', ['school_year' => $sy, 'term' => $term, 'section_doc_id' => 'au_other', 'subject_doc_id' => 'au_x', 'teacher_doc_id' => 'au_t1', 'days' => 'M,T,W,Th,F', 'start_time' => '07:30:00', 'end_time' => '09:30:00', 'kind' => 'LEC']);
+    $d = ScheduleAuto::draft('au_sec', $sy, $term, ScheduleAuto::options([]));
+    ok(!$d['unplaced'] && count($d['subjects']) === 2, 'subjects were left out: ' . implode('; ', $d['unplaced']));
+    $hours = []; $min = fn($t) => ScheduleAuto::min($t);
+    foreach ($d['rows'] as $r) {
+        ok($min($r['start']) >= $min('09:30'), "{$r['code']} {$r['kind']} starts while the teacher is busy ({$r['start']})");
+        ok(!($min($r['start']) < 13 * 60 && $min($r['end']) > 12 * 60), "{$r['code']} uses the lunch hour");
+        $hours[$r['code'] . $r['kind']] = ($hours[$r['code'] . $r['kind']] ?? 0) + count($r['days']) * ($min($r['end']) - $min($r['start'])) / 60;
+    }
+    ok(($hours['AU101LAB'] ?? 0) == 3 && ($hours['AU101LEC'] ?? 0) == 2 && ($hours['AU102LEC'] ?? 0) == 3, 'hours: lab 3 (1 lab unit), lecture 2 and 3: ' . json_encode($hours));
+    $lab = array_values(array_filter($d['rows'], fn($r) => $r['kind'] === 'LAB'))[0];
+    ok(count($lab['days']) === 1, 'a 3-hour lab should be one block');
+    // the rows do not overlap each other
+    foreach ($d['rows'] as $i => $a) foreach ($d['rows'] as $j => $b) if ($i < $j && array_intersect($a['days'], $b['days']))
+        ok($min($a['end']) <= $min($b['start']) || $min($b['end']) <= $min($a['start']), "{$a['code']} and {$b['code']} overlap");
+    ok(ScheduleAuto::patterns('LEC', 3, ['M', 'T', 'W', 'Th', 'F'])[0] === [['M', 'W', 'F'], 60] && ScheduleAuto::patterns('LEC', 3, ['M', 'T', 'W', 'Th', 'F'], 1)[0] === [['T', 'Th'], 90], 'MWF 1 hr / TTh 1.5 hrs');
+});
+
+test('v65.7: the wide top-bar toolbar is not capped (the search box covered Void on a registration)', function () {
+    $css = (string) file_get_contents(SIS_ROOT . '/assets/easy-navigation.css');
+    ok(!str_contains($css, 'flex: 0 1 860px; max-width: 860px;'), 'the 860px cap is back');
+    ok(str_contains($css, ':is(.std-tb-group-1, .std-tb-group-2) { flex-shrink: 0; }'), 'button groups can shrink under the search box again');
+});
+
 test('v65.8: a registration shows its Tools beside the statement, and Class schedule opens', function () {
     $pg = (string) file_get_contents(SIS_ROOT . '/app/pages/registration.php');
     ok(str_contains($pg, '<aside class="or-side tools-first d-print-none" data-keep-side'), 'the Tools panel is not kept on the page');
