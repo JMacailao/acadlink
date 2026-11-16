@@ -180,9 +180,13 @@
 @media screen and (min-width: 1700px) {
   /* Keep the full, labeled module toolbar beside global search on wide workspaces. */
   html[data-system="sis"] body.sis-easy.has-appbar-tools .sis-appbar-year { margin-left: auto; }
+  /* v65.7: the toolbar is as wide as its buttons need (Registration has more than 860px: the search box covered Void);
+     button groups never shrink, only the search box gets narrower */
   html[data-system="sis"] body.sis-easy.has-appbar-tools .sis-appbar-tools {
-    flex: 0 1 860px; max-width: 860px;
+    flex: 0 1 auto; max-width: none; min-width: 0;
   }
+  html[data-system="sis"] body.sis-easy.has-appbar-tools .sis-appbar-tools :is(.std-tb-group-1, .std-tb-group-2) { flex-shrink: 0; }
+  html[data-system="sis"] body.sis-easy.has-appbar-tools .sis-appbar-tools .std-tb-registration-search { min-width: 180px; }
   html[data-system="sis"] body.sis-easy.has-appbar-tools .sis-appbar-tools .std-tb-group {
     gap: 4px;
   }

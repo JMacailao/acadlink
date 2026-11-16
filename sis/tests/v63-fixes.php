@@ -253,6 +253,12 @@ test('v65.5: a class schedule follows the teacher of its class (clashes are left
     ok(ScheduleTeacherSync::classTeachers($pdo, 'st_secA', $sy, $term)['st_sub2']['id'] === 'st_t3', 'class teacher lookup');
 });
 
+test('v65.7: the wide top-bar toolbar is not capped (the search box covered Void on a registration)', function () {
+    $css = (string) file_get_contents(SIS_ROOT . '/assets/easy-navigation.css');
+    ok(!str_contains($css, 'flex: 0 1 860px; max-width: 860px;'), 'the 860px cap is back');
+    ok(str_contains($css, ':is(.std-tb-group-1, .std-tb-group-2) { flex-shrink: 0; }'), 'button groups can shrink under the search box again');
+});
+
 $server->exec("DROP DATABASE IF EXISTS `$name`");
 echo "$pass passed, $fail failed\n";
 exit($fail ? 1 : 0);
