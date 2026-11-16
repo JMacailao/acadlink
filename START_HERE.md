@@ -1,4 +1,4 @@
-# AcadLink — start here (v66.5: Activity Log list shows under the tamper check again)
+**Updating to v66.5?** Hostinger deploys from GitHub; press Ctrl+F5 once. The Activity Log list shows under the tamper check again (the box no longer takes the whole page).
 
 **Updating to v63.24?** Deploy or upload the changed files (see V63_UPDATE.md) and press Ctrl+F5 once. No database change.
 
