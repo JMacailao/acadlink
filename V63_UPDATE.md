@@ -777,7 +777,7 @@ Files: `sis/assets/blue-theme.css` (version tag 66.5 in `sis/app/views/layout.ph
 "Add to Home Screen" (Safari on iPhone) or "Add to Home screen / Install app" (Chrome on Android) now gives an AcadLink icon that opens like an app, full screen, on every workspace: SIS, Finance, LMS, Library, Canteen, the Student Portal and the Grading System.
 
 - `manifest.webmanifest`: named "AcadLink" (was "AcadLink Grading System"), opens the workspace chooser, navy theme, covers the whole site.
-- `sis/app/views/layout.php` and `portal/views/layout.php`: link the manifest and add the iPhone home-screen tags (icon, title, full screen). The Grading System pages already had them.
+- `sis/app/views/layout.php` and `portal/views/layout.php`: link the manifest and add the iPhone home-screen tags (icon, title, full screen). The Grading System (`index.html`) already had most of them; it now also names the icon "AcadLink".
 
 No service worker and nothing stored on the phone: every page still loads live from the server.
 
