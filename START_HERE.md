@@ -1,4 +1,4 @@
-**Updating to v66.6?** Hostinger deploys from GitHub; press Ctrl+F5 once. "Add to Home Screen" on iPhone and Android now opens AcadLink like an app, on every workspace.
+**Updating to v66.7?** Hostinger deploys from GitHub; press Ctrl+F5 once. My profile: the e-signature can now be drawn from Finance, LMS, Library and Canteen too.
 
 **Updating to v63.24?** Deploy or upload the changed files (see V63_UPDATE.md) and press Ctrl+F5 once. No database change.
 

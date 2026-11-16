@@ -179,7 +179,7 @@ page_title($managing ? 'E-signature of ' . $acct['display_name'] : 'My profile',
     </div>
   </div>
 </div>
-<script src="assets/esign.js?v=50"></script>
+<script src="<?= sis_web() ?>assets/esign.js?v=50"></script><?php /* v66.7: also from Finance, LMS, Library and Canteen */ ?>
 <?php if (!empty($tsPending) || !empty($tsCodes)): ?><?php if (!empty($tsPending)): ?><script src="../vendor/qrcode-generator-2.0.4/qrcode.js"></script><?php endif; ?><script src="<?= sis_web() ?>assets/two-step.js?v=1" defer></script><?php endif; ?>
 <style>.ts-qr svg { display: block; width: 180px; height: 180px; } .ts-key { font-size: 1rem; letter-spacing: .05em; } .ts-codes { display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 6px; } .ts-codes code { font-size: 1rem; padding: 6px 8px; border: 1px dashed #c9d3ce; border-radius: 6px; text-align: center; color: #123d2b; }</style>
 <?php layout_end();

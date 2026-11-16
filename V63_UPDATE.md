@@ -782,3 +782,9 @@ Files: `sis/assets/blue-theme.css` (version tag 66.5 in `sis/app/views/layout.ph
 No service worker and nothing stored on the phone: every page still loads live from the server.
 
 Help (SIS → Help, `sis/app/pages/help.php`) has a new section, "Put AcadLink on your phone's home screen", with the steps for iPhone/iPad (Safari: Share → Add to Home Screen) and Android (Chrome: ⋮ → Add to Home screen / Install app).
+
+## v66.7 — E-signature can be drawn from every workspace's My profile
+
+Found by a full-system Playwright test of the test site: on My profile opened from Finance, LMS, Library or Canteen, the e-signature drawing script (`esign.js`) was not found (404), so a signature could not be drawn or uploaded there. It worked only from the SIS. The page now loads the script from the SIS folder wherever it is opened.
+
+Files: `sis/app/pages/profile.php`.
