@@ -71,7 +71,7 @@
   <link href="../vendor/bootstrap-icons-1.13.1/font/bootstrap-icons.min.css" rel="stylesheet">
   <!-- Tailwind utilities (tw- prefix), pre-built: see tailwind.config.js -->
   <link href="../css/tailwind.css" rel="stylesheet">
-  <link href="../css/style.css?v=65b" rel="stylesheet">
+  <link href="../css/style.css?v=65.10" rel="stylesheet">
   <!-- Prefetch other pages on hover so navigation feels instant -->
   <script type="speculationrules">
   { "prefetch": [ { "where": { "href_matches": "/*" }, "eagerness": "moderate" } ] }
@@ -91,8 +91,9 @@
           <button type="button" class="btn-close btn-close-white d-lg-none mt-4 me-3" data-bs-dismiss="offcanvas" data-bs-target="#sidebar" aria-label="Close menu"></button>
         </div>
         <nav class="tw-pb-2">
-          <a class="side-link" href="dashboard.html" data-roles="admin registrar teacher"><i class="bi bi-grid-1x2" aria-hidden="true"></i><span>Dashboard</span></a>
           <a class="side-link" href="notifications.html" data-roles="admin registrar teacher"><i class="bi bi-bell" aria-hidden="true"></i><span>Notifications</span><span class="nav-badge d-none" id="notifBadge" aria-label="unread notifications"></span></a>
+          <div class="nav-group-label" data-roles="admin registrar teacher">Overview</div>
+          <a class="side-link" href="dashboard.html" data-roles="admin registrar teacher"><i class="bi bi-grid-1x2" aria-hidden="true"></i><span>Dashboard</span></a>
           <div class="nav-group-label" data-roles="admin registrar">Academic setup</div>
           <a class="side-link" href="subjects.html" data-roles="admin registrar"><i class="bi bi-journal-bookmark" aria-hidden="true"></i><span>Subjects</span></a>
           <a class="side-link" href="curriculum.html" data-roles="admin registrar"><i class="bi bi-list-check" aria-hidden="true"></i><span>Curriculum</span></a>

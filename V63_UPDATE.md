@@ -662,3 +662,15 @@ The SIS menu is now, from the top:
 **History of Grades** and **History of Assessments** are no longer in the menu; they still open from the Students page and from a student's record (the menu then shows Students as the current page).
 
 Files: `sis/app/views/layout.php`; test in `sis/tests/v63-fixes.php`.
+
+## v65.10 — The new menu design in every workspace
+
+The SIS menu design (v65.9) is now used in **Finance, LMS, Library, Canteen POS** and the **Grading System**: Notifications on top where the workspace has it, then each group under a full-width light blue band with its name in capitals, groups always open.
+- **Finance**: Notifications, Overview (Dashboard), Cashier, Balances, Accounting, Reports.
+- **LMS**: Overview (Dashboard), Classes (My Classes, Schedule, Attendance, Assignments, Gradebook, Materials, Messages), Administration (Reports, Settings).
+- **Library**: Overview (Dashboard — was "Overview"), Circulation (Catalog, Circulation, Members, Reservations, Fines), Administration (Reports, Settings).
+- **Canteen POS**: Point of Sale (Cashier, Sales & Receipts, My Shift), Supervisor, Inventory, Reports.
+- **Grading System**: Notifications, Overview (Dashboard), Academic setup, Grading, School Information System.
+The Student Portal keeps its row of tabs at the top (it has no side menu).
+
+Files: `sis/app/views/layout.php`, `sis/assets/blue-theme.css`, `sis/assets/theme.js`, `css/style.css`, `pages/*.html`; test in `sis/tests/v63-fixes.php`.

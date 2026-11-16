@@ -1,4 +1,4 @@
-**Updating to v65.9?** Hostinger deploys from GitHub; press Ctrl+F5 once. New SIS menu order: Notifications, Overview, Assessment, Academics, Operations, Student Services, Administration; no database step.
+**Updating to v65.10?** Hostinger deploys from GitHub; press Ctrl+F5 once. The banded menu design in Finance, LMS, Library, Canteen and the Grading System; no database step.
 
 **Updating to v63.24?** Deploy or upload the changed files (see V63_UPDATE.md) and press Ctrl+F5 once. No database change.
 

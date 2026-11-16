@@ -47,8 +47,8 @@ const NAV = [
 
 /** v58: the Finance system's menu (finance/index.php). Same item format as NAV. */
 const FINANCE_NAV = [
-    ['dashboard', 'Dashboard', 'house-door', [], '', 'Revenue by source and what needs attention'],
     ['notifications', 'Notifications', 'bell', ['admission', 'registration', 'payments.view', 'accounting'], '', 'Special-request approvals'],
+    ['dashboard', 'Dashboard', 'house-door', [], '', 'Revenue by source and what needs attention'],
     ['cashier', 'Cashier', 'cash-coin', ['payments.view'], 'Cashier', 'Payments and receipts'],
     ['docfees', 'Document Fees', 'file-earmark-text', ['payments.view'], 'Cashier', 'TOR and certificate requests to pay'],
     ['libfines', 'Library Fines', 'book', ['payments.view'], 'Cashier', 'Overdue, lost and damage fines to pay'],
@@ -66,9 +66,9 @@ const FINANCE_NAV = [
 
 /** v59: the Canteen POS menu (canteen/index.php). */
 const CANTEEN_NAV = [
-    ['dashboard', 'Cashier', 'shop', ['canteen.view'], '', 'Ring up orders'],
-    ['sales', 'Sales & Receipts', 'receipt', ['canteen.view'], '', 'Find, re-print, void or refund'],
-    ['shift', 'My Shift', 'clock-history', ['canteen.sell'], '', 'Open, count and close your drawer'],
+    ['dashboard', 'Cashier', 'shop', ['canteen.view'], 'Point of Sale', 'Ring up orders'],
+    ['sales', 'Sales & Receipts', 'receipt', ['canteen.view'], 'Point of Sale', 'Find, re-print, void or refund'],
+    ['shift', 'My Shift', 'clock-history', ['canteen.sell'], 'Point of Sale', 'Open, count and close your drawer'],
     ['approvals', 'Approvals', 'check2-square', ['canteen.supervise'], 'Supervisor', 'Voids and refunds to decide'],
     ['shifts', 'Shifts & Cash Counts', 'cash-stack', ['canteen.supervise', 'canteen.reports'], 'Supervisor', 'Accept counted drawers'],
     ['products', 'Products', 'box-seam', ['canteen.products'], 'Inventory', 'Items, prices, barcodes'],
@@ -79,28 +79,28 @@ const CANTEEN_NAV = [
 
 /** v60: the Library menu (library/index.php). */
 const LIBRARY_NAV = [
-    ['dashboard', 'Overview', 'house-door', ['library.view', 'library.catalog', 'library.reports'], '', 'Today at the library'],
-    ['catalog', 'Catalog', 'book', ['library.catalog', 'library.view'], '', 'Titles, copies, acquisitions, stocktake, labels'],
-    ['circulation', 'Circulation', 'arrow-left-right', ['library.view'], '', 'Check out, check in, renew'],
-    ['members', 'Members', 'people', ['library.view'], '', 'Students and teachers who borrow'],
-    ['holds', 'Reservations', 'bookmark', ['library.view'], '', 'Holds and the hold shelf'],
-    ['fines', 'Fines', 'coin', ['library.view'], '', 'Charged, paid and waived'],
-    ['reports', 'Reports', 'bar-chart', ['library.reports'], '', 'Circulation and fines'],
-    ['settings', 'Settings', 'gear', ['library.settings', 'library.reports'], '', 'Loan rules'],
+    ['dashboard', 'Dashboard', 'house-door', ['library.view', 'library.catalog', 'library.reports'], '', 'Today at the library'],
+    ['catalog', 'Catalog', 'book', ['library.catalog', 'library.view'], 'Circulation', 'Titles, copies, acquisitions, stocktake, labels'],
+    ['circulation', 'Circulation', 'arrow-left-right', ['library.view'], 'Circulation', 'Check out, check in, renew'],
+    ['members', 'Members', 'people', ['library.view'], 'Circulation', 'Students and teachers who borrow'],
+    ['holds', 'Reservations', 'bookmark', ['library.view'], 'Circulation', 'Holds and the hold shelf'],
+    ['fines', 'Fines', 'coin', ['library.view'], 'Circulation', 'Charged, paid and waived'],
+    ['reports', 'Reports', 'bar-chart', ['library.reports'], 'Administration', 'Circulation and fines'],
+    ['settings', 'Settings', 'gear', ['library.settings', 'library.reports'], 'Administration', 'Loan rules'],
 ];
 
 /** v61: the LMS menu (lms/index.php). */
 const LMS_NAV = [
     ['dashboard', 'Dashboard', 'house-door', ['lms.view'], '', 'Today at a glance'],
-    ['classes', 'My Classes', 'people', ['lms.view'], '', 'Your classes'],
-    ['schedule', 'Schedule', 'calendar3', ['lms.view'], '', 'Your week of classes'],
-    ['attendance', 'Attendance', 'calendar2-check', ['lms.view'], '', 'Take and review attendance'],
-    ['assignments', 'Assignments', 'journal-text', ['lms.view'], '', 'Assignments, quizzes and exams'],
-    ['gradebook', 'Gradebook', 'bar-chart-line', ['lms.view'], '', 'Class grades'],
-    ['materials', 'Materials', 'folder2', ['lms.view'], '', 'Files shared in your classes'],
-    ['messages', 'Messages', 'chat-square-text', ['lms.view'], '', 'Private messages between teachers and students'],
-    ['reports', 'Reports', 'pie-chart', ['lms.view'], '', 'Class summaries (teachers)'],
-    ['settings', 'Settings', 'gear', ['lms.view'], '', 'Grading categories of your classes (teachers)'],
+    ['classes', 'My Classes', 'people', ['lms.view'], 'Classes', 'Your classes'],
+    ['schedule', 'Schedule', 'calendar3', ['lms.view'], 'Classes', 'Your week of classes'],
+    ['attendance', 'Attendance', 'calendar2-check', ['lms.view'], 'Classes', 'Take and review attendance'],
+    ['assignments', 'Assignments', 'journal-text', ['lms.view'], 'Classes', 'Assignments, quizzes and exams'],
+    ['gradebook', 'Gradebook', 'bar-chart-line', ['lms.view'], 'Classes', 'Class grades'],
+    ['materials', 'Materials', 'folder2', ['lms.view'], 'Classes', 'Files shared in your classes'],
+    ['messages', 'Messages', 'chat-square-text', ['lms.view'], 'Classes', 'Private messages between teachers and students'],
+    ['reports', 'Reports', 'pie-chart', ['lms.view'], 'Administration', 'Class summaries (teachers)'],
+    ['settings', 'Settings', 'gear', ['lms.view'], 'Administration', 'Grading categories of your classes (teachers)'],
 ];
 
 /** v61.2: the phone/tablet bottom menu of the LMS and the Canteen POS ("More" opens the side menu). */
@@ -223,7 +223,7 @@ function settings_hub_nav(): string
 }
 
 /** Icon shown beside each sidebar group heading. */
-const NAV_GROUP_ICONS = ['Student Services' => 'people', 'Academics' => 'mortarboard', 'Assessment' => 'calculator', 'Operations' => 'briefcase', 'Fees' => 'cash-stack', 'Accounting' => 'journal-bookmark', 'Administration' => 'gear-wide-connected', 'Finance' => 'wallet2', 'Cashier' => 'cash-coin', 'Balances' => 'wallet2', 'Reports' => 'printer', 'Supervisor' => 'person-check', 'Inventory' => 'box-seam'];
+const NAV_GROUP_ICONS = ['Point of Sale' => 'shop', 'Circulation' => 'arrow-left-right', 'Classes' => 'people', 'Student Services' => 'people', 'Academics' => 'mortarboard', 'Assessment' => 'calculator', 'Operations' => 'briefcase', 'Fees' => 'cash-stack', 'Accounting' => 'journal-bookmark', 'Administration' => 'gear-wide-connected', 'Finance' => 'wallet2', 'Cashier' => 'cash-coin', 'Balances' => 'wallet2', 'Reports' => 'printer', 'Supervisor' => 'person-check', 'Inventory' => 'box-seam'];
 
 /** The sidebar group of the current route, used by the breadcrumb ("Home › Enrollment › Admission"). */
 function nav_group_of(string $route): string
@@ -301,7 +301,7 @@ function layout_start(string $title, bool $bare = false): void
 <?php if ($route === 'assessment' && ($_GET['tab'] ?? '') === 'names'): ?><script src="<?= sis_web() ?>assets/fee-templates.js?v=1" defer></script><?php endif; ?>
 <?php if ($route === 'documents' && ($_GET['tab'] ?? '') === 'settings'): ?><script src="<?= sis_web() ?>assets/documents-template-preview.js?v=1" defer></script><?php endif; ?>
 <?php if ($route === 'admission'): ?><link rel="stylesheet" href="<?= sis_web() ?>assets/admission-form.css?v=1"><?php endif; ?>
-<?php if ($system === 'sis' && !$bare && $u): ?><link rel="stylesheet" href="<?= sis_web() ?>assets/easy-navigation.css?v=65.7"><link rel="stylesheet" href="<?= sis_web() ?>assets/dashboard.css?v=2"><link rel="stylesheet" href="<?= sis_web() ?>assets/blue-theme.css?v=65.9b"><?php endif; // v64: the blue and orange design, loaded last ?>
+<?php if ($system === 'sis' && !$bare && $u): ?><link rel="stylesheet" href="<?= sis_web() ?>assets/easy-navigation.css?v=65.7"><link rel="stylesheet" href="<?= sis_web() ?>assets/dashboard.css?v=2"><link rel="stylesheet" href="<?= sis_web() ?>assets/blue-theme.css?v=65.10"><?php endif; // v64: the blue and orange design, loaded last ?>
 </head>
 <?php $embedFlashes = $bare && isset($_GET['embed']) ? take_flashes() : []; // pop-up pages show their own messages ?>
 <body data-client-scope="<?= h($u ? acadlink_client_scope(Auth::central()) : '') ?>" class="<?= $bare ? 'bare' : ('sis-theme' . ($system === 'sis' && $u ? ' sis-easy' : '')) ?>" data-user-id="<?= h((string) ($u['id'] ?? 'guest')) ?>" data-route="<?= h((string) $route) ?>"<?= array_filter($embedFlashes, fn($f) => $f[0] === 'success') ? ' data-changed="1"' : '' ?>>
@@ -373,7 +373,7 @@ function layout_start(string $title, bool $bare = false): void
               $group = $g;
               if ($g !== '') { $groupN++; echo '<div class="nav-group" data-nav-group="' . h($g) . '"><button type="button" class="nav-group-toggle" aria-expanded="true" aria-controls="navGroup' . $groupN . '"><i class="bi bi-' . (NAV_GROUP_ICONS[$g] ?? 'folder') . '" aria-hidden="true"></i><span>' . h($g) . '</span><i class="bi bi-chevron-up nav-group-chevron" aria-hidden="true"></i></button><div class="nav-group-items" id="navGroup' . $groupN . '">'; }
           } ?>
-        <?php if ($r === 'dashboard' && $g === '' && in_array(app_system(), ['SIS', 'FINANCE'], true)): ?><div class="nav-static-head" aria-hidden="true">Overview</div><?php endif; // v65.9: Notifications first, then Overview ?>
+        <?php if ($r === 'dashboard' && $g === ''): ?><div class="nav-static-head" aria-hidden="true">Overview</div><?php endif; // v65.9: Notifications first, then Overview ?>
         <a class="side-link<?= $active ? ' active' : '' ?>" href="<?= $extern !== '' ? h(SYSTEM_LINKS[$extern]) : url($rr, $params) ?>"<?= $active ? ' aria-current="page"' : '' ?><?= $hint !== '' ? ' title="' . h($hint) . '"' : '' ?>><i class="bi bi-<?= $icon ?>" aria-hidden="true"></i><span><?= h($label) ?></span><?php if (app_system() === 'LMS' && $rr === 'messages' && function_exists('lms_unread') && ($lu = lms_unread())): ?><span class="sis-nav-badge" aria-label="<?= $lu ?> unread"><?= $lu > 99 ? '99+' : $lu ?></span><?php endif; ?><?php if ($rr === 'notifications' && $unread): ?><span class="sis-nav-badge" aria-label="<?= $unread ?> unread"><?= $unread > 99 ? '99+' : $unread ?></span><?php endif; ?></a>
       <?php endforeach; if ($group !== '') echo '</div></div>'; ?>
       </nav>
@@ -424,7 +424,7 @@ function layout_end(bool $bare = false): void
 <script src="<?= sis_web() ?>assets/app.js?v=65.1"></script>
 <script src="<?= sis_web() ?>assets/friendly-ui.js?v=48"></script>
 <script src="<?= sis_web() ?>assets/sis-actions.js?v=65.8"></script>
-<script src="<?= sis_web() ?>assets/theme.js?v=65.9"></script>
+<script src="<?= sis_web() ?>assets/theme.js?v=65.10"></script>
 <script src="../js/standard-toolbar-core.js?v=65"></script>
 <script src="<?= sis_web() ?>assets/standard-toolbar.js?v=69"></script>
 <script src="<?= sis_web() ?>assets/card-labels.js?v=64.6"></script>

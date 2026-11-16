@@ -2104,3 +2104,15 @@ html:not([data-system]) .std-tb-host { border-color: #DCE3EC; box-shadow: none; 
 .load-spinner.is-slow .load-text{position:static;width:auto;height:auto;overflow:visible;clip:auto;white-space:normal}
 /* v65: a clearly visible focus ring on the sign-in boxes (keyboard users see where they are) */
 .sl .sl-field:focus-within { border-color: #235FD6 !important; box-shadow: 0 0 0 3px rgba(35, 95, 214, 0.35) !important; }
+
+/* v65.10: Grading System menu as in the SIS design — Notifications on top, each group under a full-width light blue band
+   with its name in capitals. */
+html:not([data-system]) #sidebar nav { padding-top: .35rem; }
+html:not([data-system]) #sidebar nav > .side-link[href="notifications.html"] { border-bottom: 1px solid #C9D6E8; border-radius: 0; margin: 0 0 0; padding-left: 1.4rem; min-height: 46px; }
+html:not([data-system]) #sidebar .nav-group-label {
+  display: flex; align-items: center; min-height: 38px; margin: .5rem 0 .35rem; padding: .5rem 1.4rem;
+  background: #E3ECF8; border-top: 1px solid #B9CCE6; color: #123D70; font-size: .8rem; font-weight: 800; letter-spacing: .06em; text-transform: uppercase;
+}
+html:not([data-system]) #sidebar nav > .side-link[href="notifications.html"] + .nav-group-label { margin-top: 0; border-top: 0; }
+html:not([data-system]) #sidebar .side-link:not(.active) { color: #1B2B44; }
+html:not([data-system]) #sidebar .side-link:not(.active) i { color: #3D5370; opacity: 1; }
