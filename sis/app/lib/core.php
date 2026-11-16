@@ -398,8 +398,7 @@ final class Settings
         'cashier_require_plan' => '1',
         // v66: fee reductions and reopening (Settings → Fee reductions and reopening)
         'red_reason' => '1',            // a reason is needed when what a student pays is lowered
-        'red_approve_reopened' => '1',  // after a confirmed enrollment is reopened, lowering its fees waits for an approver
-        'reopen_approval' => '1',       // reopening a confirmed enrollment waits for an approver
+        'approval_on_reopen' => '0',    // v66.2: the school's choice: reopening a confirmed enrollment, and lowering its fees after that, wait for an approver
         'or_note'         => 'Thank you for your payment. Please keep this receipt.',
         // TOR and certificates (Documents → Settings; saved by Documents::saveSettings, not the main form)
         'doc_prepared_by' => '', 'doc_checked_by' => '',
@@ -414,7 +413,7 @@ final class Settings
         'or_sign'         => 'Cashier',
     ];
     /** The on/off settings (checkboxes: not sent = off) */
-    public const SWITCHES = ['red_reason', 'red_approve_reopened', 'reopen_approval', 'eligibility_block_incomplete', 'print_show_logo', 'asm_show_subjects', 'asm_show_breakdown', 'asm_show_payments', 'or_show_words', 'or_show_balance', 'portal_hide_grades_unpaid', 'balance_enrollment_enabled', 'balance_allow_pay', 'balance_allow_arrangement', 'balance_allow_special', 'balance_show_on_latest_assessment', 'balance_require_approval', 'acct_separate_duties', 'cashier_require_plan', 'asm_split_lec_lab'];
+    public const SWITCHES = ['red_reason', 'approval_on_reopen', 'eligibility_block_incomplete', 'print_show_logo', 'asm_show_subjects', 'asm_show_breakdown', 'asm_show_payments', 'or_show_words', 'or_show_balance', 'portal_hide_grades_unpaid', 'balance_enrollment_enabled', 'balance_allow_pay', 'balance_allow_arrangement', 'balance_allow_special', 'balance_show_on_latest_assessment', 'balance_require_approval', 'acct_separate_duties', 'cashier_require_plan', 'asm_split_lec_lab'];
     public const PAPERS = ['A4' => 'A4 (210 × 297 mm)', 'LETTER' => 'Letter (8.5 × 11 in)', 'LEGAL' => 'Legal / Long (8.5 × 13 in)', 'HALF' => 'Half letter (5.5 × 8.5 in)', 'THERMAL' => 'Receipt printer (80 mm roll)'];
     private static ?array $all = null;
 
@@ -472,6 +471,9 @@ final class Settings
         });
         self::$all = null;
     }
+
+    /** Read the settings again (after a direct change, e.g. in tests). */
+    public static function reload(): void { self::$all = null; }
 
     /** CSS @page size for a paper key. */
     public static function pageSize(string $paper): string

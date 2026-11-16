@@ -353,7 +353,8 @@ test('v66: curriculum moves; reductions need a reason and wait after a reopen; m
     $refused = false; try { GS::saveCurriculum('MVP', '1st Year', '1st Semester', ['mv_s1'], null, null, $b); } catch (AppError) { $refused = true; }
     ok($refused, 'moving onto an existing curriculum must be refused');
     // #2/#10 settings, permission, rules
-    ok(Settings::on('red_reason') && Settings::on('reopen_approval') && Settings::on('red_approve_reopened'), 'reduction controls are not on by default');
+    ok(Settings::on('red_reason') && !Settings::on('approval_on_reopen'), 'reason on by default; approver only when the school turns it on (v66.2)');
+    Db::q("INSERT INTO sis_settings (skey, svalue) VALUES ('approval_on_reopen', '1') ON DUPLICATE KEY UPDATE svalue = '1'"); Settings::reload();
     ok(in_array('red_reason', Settings::SWITCHES, true) && (bool) Db::val("SELECT 1 FROM central_permissions WHERE code='sis.reductions.approve'"), 'setting switch or approver permission missing');
     ok((bool) Db::val("SELECT 1 FROM central_group_permissions gp JOIN central_groups g ON g.id=gp.group_id WHERE g.code='POWER_USER' AND gp.permission_code='sis.reductions.approve'"), 'the Power User cannot approve');
     ok((bool) Reductions::needsApproval(999999, 'REOPEN') && !Reductions::needsApproval(999999, 'REMOVE_FEE'), 'reopen waits; a never-reopened registration only needs a reason');
