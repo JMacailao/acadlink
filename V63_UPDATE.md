@@ -633,3 +633,9 @@ Files: `shared/schedule-teacher-sync.php` (new), `shared/curriculum-assignments.
 - Subjects that cannot fit are listed to be added by hand; running it again only adds what is still missing.
 
 Files: `sis/app/lib/schedule-auto.php` (new), `sis/app/pages/schedules.php`, `sis/app/pages/curriculum.php`, `sis/assets/subject-units.js` (new), `sis/assets/blue-theme.css`, `sis/app/bootstrap.php`, version tag in `sis/app/views/layout.php`; tests in `sis/tests/v63-fixes.php`.
+
+## v65.7 — Fix: the search box covered Void on a registration
+
+On screens 1700 px wide and more, the toolbar sits in the top bar beside the School Year and was limited to 860 px. A registration's toolbar (Back, Print Assessment, Confirm Enrollment, Pay at Cashier, Void, search, Refresh, More Actions) needs about 890 px, so its buttons were squeezed and the search box covered **Pay at Cashier** and **Void**. The toolbar is now as wide as its buttons need; only the search box gets narrower. Checked on 10 pages at 1366, 1600, 1700 and 1920 px: no overlapping buttons.
+
+Files: `sis/assets/easy-navigation.css`, version tag in `sis/app/views/layout.php`; test in `sis/tests/v63-fixes.php`.

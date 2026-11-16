@@ -280,6 +280,12 @@ test('v65.6: Auto-schedule places lecture and lab hours where section and teache
     ok(ScheduleAuto::patterns('LEC', 3, ['M', 'T', 'W', 'Th', 'F'])[0] === [['M', 'W', 'F'], 60] && ScheduleAuto::patterns('LEC', 3, ['M', 'T', 'W', 'Th', 'F'], 1)[0] === [['T', 'Th'], 90], 'MWF 1 hr / TTh 1.5 hrs');
 });
 
+test('v65.7: the wide top-bar toolbar is not capped (the search box covered Void on a registration)', function () {
+    $css = (string) file_get_contents(SIS_ROOT . '/assets/easy-navigation.css');
+    ok(!str_contains($css, 'flex: 0 1 860px; max-width: 860px;'), 'the 860px cap is back');
+    ok(str_contains($css, ':is(.std-tb-group-1, .std-tb-group-2) { flex-shrink: 0; }'), 'button groups can shrink under the search box again');
+});
+
 $server->exec("DROP DATABASE IF EXISTS `$name`");
 echo "$pass passed, $fail failed\n";
 exit($fail ? 1 : 0);
