@@ -1,4 +1,4 @@
-**Updating to v65.8?** Hostinger deploys from GitHub; press Ctrl+F5 once. A registration shows its Tools beside the statement again and Class schedule opens (also v65.6 Auto-schedule, v65.7 toolbar fix); no database step.
+**Updating to v65.9?** Hostinger deploys from GitHub; press Ctrl+F5 once. New SIS menu order: Notifications, Overview, Assessment, Academics, Operations, Student Services, Administration; no database step.
 
 **Updating to v63.24?** Deploy or upload the changed files (see V63_UPDATE.md) and press Ctrl+F5 once. No database change.
 

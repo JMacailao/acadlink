@@ -646,3 +646,17 @@ Files: `sis/assets/easy-navigation.css`, version tag in `sis/app/views/layout.ph
 - **Bug fixed:** **Class schedule** opened nothing (a script error in the browser): the line that loads the registration's schedule was removed together with the tool descriptions. All tools were checked to open, for an open and for a confirmed registration.
 
 Files: `sis/app/pages/registration.php`, `sis/assets/sis-actions.js`, `sis/assets/blue-theme.css`, version tags in `sis/app/views/layout.php`; test in `sis/tests/v63-fixes.php`.
+
+## v65.9 — SIS menu: new order and groups
+
+The SIS menu is now, from the top:
+- **Notifications**, then **Overview** (Dashboard)
+- **Assessment**: Fee categories, Fee labels, Fee Templates, Subject Fees, Scholarships & Discounts, Payment Setup
+- **Academics**: Curriculum, Class Schedules, Sections, Year Levels, Teachers (the **Grading** and **LMS** links are removed; open them from the system switcher)
+- **Operations**: Enrollment Applications, Admission, Registration, Enrollment Eligibility, Cashiering, then Document Fees, Library Fines, Accounting, Library, Canteen POS
+- **Student Services**: Students, Photo Approvals, Data Privacy, TOR & Certificates (and Online Clearance when it is on)
+- **Administration**: unchanged
+
+**History of Grades** and **History of Assessments** are no longer in the menu; they still open from the Students page and from a student's record (the menu then shows Students as the current page).
+
+Files: `sis/app/views/layout.php`; test in `sis/tests/v63-fixes.php`.
