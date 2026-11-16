@@ -34,6 +34,7 @@ function portal_layout_start(string $title, bool $bare = false): void
 <meta name="theme-color" content="#c2410c">
 <title><?= h($title) ?> · Student Portal · <?= h(School::brand()) ?></title>
 <link rel="icon" type="image/png" sizes="32x32" href="../icons/favicon-32.png">
+<meta name="color-scheme" content="light">
 <link rel="manifest" href="../manifest.webmanifest"><!-- v66.6: "Add to Home Screen" on Android and iPhone opens AcadLink like an app -->
 <link rel="apple-touch-icon" href="../icons/apple-touch-icon.png">
 <meta name="mobile-web-app-capable" content="yes">
@@ -47,10 +48,10 @@ function portal_layout_start(string $title, bool $bare = false): void
 <link rel="stylesheet" href="../vendor/bootstrap-icons-1.13.1/font/bootstrap-icons.min.css">
 <link rel="stylesheet" href="../sis/assets/app.css?v=56b">
 <link rel="stylesheet" href="../sis/assets/reference-ui.css?v=20261021portal">
-<link rel="stylesheet" href="assets/portal.css?v=65">
-<link rel="stylesheet" href="../sis/assets/bottom-nav.css?v=63.2">
-<link rel="stylesheet" href="../sis/assets/people.css?v=63">
-<link rel="stylesheet" href="../sis/assets/schedule-grid.css?v=63.4">
+<link rel="stylesheet" href="assets/portal.css?v=66.8">
+<link rel="stylesheet" href="../sis/assets/bottom-nav.css?v=66.8">
+<link rel="stylesheet" href="../sis/assets/people.css?v=66.8">
+<link rel="stylesheet" href="../sis/assets/schedule-grid.css?v=66.8">
 <script src="../js/no-inspect.js?v=64.6" defer></script>
 </head>
 <body class="portal<?= $bare ? ' bare' : '' ?>" data-route="<?= h((string) $route) ?>">

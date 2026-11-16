@@ -16,5 +16,4 @@
 .sg-who { display: block; background: var(--sg-band); padding: 3px 6px; font-size: .8rem; text-transform: uppercase; margin-top: auto; overflow-wrap: anywhere; }
 .sg-clash { display: block; margin: 0 6px 4px; padding: 2px 4px; border-radius: 4px; background: #fee2e2; color: #991b1b; font-size: .7rem; font-weight: 700; }
 .sg-class { height: 1px; } /* lets the block fill its rows, so the teacher band sits at the bottom */
-@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .sg-wrap { background: #fff; } }
 @media print { .sg-wrap { border: 0; } .sg { min-width: 0; font-size: 9pt; } .sg thead th, .sg-class, .sg-who, .sg-time { -webkit-print-color-adjust: exact; print-color-adjust: exact; } }

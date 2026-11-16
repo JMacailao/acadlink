@@ -5,7 +5,6 @@ html[data-system="portal"] { --bn-accent: #c2410c; }
 html[data-app="lms"], html[data-system][data-app="lms"] { --bn-accent: #2563eb; } /* students open the LMS in the Portal look: the LMS keeps its blue */
 html[data-app="canteen"], html[data-system][data-app="canteen"] { --bn-accent: #e0650f; }
 html[data-app="library"], html[data-system][data-app="library"] { --bn-accent: #6a1b83; }
-@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --bn-bg: #161b24; --bn-ink: #e5e9f0; --bn-muted: #aab4c3; --bn-line: #2b3445; } }
 :root[data-theme="dark"] { --bn-bg: #161b24; --bn-ink: #e5e9f0; --bn-muted: #aab4c3; --bn-line: #2b3445; }
 
 @media (max-width: 991.98px) {

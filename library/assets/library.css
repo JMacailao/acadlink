@@ -3,7 +3,6 @@ html[data-app="library"] {
   --lib: #6a1b83; --lib-dark: #4b1259; --lib-deep: #3f0d4c; --lib-soft: #f3e8f8; --lib-softer: #faf5fc; --lib-line: #e6d6ee;
   --lib-ink: #2a1033; --lib-muted: #6f5d78; --lib-card: #fff; --lib-bg: #fbf8fd;
 }
-@media (prefers-color-scheme: dark) { html[data-app="library"]:not([data-theme="light"]) { --lib-soft: #3a1f45; --lib-softer: #2a1833; --lib-line: #4b3456; --lib-ink: #f3eaf7; --lib-muted: #c3b2cc; --lib-card: #1f1626; --lib-bg: #160f1b; } }
 html[data-app="library"][data-theme="dark"] { --lib-soft: #3a1f45; --lib-softer: #2a1833; --lib-line: #4b3456; --lib-ink: #f3eaf7; --lib-muted: #c3b2cc; --lib-card: #1f1626; --lib-bg: #160f1b; }
 
 /* Shell */
