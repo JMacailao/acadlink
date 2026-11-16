@@ -773,3 +773,9 @@ dialog.ask-reason::backdrop { background: rgba(15, 35, 74, .45); }
   html[data-system="sis"] body.al-embed :is(.nav-pills .nav-link.active) { background: #123D70; }
   html[data-system="sis"] body.al-embed .nav-tabs .nav-link.active { color: #123D70; border-bottom-color: #B85309; }
 }
+
+/* v66.5: a large amount (₱12,210,450.00) stays on one line in its dashboard card; the size follows the card's width */
+@media screen {
+  html[data-system="sis"] body.sis-easy .dash-total { container-type: inline-size; }
+  html[data-system="sis"] body.sis-easy .dash-total-value { font-size: clamp(17px, 11cqi, 34px); white-space: nowrap; overflow-wrap: normal; }
+}
