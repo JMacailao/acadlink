@@ -27,6 +27,7 @@ const NAV = [
     ['admission', 'Admission', 'person-plus', ['admission', 'admission.view'], 'Operations', 'New applicants'],
     ['registration', 'Registration', 'journal-check', ['registration', 'payments.view', 'registration.view'], 'Operations', 'Enroll for a term'],
     ['eligibility', 'Enrollment Eligibility', 'shield-check', ['registration', 'eligibility.view'], 'Operations', 'Checks, holds and prerequisites'],
+    ['approvals', 'Approvals', 'check2-square', ['registration.approve', 'registration'], 'Operations', 'Fee reductions and reopening to approve'],
     ['cashier', 'Cashiering', 'credit-card', ['payments.view'], 'Operations', 'Payments and receipts'],
     ['docfees', 'Document Fees', 'file-earmark-text', ['payments.view'], 'Operations', 'TOR and certificate requests to pay'],
     ['libfines', 'Library Fines', 'coin', ['payments.view'], 'Operations', 'Overdue, lost and damage fines to pay'],
@@ -301,7 +302,7 @@ function layout_start(string $title, bool $bare = false): void
 <?php if ($route === 'assessment' && ($_GET['tab'] ?? '') === 'names'): ?><script src="<?= sis_web() ?>assets/fee-templates.js?v=1" defer></script><?php endif; ?>
 <?php if ($route === 'documents' && ($_GET['tab'] ?? '') === 'settings'): ?><script src="<?= sis_web() ?>assets/documents-template-preview.js?v=1" defer></script><?php endif; ?>
 <?php if ($route === 'admission'): ?><link rel="stylesheet" href="<?= sis_web() ?>assets/admission-form.css?v=1"><?php endif; ?>
-<?php if ($system === 'sis' && !$bare && $u): ?><link rel="stylesheet" href="<?= sis_web() ?>assets/easy-navigation.css?v=65.7"><link rel="stylesheet" href="<?= sis_web() ?>assets/dashboard.css?v=2"><link rel="stylesheet" href="<?= sis_web() ?>assets/blue-theme.css?v=65.10"><?php endif; // v64: the blue and orange design, loaded last ?>
+<?php if ($system === 'sis' && !$bare && $u): ?><link rel="stylesheet" href="<?= sis_web() ?>assets/easy-navigation.css?v=65.7"><link rel="stylesheet" href="<?= sis_web() ?>assets/dashboard.css?v=2"><link rel="stylesheet" href="<?= sis_web() ?>assets/blue-theme.css?v=66b"><?php endif; // v64: the blue and orange design, loaded last ?>
 </head>
 <?php $embedFlashes = $bare && isset($_GET['embed']) ? take_flashes() : []; // pop-up pages show their own messages ?>
 <body data-client-scope="<?= h($u ? acadlink_client_scope(Auth::central()) : '') ?>" class="<?= $bare ? 'bare' : ('sis-theme' . ($system === 'sis' && $u ? ' sis-easy' : '')) ?>" data-user-id="<?= h((string) ($u['id'] ?? 'guest')) ?>" data-route="<?= h((string) $route) ?>"<?= array_filter($embedFlashes, fn($f) => $f[0] === 'success') ? ' data-changed="1"' : '' ?>>
@@ -374,7 +375,7 @@ function layout_start(string $title, bool $bare = false): void
               if ($g !== '') { $groupN++; echo '<div class="nav-group" data-nav-group="' . h($g) . '"><button type="button" class="nav-group-toggle" aria-expanded="true" aria-controls="navGroup' . $groupN . '"><i class="bi bi-' . (NAV_GROUP_ICONS[$g] ?? 'folder') . '" aria-hidden="true"></i><span>' . h($g) . '</span><i class="bi bi-chevron-up nav-group-chevron" aria-hidden="true"></i></button><div class="nav-group-items" id="navGroup' . $groupN . '">'; }
           } ?>
         <?php if ($r === 'dashboard' && $g === ''): ?><div class="nav-static-head" aria-hidden="true">Overview</div><?php endif; // v65.9: Notifications first, then Overview ?>
-        <a class="side-link<?= $active ? ' active' : '' ?>" href="<?= $extern !== '' ? h(SYSTEM_LINKS[$extern]) : url($rr, $params) ?>"<?= $active ? ' aria-current="page"' : '' ?><?= $hint !== '' ? ' title="' . h($hint) . '"' : '' ?>><i class="bi bi-<?= $icon ?>" aria-hidden="true"></i><span><?= h($label) ?></span><?php if (app_system() === 'LMS' && $rr === 'messages' && function_exists('lms_unread') && ($lu = lms_unread())): ?><span class="sis-nav-badge" aria-label="<?= $lu ?> unread"><?= $lu > 99 ? '99+' : $lu ?></span><?php endif; ?><?php if ($rr === 'notifications' && $unread): ?><span class="sis-nav-badge" aria-label="<?= $unread ?> unread"><?= $unread > 99 ? '99+' : $unread ?></span><?php endif; ?></a>
+        <a class="side-link<?= $active ? ' active' : '' ?>" href="<?= $extern !== '' ? h(SYSTEM_LINKS[$extern]) : url($rr, $params) ?>"<?= $active ? ' aria-current="page"' : '' ?><?= $hint !== '' ? ' title="' . h($hint) . '"' : '' ?>><i class="bi bi-<?= $icon ?>" aria-hidden="true"></i><span><?= h($label) ?></span><?php if ($rr === 'approvals' && app_system() === 'SIS' && Reductions::canApprove() && ($ap = Reductions::pendingCount())): ?><span class="sis-nav-badge" aria-label="<?= $ap ?> waiting"><?= $ap ?></span><?php endif; // v66 ?><?php if (app_system() === 'LMS' && $rr === 'messages' && function_exists('lms_unread') && ($lu = lms_unread())): ?><span class="sis-nav-badge" aria-label="<?= $lu ?> unread"><?= $lu > 99 ? '99+' : $lu ?></span><?php endif; ?><?php if ($rr === 'notifications' && $unread): ?><span class="sis-nav-badge" aria-label="<?= $unread ?> unread"><?= $unread > 99 ? '99+' : $unread ?></span><?php endif; ?></a>
       <?php endforeach; if ($group !== '') echo '</div></div>'; ?>
       </nav>
       <?php if ($system === 'sis'): ?><a class="sis-rail-profile" href="<?= url('profile') ?>"><span class="sis-user-avatar" aria-hidden="true"><?= h($initials) ?></span><span><strong><?= h($u['full_name']) ?></strong><small><?= h($u['role_name']) ?></small></span><i class="bi bi-three-dots" aria-hidden="true"></i></a><?php endif; ?>
@@ -421,12 +422,12 @@ function layout_end(bool $bare = false): void
 <script src="<?= sis_web() ?>assets/record-list.js?v=48" defer></script>
 <script src="<?= sis_web() ?>assets/fixed-shell.js?v=31" defer></script>
 <script src="<?= sis_web() ?>assets/accounting-ui.js?v=31" defer></script>
-<script src="<?= sis_web() ?>assets/app.js?v=65.1"></script>
+<script src="<?= sis_web() ?>assets/app.js?v=66b"></script>
 <script src="<?= sis_web() ?>assets/friendly-ui.js?v=48"></script>
 <script src="<?= sis_web() ?>assets/sis-actions.js?v=65.11"></script>
 <script src="<?= sis_web() ?>assets/theme.js?v=65.10"></script>
 <script src="../js/standard-toolbar-core.js?v=65"></script>
-<script src="<?= sis_web() ?>assets/standard-toolbar.js?v=69"></script>
+<script src="<?= sis_web() ?>assets/standard-toolbar.js?v=70"></script>
 <script src="<?= sis_web() ?>assets/card-labels.js?v=64.6"></script>
 <script src="<?= sis_web() ?>assets/curriculum-picker.js?v=65.2b"></script>
 <?php if ($route === 'admission'): ?><script src="<?= sis_web() ?>assets/admission-form.js?v=1" defer></script><?php endif; ?>
@@ -583,9 +584,10 @@ function grades_html(array $completions, string $empty = 'No final grades have b
     return $out;
 }
 
-function post_button(string $route, array $params, array $fields, string $label, string $class = 'btn-sm btn-primary', string $confirm = ''): string
+function post_button(string $route, array $params, array $fields, string $label, string $class = 'btn-sm btn-primary', string $confirm = '', array $attrs = []): string
 {
-    $h = '<form method="post" action="' . h(url($route, $params)) . '" class="d-inline"' . ($confirm ? ' data-confirm="' . h($confirm) . '"' : '') . '>' . csrf_field();
+    $extra = ''; foreach ($attrs as $k => $v) $extra .= ' ' . h((string) $k) . '="' . h((string) $v) . '"'; // v66: e.g. data-ask-reason
+    $h = '<form method="post" action="' . h(url($route, $params)) . '" class="d-inline"' . ($confirm ? ' data-confirm="' . h($confirm) . '"' : '') . $extra . '>' . csrf_field();
     foreach ($fields as $k => $v) $h .= '<input type="hidden" name="' . h($k) . '" value="' . h($v) . '">';
     return $h . '<button class="btn ' . h($class) . '">' . $label . '</button></form>';
 }

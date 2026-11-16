@@ -144,7 +144,7 @@ final class Auth
             'accounting.edit'=>['sis.journals.prepare'], 'self'=>['portal.workspace.view'], 'parent'=>['portal.parent.view'],
             // Listed in Users and Groups; each one now controls the action it names
             'admission.view'=>['sis.admission.view','sis.admission.manage'], 'admission.approve'=>['sis.admission.approve'],
-            'registration.view'=>['sis.registration.view','sis.registration.manage'], 'enrollment.confirm'=>['sis.enrollment.confirm'], 'enrollment.reopen'=>['sis.enrollment.reopen'],
+            'registration.view'=>['sis.registration.view','sis.registration.manage'], 'enrollment.confirm'=>['sis.enrollment.confirm'], 'enrollment.reopen'=>['sis.enrollment.reopen'], 'registration.approve'=>['sis.reductions.approve'],
             'balances.view'=>['sis.balances.view'], 'balances.approve'=>['sis.balances.approve'], 'discounts.manage'=>['sis.discounts.manage'],
             'eligibility.view'=>['sis.eligibility.view'], 'eligibility.holds'=>['sis.eligibility.holds.manage'],
             'documents'=>['sis.documents.view','sis.documents.issue'], 'schedules'=>['sis.schedules.view','sis.schedules.manage'], 'schedules.edit'=>['sis.schedules.manage'], 'documents.issue'=>['sis.documents.issue'], 'documents.void'=>['sis.documents.void'],

@@ -1,4 +1,4 @@
-**Updating to v65.12?** Hostinger deploys from GitHub; press Ctrl+F5 once. An × on scholarship / discount lines of a registration; no database step.
+**Updating to v66?** Hostinger deploys from GitHub; press Ctrl+F5 once. Fee reductions need a reason and (after a reopen) approval, reopening waits for approval, Approvals page, term-wide schedule tools, units editor, curriculum move fix. Two small tables and one permission are added automatically on the first page view.
 
 **Updating to v63.24?** Deploy or upload the changed files (see V63_UPDATE.md) and press Ctrl+F5 once. No database change.
 

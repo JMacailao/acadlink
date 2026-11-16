@@ -29,6 +29,7 @@ require SIS_ROOT . '/app/lib/account-email.php';
 require SIS_ROOT . '/app/lib/document-requests.php';
 require SIS_ROOT . '/app/lib/schedules.php';
 require SIS_ROOT . '/app/lib/schedule-auto.php';
+require SIS_ROOT . '/app/lib/reductions.php';
 require SIS_ROOT . '/app/lib/adddrop.php';
 require SIS_ROOT . '/app/lib/clearance.php';
 require SIS_ROOT . '/app/lib/balance.php';
@@ -128,7 +129,7 @@ function sis_boot(): void
  * v63.21: the version of the tables this code expects. Raise it whenever sis_upgrade() (or an install() it calls) gains
  * a new step, so every school's database runs the upgrade once more; otherwise sis_upgrade() is one small query.
  */
-const SIS_SCHEMA_VERSION = 36; // v65.11: sis_registration_subject_skips
+const SIS_SCHEMA_VERSION = 37; // v66: sis_registration_changes (v65.11: sis_registration_subject_skips)
 
 function sis_upgrade(): void
 {
@@ -214,6 +215,7 @@ function sis_upgrade(): void
     Privacy::install(Db::pdo());       // v62: privacy consents and reviews
     ParentAccess::install(Db::pdo());  // v62: parent links
     FirstSetup::install();             // v63.3: retire the old published starting password
+    Reductions::install();             // v66: fee reductions and reopening, with reasons and approvals
     // v63.21: lists look up "the latest registration of this student" per row (Admission, Students): index it
     if (!Db::val("SELECT 1 FROM information_schema.statistics WHERE table_schema = DATABASE() AND table_name = 'sis_registrations' AND index_name = 'k_sis_reg_student'"))
         Db::q('ALTER TABLE sis_registrations ADD KEY k_sis_reg_student (student_number, id)');

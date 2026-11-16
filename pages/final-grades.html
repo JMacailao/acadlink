@@ -70,25 +70,8 @@
           <script>try{var s=JSON.parse(localStorage.getItem("gs-school")||"null");if(s){var l=s.schoolName||s.shortName;if(l){document.getElementById("brandName").textContent=l;document.getElementById("brandSub").textContent="Grading System";var t=document.getElementById("topbarTitle");if(t)t.textContent=l;}var e=document.getElementById("brandSeal");if(s.logo){e.innerHTML="";var i=new Image();i.src=s.logo;i.alt="";e.appendChild(i);e.classList.add("has-logo");e.classList.remove("is-default");}}}catch(x){}</script>
           <button type="button" class="btn-close btn-close-white d-lg-none mt-4 me-3" data-bs-dismiss="offcanvas" data-bs-target="#sidebar" aria-label="Close menu"></button>
         </div>
-        <nav class="tw-pb-2">
-          <a class="side-link" href="notifications.html" data-roles="admin registrar teacher"><i class="bi bi-bell" aria-hidden="true"></i><span>Notifications</span><span class="nav-badge d-none" id="notifBadge" aria-label="unread notifications"></span></a>
-          <div class="nav-group-label" data-roles="admin registrar teacher">Overview</div>
-          <a class="side-link" href="dashboard.html" data-roles="admin registrar teacher"><i class="bi bi-grid-1x2" aria-hidden="true"></i><span>Dashboard</span></a>
-          <div class="nav-group-label" data-roles="admin registrar">Academic setup</div>
-          <a class="side-link" href="subjects.html" data-roles="admin registrar"><i class="bi bi-journal-bookmark" aria-hidden="true"></i><span>Subjects</span></a>
-          <a class="side-link" href="curriculum.html" data-roles="admin registrar"><i class="bi bi-list-check" aria-hidden="true"></i><span>Curriculum</span></a>
-          <a class="side-link" href="teachers.html" data-roles="admin registrar"><i class="bi bi-person-badge" aria-hidden="true"></i><span>Teachers</span></a>
-          <a class="side-link" href="sections.html" data-roles="admin registrar"><i class="bi bi-collection" aria-hidden="true"></i><span>Sections</span></a>
-          <a class="side-link" href="students.html" data-roles="admin registrar"><i class="bi bi-people" aria-hidden="true"></i><span>Students</span></a>
-          <div class="nav-group-label" data-roles="admin registrar teacher">Grading</div>
-          <a class="side-link" href="assignments.html" data-roles="admin registrar"><i class="bi bi-diagram-3" aria-hidden="true"></i><span>Grading assignments</span></a>
-          <a class="side-link" href="grading.html" data-roles="admin registrar teacher"><i class="bi bi-pencil-square" aria-hidden="true"></i><span>Enter grades</span></a>
-          <a class="side-link" href="../sis/index.php?r=myschedule" target="_top" data-roles="teacher"><i class="bi bi-calendar-week" aria-hidden="true"></i><span>My class schedule</span></a>
-          <a class="side-link" href="../sis/index.php?r=clearance" target="_top" data-roles="teacher registrar admin" data-clearance hidden><i class="bi bi-patch-check" aria-hidden="true"></i><span>Clearance</span></a>
-          <a class="side-link active" aria-current="page" href="final-grades.html" data-roles="admin registrar"><i class="bi bi-mortarboard" aria-hidden="true"></i><span>Final grades</span></a>
-          <div class="nav-group-label" data-roles="admin registrar teacher">School Information System</div>
-          <a class="side-link" href="sis.html" data-roles="admin registrar teacher"><i class="bi bi-buildings" aria-hidden="true"></i><span>Enrollment and fees (SIS)</span></a>
-        </nav>
+        <nav class="tw-pb-2" data-grading-menu aria-label="Main menu"></nav>
+        <script src="../js/grading-menu.js?v=66"></script>
         <div class="sidebar-user">
           <div class="d-flex align-items-center gap-2">
             <span class="user-avatar" id="userInitials" aria-hidden="true"></span>

@@ -194,7 +194,7 @@
    if(document.body.classList.contains('sis-easy')){
      const supported={new:!!newSource,...Object.fromEntries(ACT.map(k=>[k,known[k]||!!s[k]?.enabled])),selectAll:!!bulkAll,filters:!!(form||pageForm),apply:!!(apply||pageForm)};
      Object.entries(supported).forEach(([key,show])=>{const button=tb.el.querySelector('[data-std-slot="'+key+'"]');if(button)button.hidden=!show;});
-     if(newSource)tb.set('new',{...s.new,label:visibleLabel(newSource)});
+     if(newSource){tb.set('new',{...s.new,label:visibleLabel(newSource)});newSource.classList.add('std-tb-copied');} // v66: the page's own button is not shown twice on phones
    }
    tb.el.classList.toggle('std-tb-dirty',!!list?.classList.contains('is-dirty'));
  }

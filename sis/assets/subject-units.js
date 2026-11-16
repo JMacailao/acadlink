@@ -2,7 +2,7 @@
 (function(register){register('subject-units',function(scope){
  'use strict';
  document.querySelectorAll('[data-unit-split]').forEach(box=>{
-   const lec=box.querySelector('[name=lecUnits]'),lab=box.querySelector('[name=labUnits]'),out=box.querySelector('[data-unit-total]');
+   const lec=box.querySelector('[name="u_lec[]"]')||box.querySelector('[name=lecUnits]'),lab=box.querySelector('[name="u_lab[]"]')||box.querySelector('[name=labUnits]'),out=box.querySelector('[data-unit-total]'); // v66: also the many-subjects editor
    if(!lec||!lab||!out)return;
    const n=v=>{const x=parseFloat(String(v).trim());return isFinite(x)?x:0;};
    const sum=()=>{const t=n(lec.value)+n(lab.value);out.textContent=String(+t.toFixed(1));};

@@ -17,10 +17,10 @@ const SIS = r => `/sis/index.php?r=${r}`;
 const PLAN = [
   ['power.admin', [SIS('dashboard'), SIS('workspaces'), SIS('students'), SIS('registration'), SIS('admission'), SIS('cashier'), SIS('assessment&tab=categories'),
     SIS('curriculum'), SIS('sections'), SIS('teachers'), SIS('schedules'), SIS('reports'), SIS('users'), SIS('activity'), SIS('notifications'), SIS('profile'),
-    SIS('syscheck'), SIS('school'), SIS('settings'), SIS('docrequirements'), SIS('emailsetup'), SIS('backup'), SIS('bulkaccounts'), SIS('migration'), SIS('importall'),
+    SIS('approvals'), SIS('approvals&tab=history'), SIS('subjectfees&new=1'), SIS('curriculum&new=1'), SIS('curriculum&tab=subjects&units=1'), SIS('assessment&tab=names'), SIS('schedules&autoall=1'), SIS('syscheck'), SIS('school'), SIS('settings'), SIS('docrequirements'), SIS('emailsetup'), SIS('backup'), SIS('bulkaccounts'), SIS('migration'), SIS('importall'),
     [SIS('gradingoptions'), /pages\/options\.html/], [SIS('systemsettings'), /pages\/settings\.html/], [SIS('gradingaudit'), /pages\/audit\.html/],
     '/finance/index.php', '/canteen/index.php', '/library/index.php', '/lms/index.php', ['/', /pages\/dashboard\.html/]]],
-  ['ci.registrar', [SIS('dashboard'), SIS('students'), SIS('registration'), SIS('admission'), SIS('enrollment')]],
+  ['ci.registrar', [SIS('dashboard'), SIS('students'), SIS('registration'), SIS('admission'), SIS('enrollment'), SIS('approvals')]],
   ['ci.cashier', [SIS('cashier'), '/finance/index.php']],
   ['ci.canteen', ['/canteen/index.php']],
   ['ci.librarian', ['/library/index.php']],

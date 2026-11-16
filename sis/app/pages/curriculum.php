@@ -5,6 +5,25 @@ declare(strict_types=1);
 $canEdit = Auth::can('curriculum.edit');
 $tab = ($_GET['tab'] ?? '') === 'subjects' ? 'subjects' : 'curriculum';
 if ($isPost) {
+    if (($_POST['action'] ?? '') === 'units') { // v66: lecture / lab units of many subjects at once
+        $ids = array_values((array) ($_POST['u_id'] ?? [])); $lecs = array_values((array) ($_POST['u_lec'] ?? [])); $labs = array_values((array) ($_POST['u_lab'] ?? []));
+        if (count($ids) !== count($lecs) || count($ids) !== count($labs) || count($ids) > 2000) throw new AppError('The list was not sent completely. Reload the page and try again.');
+        $changed = 0;
+        Db::tx(function () use ($ids, $lecs, $labs, &$changed) {
+            foreach ($ids as $i => $sid) {
+                $sub = GS::get('subjects', (string) $sid); if (!$sub) continue;
+                $old = LecLab::ofSubject($sub);
+                try { $split = LecLab::parse((string) $lecs[$i], (string) $labs[$i]); }
+                catch (AppError $e) { throw new AppError(($sub['subjectCode'] ?? 'A subject') . ': ' . $e->getMessage()); }
+                if (!$split || ((float) $split[0] === (float) $old[0] && (float) $split[1] === (float) $old[1])) continue; // unchanged
+                GS::saveSubject((string) $sid, (string) ($sub['subjectCode'] ?? ''), (string) ($sub['subjectName'] ?? ''), LecLab::text($split[0] + $split[1]));
+                GS::setSubjectSplit((string) $sid, $split);
+                $changed++;
+            }
+        });
+        flash('success', $changed . ' subject(s) saved. Open assessments use the new units when they are next recalculated.');
+        redirect('curriculum', ['tab' => 'subjects']);
+    }
     if (($_POST['action'] ?? '') === 'subject') {
         // v56.2: with lecture / laboratory units, Units = lecture + laboratory
         $splitIn = true ? LecLab::parse((string) ($_POST['lecUnits'] ?? ''), (string) ($_POST['labUnits'] ?? '')) : null;
@@ -18,7 +37,7 @@ if ($isPost) {
         redirect('curriculum', ['tab' => 'subjects']);
     }
     $sel = array_values(array_filter((array) ($_POST['subjectIds'] ?? []), 'is_string'));
-    $id = GS::saveCurriculum((string) ($_POST['program'] ?? ''), (string) ($_POST['yearLevel'] ?? ''), (string) ($_POST['term'] ?? ''), $sel, (array)($_POST['subjectTeachers']??[]), (string) ($_POST['curriculumName'] ?? ''));
+    $id = GS::saveCurriculum((string) ($_POST['program'] ?? ''), (string) ($_POST['yearLevel'] ?? ''), (string) ($_POST['term'] ?? ''), $sel, (array)($_POST['subjectTeachers']??[]), (string) ($_POST['curriculumName'] ?? ''), (string) ($_POST['fromId'] ?? ''));
     $sync = GS::$lastCurriculumSync;
     flash('success', 'Curriculum saved. ' . ($sync['created'] ? $sync['created'] . ' missing Grading Assignment(s) created. ' : '')
         . ($sync['updated'] ? $sync['updated'] . ' active class(es) changed to the new teacher; their saved grades stay. ' : '')
@@ -47,7 +66,7 @@ if (!$curEditing) page_title('Curriculum', $canEdit ? '<a class="btn btn-primary
 <div class="cur-page">
 <a class="cur-back" href="<?= url('curriculum') ?>"><i class="bi bi-arrow-left" aria-hidden="true"></i> Back to curricula</a>
 <div class="cur-title" role="heading" aria-level="2"><?= $open ? ($canEdit ? 'Edit curriculum' : 'Curriculum') : 'Add curriculum' ?></div>
-<form method="post" id="curEdit" class="cur-form" data-cur-edit><?= csrf_field() ?>
+<form method="post" id="curEdit" class="cur-form" data-cur-edit><?= csrf_field() ?><?php if ($open): ?><input type="hidden" name="fromId" value="<?= h($open['id']) ?>"><?php endif; ?>
   <section class="cur-card" aria-labelledby="curDetailsTitle">
     <h3 id="curDetailsTitle">Curriculum details</h3>
     <div class="cur-fields">
@@ -142,10 +161,25 @@ if (!$curEditing) page_title('Curriculum', $canEdit ? '<a class="btn btn-primary
     <td><?= count($ids) ?></td><td><?= h($units) ?></td><td class="text-end"><a class="btn btn-sm btn-outline-primary" href="<?= url('curriculum', ['open' => $c['id']]) ?>"><?= $canEdit ? 'Edit' : 'View' ?></a></td></tr>
   <?php endforeach; if (!$list): ?><tr><td colspan="7" class="text-center text-muted py-4">No curriculum yet.</td></tr><?php endif; ?>
 </tbody></table></div>
+<?php elseif ($canEdit && isset($_GET['units'])): /* v66: lecture / lab units of every subject on one page */ ?>
+<form method="post" class="form-section" data-units-bulk><?= csrf_field() ?><input type="hidden" name="action" value="units">
+  <div class="d-flex flex-wrap align-items-center gap-2 mb-2"><h2 class="h6 mb-0 me-auto">Lecture and lab units</h2>
+    <input type="search" class="form-control form-control-sm" style="max-width:260px" data-filter="#unitsTable" placeholder="Search subjects" aria-label="Search subjects">
+    <a class="btn btn-sm btn-link" href="<?= url('curriculum', ['tab' => 'subjects']) ?>">Cancel</a><button class="btn btn-sm btn-primary">Save units</button></div>
+  <p class="small text-muted">Total = lecture + lab units. Class Schedules gives 1 hour a week per lecture unit and 3 hours per lab unit. Only the subjects you change are saved.</p>
+  <div class="table-responsive"><table class="table table-sm align-middle mb-0" id="unitsTable" data-plain-table><thead><tr><th>Code</th><th>Subject</th><th style="width:110px">Lec units</th><th style="width:110px">Lab units</th><th class="text-center" style="width:100px">Total</th></tr></thead><tbody>
+  <?php foreach ($subjects as $su): $sp = LecLab::ofSubject($su); ?><tr data-unit-split>
+    <td class="font-monospace"><?= h($su['subjectCode'] ?? '') ?><input type="hidden" name="u_id[]" value="<?= h($su['id']) ?>"></td><td><?= h($su['subjectName'] ?? '') ?><?= isset($su['lecUnits']) ? '' : ' <span class="badge text-bg-light border">all lecture so far</span>' ?></td>
+    <td><input class="form-control form-control-sm" name="u_lec[]" inputmode="decimal" value="<?= h(LecLab::text($sp[0])) ?>" aria-label="<?= h('Lecture units of ' . ($su['subjectCode'] ?? '')) ?>"></td>
+    <td><input class="form-control form-control-sm" name="u_lab[]" inputmode="decimal" value="<?= h(LecLab::text($sp[1])) ?>" aria-label="<?= h('Lab units of ' . ($su['subjectCode'] ?? '')) ?>"></td>
+    <td class="text-center fw-semibold" data-unit-total><?= h(LecLab::text($sp[2])) ?></td></tr><?php endforeach; ?>
+  </tbody></table></div>
+  <div class="mt-2 text-end"><button class="btn btn-primary">Save units</button></div>
+</form>
 <?php else: $edit = isset($_GET['edit']) ? GS::get('subjects', (string) $_GET['edit']) : null; ?>
 <div class="row g-3">
 <div class="<?= $canEdit ? 'col-xl-8' : 'col-12' ?>">
-  <input class="form-control form-control-sm mb-2" data-filter="#subjects" placeholder="Search">
+  <div class="d-flex flex-wrap gap-2 mb-2"><input class="form-control form-control-sm" style="max-width:320px" data-filter="#subjects" placeholder="Search"><?php if ($canEdit): ?><a class="btn btn-sm btn-outline-primary ms-auto" href="<?= url('curriculum', ['tab' => 'subjects', 'units' => 1]) ?>"><i class="bi bi-sliders me-1" aria-hidden="true"></i>Edit lecture / lab units</a><?php endif; ?></div>
   <div class="table-responsive bg-white border rounded"><table class="table table-sm mb-0" id="subjects"><thead class="table-light"><tr><th>Code</th><th>Subject</th><th>Lec units</th><th>Lab units</th><th>Total units</th><th>Type</th><th></th></tr></thead><tbody>
   <?php foreach (RecordList::rows(fn()=>$subjects) as $s): ?><tr><td class="font-monospace"><?= h($s['subjectCode'] ?? '') ?></td><td><?= h($s['subjectName'] ?? '') ?></td><?php $sp = LecLab::ofSubject($s); ?><td><?= h(LecLab::text($sp[0])) ?></td><td><?= h(LecLab::text($sp[1])) ?></td><td><?= h($s['units'] ?? '') ?></td><td class="small"><?= h($s['subjectType'] ?? '') ?></td>
     <td class="text-end"><?php if ($canEdit): ?><a class="btn btn-sm btn-outline-secondary" href="<?= url('curriculum', ['tab' => 'subjects', 'edit' => $s['id']]) ?>"><i class="bi bi-pencil me-1"></i>Edit</a><?php endif; ?></td></tr><?php endforeach; ?>
@@ -168,5 +202,5 @@ if (!$curEditing) page_title('Curriculum', $canEdit ? '<a class="btn btn-primary
 <?php endif; ?>
 </div>
 <?php endif; ?>
-<script src="assets/subject-units.js?v=65.6" defer></script>
+<script src="assets/subject-units.js?v=66" defer></script>
 <?php layout_end();

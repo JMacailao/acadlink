@@ -26,6 +26,11 @@ $printedAt = date('F j, Y');
 // v56: "Prepared by" is the staff member signed in now (printing the statement), never typed by hand.
 $preparedBy = SoaPreparer::name();
 $columnCount = $showBreakdown ? 6 : 4;
+// v66: taking a fee off asks for the reason (and says when it waits for an approver)
+$askWhy = static function (string $what) use ($id): array {
+    if (!Reductions::reasonRequired() && !(Reductions::needsApproval((int) $id, 'REMOVE_FEE') && !Reductions::canApprove())) return [];
+    return ['data-ask-reason' => 'Why is ' . $what . ' taken off this student\'s assessment?', 'data-approval' => Reductions::needsApproval((int) $id, 'REMOVE_FEE') && !Reductions::canApprove() ? '1' : '0'];
+};
 // v65.12: a scholarship / discount line ("Academic Scholarship (50% of Tuition)") → the program given to this registration
 $discountIdByLine = [];
 if ($editable) foreach (Discounts::given((int) $r['id']) as $g) $discountIdByLine[mb_substr($g['name'] . ' (' . Discounts::describe($g) . ')', 0, 100)] = (int) $g['discount_id'];
@@ -110,10 +115,10 @@ $subjectFeeOf = function (string $name) use ($subjectCodeToDoc, &$labelIdByName)
             <?php elseif ($editable && $line['charge_type'] === 'DISCOUNT' && isset($discountIdByLine[$line['label_name']])): /* v65.12: a scholarship / discount */ ?>
               <span class="d-print-none"><?= post_button('registration', ['id' => $id], ['action' => 'remove_discount', 'discount_id' => $discountIdByLine[$line['label_name']]], '<i class="bi bi-x-lg"></i>', 'btn-sm btn-link text-danger p-0', 'Remove ' . $line['label_name'] . ' from this student\'s assessment?') ?></span>
             <?php elseif ($editable && ($sk = $subjectFeeOf($line['label_name']))): /* v65.11: a subject's fee (Tuition Fee · IT101) */ ?>
-              <span class="d-print-none"><?= post_button('registration', ['id' => $id], ['action' => 'skip_subject_fee', 'subject_doc_id' => $sk[0], 'label_id' => $sk[1]], '<i class="bi bi-x-lg"></i>', 'btn-sm btn-link text-danger p-0', 'Take ' . $line['label_name'] . ' off this student\'s assessment?') ?></span>
+              <span class="d-print-none"><?php $ask = $askWhy($line['label_name']); ?><?= post_button('registration', ['id' => $id], ['action' => 'skip_subject_fee', 'subject_doc_id' => $sk[0], 'label_id' => $sk[1]], '<i class="bi bi-x-lg"></i>', 'btn-sm btn-link text-danger p-0', $ask ? '' : 'Take ' . $line['label_name'] . ' off this student\'s assessment?', $ask) ?></span>
             <?php elseif ($editable && isset($labelIdByName[$line['label_name']])): $labelId = (int) $labelIdByName[$line['label_name']]; ?>
               <?php if (isset($feeChoices[$labelId])): ?><span class="badge text-bg-info me-1 d-print-none">for this student</span><?php endif; ?>
-              <span class="d-print-none"><?= post_button('registration', ['id' => $id], ['action' => 'remove_label', 'label_id' => $labelId], '<i class="bi bi-x-lg"></i>', 'btn-sm btn-link text-danger p-0', 'Take ' . $line['label_name'] . ' off this student\'s assessment?') ?></span>
+              <span class="d-print-none"><?php $ask = $askWhy($line['label_name']); ?><?= post_button('registration', ['id' => $id], ['action' => 'remove_label', 'label_id' => $labelId], '<i class="bi bi-x-lg"></i>', 'btn-sm btn-link text-danger p-0', $ask ? '' : 'Take ' . $line['label_name'] . ' off this student\'s assessment?', $ask) ?></span>
             <?php endif; ?></td>
           <?php if ($showBreakdown): ?>
           <td class="soa-num"><?= $hasQuantity ? h($quantity) : '—' ?></td>

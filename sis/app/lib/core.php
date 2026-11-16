@@ -396,6 +396,10 @@ final class Settings
         'acct_separate_duties' => '1',
         // v56: Cashier needs the student's payment plan before the first payment of an enrollment
         'cashier_require_plan' => '1',
+        // v66: fee reductions and reopening (Settings → Fee reductions and reopening)
+        'red_reason' => '1',            // a reason is needed when what a student pays is lowered
+        'red_approve_reopened' => '1',  // after a confirmed enrollment is reopened, lowering its fees waits for an approver
+        'reopen_approval' => '1',       // reopening a confirmed enrollment waits for an approver
         'or_note'         => 'Thank you for your payment. Please keep this receipt.',
         // TOR and certificates (Documents → Settings; saved by Documents::saveSettings, not the main form)
         'doc_prepared_by' => '', 'doc_checked_by' => '',
@@ -410,7 +414,7 @@ final class Settings
         'or_sign'         => 'Cashier',
     ];
     /** The on/off settings (checkboxes: not sent = off) */
-    public const SWITCHES = ['eligibility_block_incomplete', 'print_show_logo', 'asm_show_subjects', 'asm_show_breakdown', 'asm_show_payments', 'or_show_words', 'or_show_balance', 'portal_hide_grades_unpaid', 'balance_enrollment_enabled', 'balance_allow_pay', 'balance_allow_arrangement', 'balance_allow_special', 'balance_show_on_latest_assessment', 'balance_require_approval', 'acct_separate_duties', 'cashier_require_plan', 'asm_split_lec_lab'];
+    public const SWITCHES = ['red_reason', 'red_approve_reopened', 'reopen_approval', 'eligibility_block_incomplete', 'print_show_logo', 'asm_show_subjects', 'asm_show_breakdown', 'asm_show_payments', 'or_show_words', 'or_show_balance', 'portal_hide_grades_unpaid', 'balance_enrollment_enabled', 'balance_allow_pay', 'balance_allow_arrangement', 'balance_allow_special', 'balance_show_on_latest_assessment', 'balance_require_approval', 'acct_separate_duties', 'cashier_require_plan', 'asm_split_lec_lab'];
     public const PAPERS = ['A4' => 'A4 (210 × 297 mm)', 'LETTER' => 'Letter (8.5 × 11 in)', 'LEGAL' => 'Legal / Long (8.5 × 13 in)', 'HALF' => 'Half letter (5.5 × 8.5 in)', 'THERMAL' => 'Receipt printer (80 mm roll)'];
     private static ?array $all = null;
 
@@ -704,7 +708,7 @@ function keep_old_input(): void
     foreach ($_POST as $k => $v) {
         if (!is_string($k) || in_array($k, $skip, true) || stripos($k, 'password') !== false) continue;
         if (is_scalar($v)) $fields[$k] = $clip($v);
-        elseif (is_array($v)) $fields[$k] = array_map($clip, array_slice($v, 0, 500, true));
+        elseif (is_array($v)) $fields[$k] = array_map(fn($x) => is_array($x) ? array_map($clip, array_slice($x, 0, 50, true)) : $clip($x), array_slice($v, 0, 500, true)); // v66: one more level (gen[5][amount])
     }
     $_SESSION['old_input'] = ['uri' => (string) ($_SERVER['REQUEST_URI'] ?? ''), 'action' => is_string($_POST['action'] ?? null) ? $_POST['action'] : '', 'fields' => $fields];
 }
